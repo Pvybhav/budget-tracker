@@ -35,6 +35,12 @@ export function calcEmiTotalCost(
   return monthlyEmi * months + processingFee + gst;
 }
 
+export interface AccountAlertStatus {
+  severity: 'warning' | 'danger';
+  message: string;
+  detail: string;
+}
+
 export function getCardMetrics(card: Card, expenses: Expense[], payments: Payment[]) {
   const today = new Date();
   const isCreditAccount = card.type === 'credit';
@@ -145,6 +151,42 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     remainingToWaive,
     isAmcWaived
   };
+}
+
+export function getAccountAlertStatus(card: Card, metrics: ReturnType<typeof getCardMetrics>): AccountAlertStatus | null {
+  const spentRatio = card.totalLimit > 0 ? metrics.currentBalance / card.totalLimit : 0;
+  const isLowBalance = card.type !== 'credit' && metrics.currentBalance <= Math.max(1000, card.totalLimit * 0.1);
+  const isOverLimit = card.type === 'credit' && metrics.availableLimit <= 0;
+
+  if (isOverLimit) {
+    return {
+      severity: 'danger',
+      message: `${card.title} is over its limit`,
+      detail: `Available limit is ₹${metrics.availableLimit.toLocaleString('en-IN')} after current spend.`,
+    };
+  }
+
+  if (isLowBalance) {
+    return {
+      severity: 'warning',
+      message: `${card.title} balance is running low`,
+      detail: `Current balance is ₹${metrics.currentBalance.toLocaleString('en-IN')}.`,
+    };
+  }
+
+  if (card.type === 'credit' && spentRatio <= 0.8 && metrics.availableLimit > 0) {
+    return null;
+  }
+
+  if (card.type === 'credit' && spentRatio <= 0.9) {
+    return {
+      severity: 'warning',
+      message: `${card.title} is nearing its credit limit`,
+      detail: `Only ₹${metrics.availableLimit.toLocaleString('en-IN')} of limit remains.`,
+    };
+  }
+
+  return null;
 }
 
 export async function addCard(data: Card) {

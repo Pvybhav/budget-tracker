@@ -403,11 +403,21 @@ export default function ManageExpensesPage({
                           No description
                         </span>
                       )}
-                      {isEmi && (
+                      {(isEmi || expense.recurringFrequency) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium">
-                            EMI · {expense.emiMonths}mo
-                          </span>
+                          {isEmi && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium">
+                              EMI · {expense.emiMonths}mo
+                            </span>
+                          )}
+                          {expense.recurringFrequency && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+                              {expense.recurringFrequency
+                                .charAt(0)
+                                .toUpperCase() +
+                                expense.recurringFrequency.slice(1)}
+                            </span>
+                          )}
                           {(expense.emiInterestRate ?? 0) === 0 ? (
                             <span className="text-xs text-slate-500">
                               No Cost

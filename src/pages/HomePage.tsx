@@ -14,6 +14,7 @@ import CardThumbnail from "../components/CardThumbnail";
 import MonthlySummary from "../components/MonthlySummary";
 import PaymentDueAlerts from "../components/PaymentDueAlerts";
 import SavingsGoalsSection from "../components/SavingsGoalsSection";
+import AlertsPanel from "../components/AlertsPanel";
 
 const HERO_POINTS = [
   {
@@ -93,8 +94,9 @@ export default function HomePage() {
         <div className="lg:col-span-2">
           <MonthlySummary />
         </div>
-        <div>
+        <div className="space-y-4">
           <PaymentDueAlerts />
+          <AlertsPanel />
         </div>
       </div>
       {showFullDescription && (

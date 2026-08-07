@@ -34,6 +34,12 @@ export interface Expense {
   emiInterestRate?: number;    // annual % — 0 means No Cost EMI
   emiProcessingFee?: number;   // flat processing fee in ₹ (user-entered)
   emiGst?: number;             // flat GST amount in ₹ (user-entered, applied on processing fee / interest)
+  // Recurring fields
+  recurringFrequency?: 'monthly' | 'weekly' | 'yearly';
+  recurringInterval?: number;
+  recurringEndDate?: string;
+  recurringTemplateId?: number;
+  isRecurringInstance?: boolean;
 }
 
 export interface Payment {
@@ -109,6 +115,10 @@ db.version(7).stores({
 
 db.version(8).stores({
   savingsGoals: '++id, title, targetDate, targetAmount, currentAmount, createdAt',
+});
+
+db.version(9).stores({
+  expenses: '++id, cardId, categoryId, date, amount, isEmi, recurringFrequency, recurringTemplateId',
 });
 
 export { db };

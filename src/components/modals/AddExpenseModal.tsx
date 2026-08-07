@@ -13,6 +13,7 @@ import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { getBudgetStatus } from "../../services/budget.service";
+import { syncRecurringExpenses } from "../../services/recurring.service";
 
 interface Props {
   isOpen: boolean;
@@ -72,6 +73,10 @@ export default function AddExpenseModal({
     emiCustomInterest: "", // used when preset = -1 (Custom)
     emiProcessingFee: "",
     emiGst: "",
+    isRecurring: false,
+    recurringFrequency: "monthly" as Expense["recurringFrequency"],
+    recurringInterval: 1,
+    recurringEndDate: "",
   });
 
   const selectedCategory = categories?.find(
@@ -166,6 +171,10 @@ export default function AddExpenseModal({
         emiCustomInterest: presetExists ? "" : interestRate.toString(),
         emiProcessingFee: initialExpense.emiProcessingFee?.toString() ?? "",
         emiGst: initialExpense.emiGst?.toString() ?? "",
+        isRecurring: Boolean(initialExpense.recurringFrequency),
+        recurringFrequency: initialExpense.recurringFrequency ?? "monthly",
+        recurringInterval: initialExpense.recurringInterval ?? 1,
+        recurringEndDate: initialExpense.recurringEndDate ?? "",
       });
     } else {
       setFormData({
@@ -184,6 +193,10 @@ export default function AddExpenseModal({
         emiCustomInterest: "",
         emiProcessingFee: "",
         emiGst: "",
+        isRecurring: false,
+        recurringFrequency: "monthly",
+        recurringInterval: 1,
+        recurringEndDate: "",
       });
     }
   }, [initialExpense, isOpen]);
@@ -301,6 +314,15 @@ export default function AddExpenseModal({
           ? processingFeeAmount
           : undefined,
       emiGst: formData.isEmi && gstAmount > 0 ? gstAmount : undefined,
+      recurringFrequency: formData.isRecurring
+        ? formData.recurringFrequency
+        : undefined,
+      recurringInterval: formData.isRecurring
+        ? formData.recurringInterval
+        : undefined,
+      recurringEndDate: formData.isRecurring
+        ? formData.recurringEndDate || undefined
+        : undefined,
     };
 
     if (initialExpense) {
@@ -308,6 +330,7 @@ export default function AddExpenseModal({
     } else {
       await db.expenses.add(payload);
     }
+    await syncRecurringExpenses();
     onClose();
   };
 
@@ -324,7 +347,9 @@ export default function AddExpenseModal({
       setFormData({
         ...formData,
         [name]:
-          name === "emiMonths" || name === "emiInterestPreset"
+          name === "emiMonths" ||
+          name === "emiInterestPreset" ||
+          name === "recurringInterval"
             ? parseInt(value)
             : value,
       });
@@ -772,6 +797,54 @@ export default function AddExpenseModal({
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          <div className="border border-slate-700 rounded-xl p-4 bg-slate-800/20 space-y-3">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium text-slate-300">
+              <span>Recurring transaction</span>
+              <input
+                type="checkbox"
+                name="isRecurring"
+                checked={formData.isRecurring}
+                onChange={handleChange}
+                className="w-4 h-4 accent-emerald-500"
+              />
+            </label>
+            {formData.isRecurring && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <select
+                    name="recurringFrequency"
+                    value={formData.recurringFrequency}
+                    onChange={handleChange}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    name="recurringInterval"
+                    value={formData.recurringInterval}
+                    onChange={handleChange}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                  <input
+                    type="date"
+                    name="recurringEndDate"
+                    value={formData.recurringEndDate}
+                    onChange={handleChange}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  The first occurrence is the entry you save now. Future copies
+                  are added automatically based on the cadence and end date.
+                </p>
               </div>
             )}
           </div>
