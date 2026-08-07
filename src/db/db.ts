@@ -43,11 +43,22 @@ export interface Payment {
   date: string;
 }
 
+export interface SavingsGoal {
+  id?: number;
+  title: string;
+  targetAmount: number;
+  targetDate: string;
+  currentAmount: number;
+  createdAt: string;
+  note?: string;
+}
+
 const db = new Dexie('CreditWiselyDB') as Dexie & {
   cards: EntityTable<Card, 'id'>;
   categories: EntityTable<Category, 'id'>;
   expenses: EntityTable<Expense, 'id'>;
   payments: EntityTable<Payment, 'id'>;
+  savingsGoals: EntityTable<SavingsGoal, 'id'>;
 };
 
 db.version(1).stores({
@@ -94,6 +105,10 @@ db.version(7).stores({
       card.type = 'credit';
     }
   });
+});
+
+db.version(8).stores({
+  savingsGoals: '++id, title, targetDate, targetAmount, currentAmount, createdAt',
 });
 
 export { db };

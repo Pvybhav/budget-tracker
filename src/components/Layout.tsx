@@ -3,6 +3,7 @@ import {
   CreditCard,
   Receipt,
   HandCoins,
+  PiggyBank,
   Info,
   ChevronDown,
   ChevronUp,
@@ -187,6 +188,19 @@ export default function Layout() {
           >
             <HandCoins className="w-5 h-5" />
             Manage Payments
+          </Link>
+
+          <Link
+            to="/savings-goals"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+              location.pathname === "/savings-goals"
+                ? "bg-slate-800 text-white font-medium"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50",
+            )}
+          >
+            <PiggyBank className="w-5 h-5" />
+            Savings Goals
           </Link>
 
           <Link

@@ -13,6 +13,7 @@ import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CardThumbnail from "../components/CardThumbnail";
 import MonthlySummary from "../components/MonthlySummary";
 import PaymentDueAlerts from "../components/PaymentDueAlerts";
+import SavingsGoalsSection from "../components/SavingsGoalsSection";
 
 const HERO_POINTS = [
   {
@@ -142,6 +143,8 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <SavingsGoalsSection />
 
       {/* Cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

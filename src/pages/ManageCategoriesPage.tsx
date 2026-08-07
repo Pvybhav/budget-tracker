@@ -4,6 +4,7 @@ import { Tags, Pencil, Trash2, Plus, Wallet } from "lucide-react";
 import { db, type Category } from "../db/db";
 import showConfirm from "../components/Confirm";
 import AddCategoryModal from "../components/modals/AddCategoryModal";
+import { getBudgetStatus } from "../services/budget.service";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
@@ -262,10 +263,13 @@ export default function ManageCategoriesPage() {
                             ? (yearlySpentMap.get(category.id!) ?? 0)
                             : (monthlySpentMap.get(category.id!) ?? 0);
                         const budget = category.budgetAmount ?? 0;
-                        const remaining = budget - spent;
-                        const pct = budget > 0 ? (spent / budget) * 100 : 0;
-                        const pctClamped = Math.min(999, Math.round(pct));
-                        const over = remaining < 0;
+                        const budgetStatus = getBudgetStatus(
+                          spent,
+                          budget,
+                          category.budgetMode ?? "monthly",
+                        );
+                        const over = budgetStatus.isOverBudget;
+                        const nearLimit = budgetStatus.isNearLimit;
                         return (
                           <div>
                             <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
@@ -273,9 +277,9 @@ export default function ManageCategoriesPage() {
                                 Budget usage
                               </div>
                               <div
-                                className={`font-semibold ${over ? "text-red-400" : "text-emerald-400"}`}
+                                className={`font-semibold ${over ? "text-red-400" : nearLimit ? "text-amber-400" : "text-emerald-400"}`}
                               >
-                                {pctClamped}%
+                                {budgetStatus.progressClamped}%
                               </div>
                             </div>
 
@@ -283,20 +287,27 @@ export default function ManageCategoriesPage() {
                               className={`w-full bg-slate-800 rounded-full ${compactMode ? "h-2" : "h-3"} overflow-hidden border border-slate-700`}
                             >
                               <div
-                                style={{ width: `${Math.min(100, pct)}%` }}
-                                className={`${over ? "bg-red-500" : "bg-emerald-400"} ${compactMode ? "h-2" : "h-3"} transition-all duration-300`}
+                                style={{
+                                  width: `${Math.min(100, budgetStatus.progressClamped)}%`,
+                                }}
+                                className={`${over ? "bg-red-500" : nearLimit ? "bg-amber-500" : "bg-emerald-400"} ${compactMode ? "h-2" : "h-3"} transition-all duration-300`}
                               />
                             </div>
 
-                            <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
+                            <div className="flex items-center justify-between text-xs text-slate-500 mt-2 gap-2">
                               <div>₹{spent.toLocaleString("en-IN")} spent</div>
                               <div
-                                className={`${over ? "text-red-400 font-medium" : "text-slate-400"}`}
+                                className={`${over ? "text-red-400 font-medium" : nearLimit ? "text-amber-400 font-medium" : "text-slate-400"}`}
                               >
                                 {over
-                                  ? `Over by ₹${Math.abs(remaining).toLocaleString("en-IN")}`
-                                  : `₹${Math.max(0, remaining).toLocaleString("en-IN")} left`}
+                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toLocaleString("en-IN")}`
+                                  : `${Math.max(0, budgetStatus.remaining).toLocaleString("en-IN")} left`}
                               </div>
+                            </div>
+                            <div
+                              className={`mt-1 text-[11px] ${over ? "text-red-400" : nearLimit ? "text-amber-400" : "text-emerald-400"}`}
+                            >
+                              {budgetStatus.statusLabel}
                             </div>
                           </div>
                         );

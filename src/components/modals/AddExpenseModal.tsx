@@ -12,19 +12,12 @@ import {
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
+import { getBudgetStatus } from "../../services/budget.service";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialExpense?: Expense;
-}
-
-function getEffectiveMonthlyBudget(
-  amount: number,
-  mode: "monthly" | "yearly",
-): number {
-  if (mode === "monthly") return amount;
-  return amount / 12; // yearly → monthly equivalent
 }
 
 const EMI_MONTH_OPTIONS = [2, 3, 6, 9, 12, 18, 24, 36, 48, 60];
@@ -343,14 +336,15 @@ export default function AddExpenseModal({
   const hasBudget =
     selectedCategory?.budgetAmount != null &&
     selectedCategory?.budgetMode != null;
-  const effectiveBudget = hasBudget
-    ? getEffectiveMonthlyBudget(
+  const budgetStatus = hasBudget
+    ? getBudgetStatus(
+        spent,
         selectedCategory!.budgetAmount!,
         selectedCategory!.budgetMode!,
       )
-    : 0;
-  const gap = effectiveBudget - spent;
-  const isOverBudget = gap < 0;
+    : null;
+  const isOverBudget = budgetStatus?.isOverBudget ?? false;
+  const isNearLimit = budgetStatus?.isNearLimit ?? false;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
@@ -415,17 +409,24 @@ export default function AddExpenseModal({
           </div>
 
           {/* Budget indicator */}
-          {selectedCategory && hasBudget && (
+          {selectedCategory && hasBudget && budgetStatus && (
             <div
-              className={`rounded-xl border px-4 py-3 flex items-center gap-4 ${isOverBudget ? "bg-red-500/10 border-red-500/30" : "bg-emerald-500/10 border-emerald-500/30"}`}
+              className={`rounded-xl border px-4 py-3 flex items-center gap-4 ${isOverBudget ? "bg-red-500/10 border-red-500/30" : isNearLimit ? "bg-amber-500/10 border-amber-500/30" : "bg-emerald-500/10 border-emerald-500/30"}`}
             >
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-wider font-medium text-slate-400 mb-1">
-                  {selectedCategory.budgetMode === "yearly"
-                    ? "Yearly (≈monthly)"
-                    : "Monthly"}{" "}
-                  Budget · {selectedCategory.title}
-                </p>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-xs uppercase tracking-wider font-medium text-slate-400">
+                    {selectedCategory.budgetMode === "yearly"
+                      ? "Yearly (≈monthly)"
+                      : "Monthly"}{" "}
+                    Budget · {selectedCategory.title}
+                  </p>
+                  <span
+                    className={`text-xs font-semibold ${isOverBudget ? "text-red-400" : isNearLimit ? "text-amber-400" : "text-emerald-400"}`}
+                  >
+                    {budgetStatus.statusLabel}
+                  </span>
+                </div>
                 <div className="flex items-center gap-4 flex-wrap">
                   <div>
                     <span className="text-xs text-slate-500">
@@ -438,21 +439,36 @@ export default function AddExpenseModal({
                   <div>
                     <span className="text-xs text-slate-500">Budget</span>
                     <p className="text-sm font-semibold text-slate-200">
-                      ₹{fmt(effectiveBudget)}
+                      ₹{fmt(budgetStatus.effectiveBudget)}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500">Gap</span>
+                    <span className="text-xs text-slate-500">Remaining</span>
                     <p
-                      className={`text-sm font-bold flex items-center gap-1 ${isOverBudget ? "text-red-400" : "text-emerald-400"}`}
+                      className={`text-sm font-bold flex items-center gap-1 ${isOverBudget ? "text-red-400" : isNearLimit ? "text-amber-400" : "text-emerald-400"}`}
                     >
                       {isOverBudget ? (
                         <TrendingDown className="w-3.5 h-3.5" />
                       ) : (
                         <TrendingUp className="w-3.5 h-3.5" />
                       )}
-                      {isOverBudget ? "-" : "+"}₹{fmt(Math.abs(gap))}
+                      {isOverBudget ? "-" : "+"}₹
+                      {fmt(Math.abs(budgetStatus.remaining))}
                     </p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                    <span>Usage</span>
+                    <span>{budgetStatus.progressClamped}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
+                      style={{
+                        width: `${Math.min(100, budgetStatus.progressClamped)}%`,
+                      }}
+                    />
                   </div>
                 </div>
               </div>

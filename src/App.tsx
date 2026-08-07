@@ -1,13 +1,14 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
-import ManageCardsPage from './pages/ManageCardsPage';
-import ManageExpensesPage from './pages/ManageExpensesPage';
-import ManagePaymentsPage from './pages/ManagePaymentsPage';
-import ManageCategoriesPage from './pages/ManageCategoriesPage';
-import VisualizePage from './pages/VisualizePage';
-import ExportPage from './pages/ExportPage';
-import AboutPage from './pages/AboutPage';
+import { HashRouter, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import HomePage from "./pages/HomePage";
+import ManageCardsPage from "./pages/ManageCardsPage";
+import ManageExpensesPage from "./pages/ManageExpensesPage";
+import ManagePaymentsPage from "./pages/ManagePaymentsPage";
+import ManageCategoriesPage from "./pages/ManageCategoriesPage";
+import VisualizePage from "./pages/VisualizePage";
+import ExportPage from "./pages/ExportPage";
+import AboutPage from "./pages/AboutPage";
+import SavingsGoalsPage from "./pages/SavingsGoalsPage";
 
 function App() {
   return (
@@ -17,9 +18,16 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="cards" element={<ManageCardsPage />} />
           <Route path="categories" element={<ManageCategoriesPage />} />
-          <Route path="expenses/monthly" element={<ManageExpensesPage mode="monthly" />} />
-          <Route path="expenses/yearly" element={<ManageExpensesPage mode="yearly" />} />
+          <Route
+            path="expenses/monthly"
+            element={<ManageExpensesPage mode="monthly" />}
+          />
+          <Route
+            path="expenses/yearly"
+            element={<ManageExpensesPage mode="yearly" />}
+          />
           <Route path="payments" element={<ManagePaymentsPage />} />
+          <Route path="savings-goals" element={<SavingsGoalsPage />} />
           <Route path="visualize" element={<VisualizePage />} />
           <Route path="export" element={<ExportPage />} />
           <Route path="about" element={<AboutPage />} />
