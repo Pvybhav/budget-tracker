@@ -19,6 +19,7 @@ export default function ExportPage() {
   const categories = useLiveQuery(() => db.categories.toArray());
   const expenses = useLiveQuery(() => db.expenses.toArray());
   const payments = useLiveQuery(() => db.payments.toArray());
+  const loans = useLiveQuery(() => db.loans.toArray());
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -61,12 +62,14 @@ export default function ExportPage() {
       categoriesData,
       expensesData,
       paymentsData,
+      loansData,
       savingsGoalsData,
     ] = await Promise.all([
       db.cards.toArray(),
       db.categories.toArray(),
       db.expenses.toArray(),
       db.payments.toArray(),
+      db.loans.toArray(),
       db.savingsGoals.toArray(),
     ]);
 
@@ -77,6 +80,7 @@ export default function ExportPage() {
       categories: categoriesData ?? [],
       expenses: expensesData ?? [],
       payments: paymentsData ?? [],
+      loans: loansData ?? [],
       savingsGoals: savingsGoalsData ?? [],
     };
   };
@@ -91,6 +95,7 @@ export default function ExportPage() {
       categories?: unknown;
       expenses?: unknown;
       payments?: unknown;
+      loans?: unknown;
       savingsGoals?: unknown;
     };
 
@@ -99,6 +104,7 @@ export default function ExportPage() {
       categories: Array.isArray(payload.categories) ? payload.categories : [],
       expenses: Array.isArray(payload.expenses) ? payload.expenses : [],
       payments: Array.isArray(payload.payments) ? payload.payments : [],
+      loans: Array.isArray(payload.loans) ? payload.loans : [],
       savingsGoals: Array.isArray(payload.savingsGoals)
         ? payload.savingsGoals
         : [],
@@ -106,13 +112,21 @@ export default function ExportPage() {
 
     await db.transaction(
       "rw",
-      [db.cards, db.categories, db.expenses, db.payments, db.savingsGoals],
+      [
+        db.cards,
+        db.categories,
+        db.expenses,
+        db.payments,
+        db.loans,
+        db.savingsGoals,
+      ],
       async () => {
         await Promise.all([
           db.cards.clear(),
           db.categories.clear(),
           db.expenses.clear(),
           db.payments.clear(),
+          db.loans.clear(),
           db.savingsGoals.clear(),
         ]);
 
@@ -128,6 +142,9 @@ export default function ExportPage() {
         for (const payment of normalized.payments) {
           await db.payments.put(payment as never);
         }
+        for (const loan of normalized.loans) {
+          await db.loans.put(loan as never);
+        }
         for (const goal of normalized.savingsGoals) {
           await db.savingsGoals.put(goal as never);
         }
@@ -136,7 +153,7 @@ export default function ExportPage() {
   };
 
   const handleExportExcel = async () => {
-    if (!cards || !expenses || !payments || !categories) return;
+    if (!cards || !expenses || !payments || !categories || !loans) return;
 
     setIsProcessing(true);
     try {
@@ -213,6 +230,38 @@ export default function ExportPage() {
         }
       });
 
+      const loanRows = loans
+        .filter((loan) => {
+          const d = new Date(loan.startDate);
+          return (
+            d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
+          );
+        })
+        .map((loan) => [
+          new Date(loan.startDate).toLocaleDateString(),
+          loan.lender,
+          loan.principal,
+          loan.annualInterestRate,
+          loan.termMonths,
+          loan.note || "",
+        ]);
+
+      if (loanRows.length > 0) {
+        const finalData = [
+          [
+            "Start Date",
+            "Lender",
+            "Principal (₹)",
+            "Interest %",
+            "Term (months)",
+            "Note",
+          ],
+          ...loanRows,
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(finalData);
+        XLSX.utils.book_append_sheet(wb, ws, "Loans");
+      }
+
       if (wb.SheetNames.length === 0) {
         await showAlert("No data found for the selected month and year.");
         return;
@@ -229,7 +278,7 @@ export default function ExportPage() {
   };
 
   const handleExportCsv = async () => {
-    if (!cards || !expenses || !payments || !categories) return;
+    if (!cards || !expenses || !payments || !categories || !loans) return;
 
     setIsProcessing(true);
     try {
@@ -260,6 +309,18 @@ export default function ExportPage() {
           "",
           "",
           payment.amount.toString(),
+        ]);
+      });
+
+      loans.forEach((loan) => {
+        rows.push([
+          "loan",
+          new Date(loan.startDate).toLocaleDateString(),
+          loan.lender,
+          loan.note || "",
+          loan.principal.toString(),
+          loan.annualInterestRate.toString(),
+          loan.termMonths.toString(),
         ]);
       });
 

@@ -5,6 +5,7 @@ import ManageCardsPage from "./pages/ManageCardsPage";
 import ManageExpensesPage from "./pages/ManageExpensesPage";
 import ManagePaymentsPage from "./pages/ManagePaymentsPage";
 import ManageCategoriesPage from "./pages/ManageCategoriesPage";
+import ManageLoansPage from "./pages/ManageLoansPage";
 import VisualizePage from "./pages/VisualizePage";
 import ExportPage from "./pages/ExportPage";
 import AboutPage from "./pages/AboutPage";
@@ -26,7 +27,12 @@ function App() {
             path="expenses/yearly"
             element={<ManageExpensesPage mode="yearly" />}
           />
+          <Route
+            path="expenses/emi"
+            element={<ManageExpensesPage mode="emi" />}
+          />
           <Route path="payments" element={<ManagePaymentsPage />} />
+          <Route path="loans" element={<ManageLoansPage />} />
           <Route path="savings-goals" element={<SavingsGoalsPage />} />
           <Route path="visualize" element={<VisualizePage />} />
           <Route path="export" element={<ExportPage />} />

@@ -13,6 +13,7 @@ import {
   Tags,
   ChartPie,
   FileSpreadsheet,
+  DollarSign,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -41,6 +42,7 @@ export default function Layout() {
   const navItems = [
     { name: "Dashboard", path: "/", icon: CreditCard },
     { name: "Manage Cards", path: "/cards", icon: CreditCard },
+    { name: "Manage Loans", path: "/loans", icon: DollarSign },
   ];
 
   return (

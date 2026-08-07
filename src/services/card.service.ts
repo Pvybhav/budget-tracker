@@ -35,6 +35,75 @@ export function calcEmiTotalCost(
   return monthlyEmi * months + processingFee + gst;
 }
 
+export type EmiScheduleStatus = "completed" | "due" | "upcoming";
+
+export interface EmiScheduleEntry {
+  paymentNumber: number;
+  dueDate: string;
+  paymentAmount: number;
+  principalAmount: number;
+  interestAmount: number;
+  remainingBalance: number;
+  status: EmiScheduleStatus;
+}
+
+function getScheduleStatus(dueDate: Date): EmiScheduleStatus {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  if (due < today) {
+    return "completed";
+  }
+
+  if (
+    due.getFullYear() === today.getFullYear() &&
+    due.getMonth() === today.getMonth()
+  ) {
+    return "due";
+  }
+
+  return "upcoming";
+}
+
+export function getEmiSchedule(
+  principal: number,
+  annualRatePct: number,
+  months: number,
+  startDate: string,
+): EmiScheduleEntry[] {
+  const monthlyRate = annualRatePct / 100 / 12;
+  const monthlyPayment = calcMonthlyEmi(principal, annualRatePct, months);
+  let balance = principal;
+  const start = new Date(startDate);
+
+  return Array.from({ length: months }, (_, index) => {
+    const dueDate = new Date(start);
+    dueDate.setMonth(dueDate.getMonth() + index);
+
+    const interestAmount = monthlyRate > 0 ? balance * monthlyRate : 0;
+    let principalAmount = monthlyPayment - interestAmount;
+
+    if (index === months - 1) {
+      principalAmount = balance;
+    }
+
+    const paymentAmount = principalAmount + interestAmount;
+    balance = Math.max(0, balance - principalAmount);
+
+    return {
+      paymentNumber: index + 1,
+      dueDate: dueDate.toISOString().slice(0, 10),
+      paymentAmount,
+      principalAmount,
+      interestAmount,
+      remainingBalance: balance,
+      status: getScheduleStatus(dueDate),
+    };
+  });
+}
+
 export interface AccountAlertStatus {
   severity: 'warning' | 'danger';
   message: string;

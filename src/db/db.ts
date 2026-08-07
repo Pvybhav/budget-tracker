@@ -49,6 +49,17 @@ export interface Payment {
   date: string;
 }
 
+export interface Loan {
+  id?: number;
+  lender: string;
+  principal: number;
+  annualInterestRate: number;
+  termMonths: number;
+  startDate: string;
+  note?: string;
+  createdAt: string;
+}
+
 export interface SavingsGoal {
   id?: number;
   title: string;
@@ -64,6 +75,7 @@ const db = new Dexie('CreditWiselyDB') as Dexie & {
   categories: EntityTable<Category, 'id'>;
   expenses: EntityTable<Expense, 'id'>;
   payments: EntityTable<Payment, 'id'>;
+  loans: EntityTable<Loan, 'id'>;
   savingsGoals: EntityTable<SavingsGoal, 'id'>;
 };
 
@@ -119,6 +131,10 @@ db.version(8).stores({
 
 db.version(9).stores({
   expenses: '++id, cardId, categoryId, date, amount, isEmi, recurringFrequency, recurringTemplateId',
+});
+
+db.version(10).stores({
+  loans: '++id, lender, startDate, termMonths',
 });
 
 export { db };

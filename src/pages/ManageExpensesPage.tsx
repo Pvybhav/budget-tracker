@@ -15,7 +15,7 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
 export default function ManageExpensesPage({
   mode,
 }: {
-  mode?: "monthly" | "yearly";
+  mode?: "monthly" | "yearly" | "emi";
 }) {
   const expenses = useLiveQuery(() => db.expenses.toArray());
   const categories = useLiveQuery(() => db.categories.toArray());
@@ -44,6 +44,9 @@ export default function ManageExpensesPage({
 
   const periodFilteredExpenses = expenses?.filter((expense) => {
     if (!mode) return true;
+    if (mode === "emi") {
+      return !!expense.isEmi;
+    }
     const expenseDate = new Date(expense.date);
     if (mode === "monthly") {
       return (
@@ -56,6 +59,25 @@ export default function ManageExpensesPage({
     }
     return true;
   });
+
+  const getEmiExpenseStatus = (expense: Expense) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(expense.date);
+    start.setHours(0, 0, 0, 0);
+    const months = expense.emiMonths ?? 1;
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months - 1);
+    end.setHours(0, 0, 0, 0);
+
+    if (today < start) {
+      return "upcoming" as const;
+    }
+    if (today > end) {
+      return "completed" as const;
+    }
+    return "current" as const;
+  };
 
   const filteredExpenses = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -171,7 +193,9 @@ export default function ManageExpensesPage({
             ? "Monthly Manage Expenses"
             : mode === "yearly"
               ? "Yearly Manage Expenses"
-              : "Manage Expenses"}
+              : mode === "emi"
+                ? "Manage EMI Payments"
+                : "Manage Expenses"}
         </h1>
         <button
           onClick={openAddModal}
@@ -181,18 +205,39 @@ export default function ManageExpensesPage({
         </button>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-300">
+          <div className="font-semibold mb-1">Completed</div>
+          <div className="text-slate-400">
+            EMI repayment cycle finished for this expense.
+          </div>
+        </div>
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+          <div className="font-semibold mb-1">Ongoing</div>
+          <div className="text-slate-300">
+            EMI is active and current this month.
+          </div>
+        </div>
+        <div className="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-4 text-sm text-sky-200">
+          <div className="font-semibold mb-1">Upcoming</div>
+          <div className="text-slate-300">EMI starts in a future month.</div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-4">
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
-        >
-          {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+        {mode !== "emi" && (
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+          >
+            {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        )}
         {mode === "monthly" && (
           <select
             value={selectedMonth}
@@ -367,6 +412,7 @@ export default function ManageExpensesPage({
               <th className="px-6 py-4 font-medium">Category</th>
               <th className="px-6 py-4 font-medium">Card ID</th>
               <th className="px-6 py-4 font-medium">Amount</th>
+              <th className="px-6 py-4 font-medium">Status</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -469,6 +515,30 @@ export default function ManageExpensesPage({
                       )}
                     </div>
                   </td>
+                  <td className="px-6 py-4">
+                    {isEmi ? (
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
+                          const status = getEmiExpenseStatus(expense);
+                          if (status === "completed") {
+                            return "bg-slate-700 text-slate-300";
+                          }
+                          if (status === "current") {
+                            return "bg-emerald-500/15 text-emerald-300";
+                          }
+                          return "bg-sky-500/15 text-sky-300";
+                        })()}`}
+                      >
+                        {getEmiExpenseStatus(expense) === "completed"
+                          ? "Completed"
+                          : getEmiExpenseStatus(expense) === "current"
+                            ? "Ongoing"
+                            : "Upcoming"}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => openEditModal(expense)}
@@ -489,7 +559,7 @@ export default function ManageExpensesPage({
             {filteredExpenses.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-12 text-center text-slate-500"
                 >
                   No expenses found for the selected filters.
