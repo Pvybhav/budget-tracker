@@ -16,6 +16,10 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    allowedHosts: ['budget-tracker-vw93.onrender.com'],
+  },
   build: {
     target: 'esnext',
     rollupOptions: {
