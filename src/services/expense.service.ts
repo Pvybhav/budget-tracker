@@ -1,13 +1,14 @@
-import { db, type Expense } from '../db/db';
+import type { Expense } from '../db/db';
+import * as backend from './backendSync';
 
 export async function addExpense(data: Expense) {
-  return await db.expenses.add(data);
+  return backend.createExpense(data);
 }
 
 export async function updateExpense(id: number, data: Partial<Expense>) {
-  return await db.expenses.update(id, data);
+  return backend.updateExpense(id, data);
 }
 
 export async function deleteExpense(id: number) {
-  return await db.expenses.delete(id);
+  return backend.deleteExpense(id);
 }

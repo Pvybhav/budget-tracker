@@ -1,5 +1,3 @@
-import Dexie, { type EntityTable } from 'dexie';
-
 export type AccountType = 'credit' | 'debit' | 'meal' | 'wallet' | 'other';
 
 export interface Card {
@@ -70,71 +68,3 @@ export interface SavingsGoal {
   note?: string;
 }
 
-const db = new Dexie('CreditWiselyDB') as Dexie & {
-  cards: EntityTable<Card, 'id'>;
-  categories: EntityTable<Category, 'id'>;
-  expenses: EntityTable<Expense, 'id'>;
-  payments: EntityTable<Payment, 'id'>;
-  loans: EntityTable<Loan, 'id'>;
-  savingsGoals: EntityTable<SavingsGoal, 'id'>;
-};
-
-db.version(1).stores({
-  cards: '++id, title, billingDate, paymentDate, totalLimit, currentBalance, amc, waiveOffLimit',
-  expenses: '++id, cardId, date, amount',
-  payments: '++id, cardId, date, amount',
-});
-
-db.version(2).stores({
-  cards: '++id, title, billingDate, paymentDate, totalLimit, amc, waiveOffLimit',
-});
-
-db.version(3).stores({
-  categories: '++id, title',
-  expenses: '++id, cardId, categoryId, date, amount',
-});
-
-db.version(4).stores({
-  expenses: '++id, cardId, categoryId, date, amount, isEmi',
-});
-
-db.version(5).stores({
-  expenses: '++id, cardId, categoryId, date, amount, isEmi',
-});
-
-// Migrate legacy daily/weekly budget modes to monthly equivalents
-db.version(6).stores({}).upgrade((tx) => {
-  return tx.table('categories').toCollection().modify((category) => {
-    if (category.budgetMode === 'daily') {
-      category.budgetAmount = (category.budgetAmount ?? 0) * 30;
-      category.budgetMode = 'monthly';
-    } else if (category.budgetMode === 'weekly') {
-      category.budgetAmount = (category.budgetAmount ?? 0) * 4;
-      category.budgetMode = 'monthly';
-    }
-  });
-});
-
-db.version(7).stores({
-  cards: '++id, title, type, billingDate, paymentDate, totalLimit, amc, waiveOffLimit',
-}).upgrade((tx) => {
-  return tx.table('cards').toCollection().modify((card) => {
-    if (!card.type) {
-      card.type = 'credit';
-    }
-  });
-});
-
-db.version(8).stores({
-  savingsGoals: '++id, title, targetDate, targetAmount, currentAmount, createdAt',
-});
-
-db.version(9).stores({
-  expenses: '++id, cardId, categoryId, date, amount, isEmi, recurringFrequency, recurringTemplateId',
-});
-
-db.version(10).stores({
-  loans: '++id, lender, startDate, termMonths',
-});
-
-export { db };

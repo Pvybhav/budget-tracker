@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import { fetchExpenses, fetchPayments } from "../services/backend.service";
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -11,8 +11,8 @@ function endOfMonth(d: Date) {
 }
 
 export default function MonthlySummary({ className }: { className?: string }) {
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const payments = useLiveQuery(() => db.payments.toArray());
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const payments = useBackendResource(() => fetchPayments(), []);
 
   const now = new Date();
   const start = startOfMonth(now);

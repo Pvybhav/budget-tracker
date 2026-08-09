@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { db } from "../../db/db";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useBackendResource } from "../../services/backendHooks";
+import { fetchCards } from "../../services/backend.service";
+import { createPayment } from "../../services/backendSync";
 import { X } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +13,7 @@ interface Props {
 
 export default function AddPaymentModal({ isOpen, onClose }: Props) {
   const navigate = useNavigate();
-  const cards = useLiveQuery(() => db.cards.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
   const [formData, setFormData] = useState({
     cardId: "",
     amount: "",
@@ -62,7 +63,7 @@ export default function AddPaymentModal({ isOpen, onClose }: Props) {
       return;
     }
 
-    await db.payments.add({
+    await createPayment({
       cardId: parseInt(formData.cardId),
       amount: parseFloat(formData.amount),
       date: formData.date,

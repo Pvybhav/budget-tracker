@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { db, type SavingsGoal } from "../../db/db";
+import { type SavingsGoal } from "../../db/db";
+import {
+  createSavingsGoal,
+  updateSavingsGoal,
+} from "../../services/backendSync";
 
 interface Props {
   isOpen: boolean;
@@ -61,9 +65,9 @@ export default function AddSavingsGoalModal({
     };
 
     if (initialGoal?.id) {
-      await db.savingsGoals.update(initialGoal.id, payload);
+      await updateSavingsGoal(initialGoal.id, payload);
     } else {
-      await db.savingsGoals.add(payload);
+      await createSavingsGoal(payload);
     }
 
     onClose();

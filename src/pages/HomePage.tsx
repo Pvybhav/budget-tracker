@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useBackendResource } from "../services/backendHooks";
 import { ShieldCheck, PenLine, Sparkles } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { fetchCards } from "../services/backend.service";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-import { db } from "../db/db";
 import AddCardModal from "../components/modals/AddCardModal";
 import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CardThumbnail from "../components/CardThumbnail";
@@ -41,7 +41,7 @@ const HERO_POINTS = [
 ] as const;
 
 export default function HomePage() {
-  const cards = useLiveQuery(() => db.cards.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);

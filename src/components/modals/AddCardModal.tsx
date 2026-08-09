@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db, type AccountType, type Card } from "../../db/db";
+import { type AccountType, type Card } from "../../db/db";
+import { createCard, updateCard } from "../../services/backendSync";
 import { X } from "lucide-react";
 
 interface Props {
@@ -65,9 +66,9 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
     };
 
     if (initialCard) {
-      await db.cards.update(initialCard.id!, payload);
+      await updateCard(initialCard.id!, payload);
     } else {
-      await db.cards.add(payload);
+      await createCard(payload);
     }
     onClose();
   };

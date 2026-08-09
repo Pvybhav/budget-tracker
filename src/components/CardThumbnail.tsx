@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { type Card, db } from "../db/db";
-import { useLiveQuery } from "dexie-react-hooks";
+import { type Card } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import { fetchExpenses, fetchPayments } from "../services/backend.service";
 import { CreditCard, CalendarDays, AlertCircle, Zap } from "lucide-react";
 import { getCardMetrics } from "../services/card.service";
 
@@ -28,12 +29,20 @@ export default function CardThumbnail({ card }: { card: Card }) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   // Fetch expenses to determine AMC condition and current limits dynamically
-  const expenses = useLiveQuery(() =>
-    db.expenses.where("cardId").equals(card.id!).toArray(),
+  const expenses = useBackendResource(
+    () =>
+      fetchExpenses().then((items) =>
+        items.filter((item) => item.cardId === card.id!),
+      ),
+    [card.id],
   );
 
-  const payments = useLiveQuery(() =>
-    db.payments.where("cardId").equals(card.id!).toArray(),
+  const payments = useBackendResource(
+    () =>
+      fetchPayments().then((items) =>
+        items.filter((item) => item.cardId === card.id!),
+      ),
+    [card.id],
   );
 
   // Fallbacks while loading

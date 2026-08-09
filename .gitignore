@@ -1,4 +1,7 @@
 node_modules/
 .DS_Store
 
+# ignore local environment files
+server/.env
+
 dist/

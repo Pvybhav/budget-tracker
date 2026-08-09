@@ -7,6 +7,15 @@ export default defineConfig({
   base: '/',
   plugins: [react()],
   envPrefix: ['VITE_', 'FIREBASE_'],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   build: {
     target: 'esnext',
     rollupOptions: {
@@ -18,5 +27,5 @@ export default defineConfig({
         },
       },
     },
-  }
+  },
 })

@@ -1,4 +1,5 @@
-import { db, type Expense } from '../db/db';
+import type { Expense } from '../db/db';
+import { fetchExpenses, createExpense } from './backend.service';
 
 type RecurringFrequency = NonNullable<Expense['recurringFrequency']>;
 
@@ -28,7 +29,7 @@ function addInterval(date: Date, frequency: RecurringFrequency, interval: number
 }
 
 export async function syncRecurringExpenses(now = new Date()) {
-  const expenses = await db.expenses.toArray();
+  const expenses = await fetchExpenses();
   const templates = expenses.filter(
     (expense) => Boolean(expense.recurringFrequency) && !expense.isRecurringInstance,
   );
@@ -86,7 +87,7 @@ export async function syncRecurringExpenses(now = new Date()) {
           isRecurringInstance: true,
         };
 
-        await db.expenses.add(payload);
+        await createExpense(payload);
         instances.push({ ...payload, id: undefined } as Expense);
         createdCount += 1;
       }

@@ -1,32 +1,28 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
-import {
-  FileSpreadsheet,
-  Download,
-  Calendar,
-  Upload,
-  RefreshCw,
-  Database,
-} from "lucide-react";
-import showConfirm, { showAlert } from "../components/Confirm";
+import { useState } from "react";
+import { useBackendResource } from "../services/backendHooks";
+import { FileSpreadsheet, Download, Calendar, Database } from "lucide-react";
+import { showAlert } from "../components/Confirm";
 import * as XLSX from "xlsx";
-
-const LOCAL_BACKUP_KEY = "creditwisely-local-backup-v1";
+import {
+  fetchCards,
+  fetchCategories,
+  fetchExpenses,
+  fetchPayments,
+  fetchLoans,
+  fetchSavingsGoals,
+} from "../services/backend.service";
 
 export default function ExportPage() {
-  const cards = useLiveQuery(() => db.cards.toArray());
-  const categories = useLiveQuery(() => db.categories.toArray());
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const payments = useLiveQuery(() => db.payments.toArray());
-  const loans = useLiveQuery(() => db.loans.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const payments = useBackendResource(() => fetchPayments(), []);
+  const loans = useBackendResource(() => fetchLoans(), []);
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [isProcessing, setIsProcessing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const months = [
     "January",
     "February",
@@ -65,12 +61,12 @@ export default function ExportPage() {
       loansData,
       savingsGoalsData,
     ] = await Promise.all([
-      db.cards.toArray(),
-      db.categories.toArray(),
-      db.expenses.toArray(),
-      db.payments.toArray(),
-      db.loans.toArray(),
-      db.savingsGoals.toArray(),
+      fetchCards(),
+      fetchCategories(),
+      fetchExpenses(),
+      fetchPayments(),
+      fetchLoans(),
+      fetchSavingsGoals(),
     ]);
 
     return {
@@ -83,73 +79,6 @@ export default function ExportPage() {
       loans: loansData ?? [],
       savingsGoals: savingsGoalsData ?? [],
     };
-  };
-
-  const restoreSnapshot = async (snapshot: unknown) => {
-    if (!snapshot || typeof snapshot !== "object") {
-      throw new Error("The selected file does not contain valid backup data.");
-    }
-
-    const payload = snapshot as {
-      cards?: unknown;
-      categories?: unknown;
-      expenses?: unknown;
-      payments?: unknown;
-      loans?: unknown;
-      savingsGoals?: unknown;
-    };
-
-    const normalized = {
-      cards: Array.isArray(payload.cards) ? payload.cards : [],
-      categories: Array.isArray(payload.categories) ? payload.categories : [],
-      expenses: Array.isArray(payload.expenses) ? payload.expenses : [],
-      payments: Array.isArray(payload.payments) ? payload.payments : [],
-      loans: Array.isArray(payload.loans) ? payload.loans : [],
-      savingsGoals: Array.isArray(payload.savingsGoals)
-        ? payload.savingsGoals
-        : [],
-    };
-
-    await db.transaction(
-      "rw",
-      [
-        db.cards,
-        db.categories,
-        db.expenses,
-        db.payments,
-        db.loans,
-        db.savingsGoals,
-      ],
-      async () => {
-        await Promise.all([
-          db.cards.clear(),
-          db.categories.clear(),
-          db.expenses.clear(),
-          db.payments.clear(),
-          db.loans.clear(),
-          db.savingsGoals.clear(),
-        ]);
-
-        for (const card of normalized.cards) {
-          await db.cards.put(card as never);
-        }
-        for (const category of normalized.categories) {
-          await db.categories.put(category as never);
-        }
-        for (const expense of normalized.expenses) {
-          await db.expenses.put(expense as never);
-        }
-        for (const payment of normalized.payments) {
-          await db.payments.put(payment as never);
-        }
-        for (const loan of normalized.loans) {
-          await db.loans.put(loan as never);
-        }
-        for (const goal of normalized.savingsGoals) {
-          await db.savingsGoals.put(goal as never);
-        }
-      },
-    );
   };
 
   const handleExportExcel = async () => {
@@ -267,7 +196,7 @@ export default function ExportPage() {
         return;
       }
 
-      const fileName = `CreditWisely_Export_${months[selectedMonth]}_${selectedYear}.xlsx`;
+      const fileName = `Budget_Tracker_Export_${months[selectedMonth]}_${selectedYear}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } catch (error) {
       console.error("Export failed:", error);
@@ -331,7 +260,7 @@ export default function ExportPage() {
 
       const sheet = XLSX.utils.aoa_to_sheet(rows);
       const csvContent = XLSX.utils.sheet_to_csv(sheet);
-      const fileName = `CreditWisely_Transactions.csv`;
+      const fileName = `Budget_Tracker_Transactions.csv`;
       downloadTextFile(csvContent, fileName, "text/csv;charset=utf-8;");
     } catch (error) {
       console.error("CSV export failed:", error);
@@ -345,7 +274,7 @@ export default function ExportPage() {
     setIsProcessing(true);
     try {
       const snapshot = await buildSnapshot();
-      const fileName = `CreditWisely_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      const fileName = `Budget_Tracker_Backup_${new Date().toISOString().slice(0, 10)}.json`;
       downloadTextFile(
         JSON.stringify(snapshot, null, 2),
         fileName,
@@ -359,70 +288,10 @@ export default function ExportPage() {
     }
   };
 
-  const handleCreateLocalBackup = async () => {
-    setIsProcessing(true);
-    try {
-      const snapshot = await buildSnapshot();
-      localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(snapshot));
-      await showAlert("Local backup saved successfully in this browser.");
-    } catch (error) {
-      console.error("Backup save failed:", error);
-      await showAlert("Failed to save the local backup.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleRestoreLocalBackup = async () => {
-    const confirmed = await showConfirm(
-      "This will replace your current local data with the most recent browser backup.",
-      {
-        title: "Restore local backup?",
-        confirmText: "Restore",
-        cancelText: "Cancel",
-      },
+  const handleImportBackup = async () => {
+    await showAlert(
+      "Importing local backups is not supported in server-backed mode.",
     );
-
-    if (!confirmed) return;
-
-    setIsProcessing(true);
-    try {
-      const stored = localStorage.getItem(LOCAL_BACKUP_KEY);
-      if (!stored) {
-        await showAlert("No local backup is currently stored in this browser.");
-        return;
-      }
-
-      const snapshot = JSON.parse(stored);
-      await restoreSnapshot(snapshot);
-      await showAlert("Local backup restored successfully.");
-    } catch (error) {
-      console.error("Restore failed:", error);
-      await showAlert("Failed to restore the local backup. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleImportBackup = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsProcessing(true);
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      await restoreSnapshot(parsed);
-      await showAlert("Backup imported successfully.");
-    } catch (error) {
-      console.error("Import failed:", error);
-      await showAlert(
-        "Could not import that backup file. Please choose a valid JSON backup.",
-      );
-    } finally {
-      setIsProcessing(false);
-      event.target.value = "";
-    }
   };
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
@@ -524,47 +393,15 @@ export default function ExportPage() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">Restore data</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Server export only
+              </h2>
               <p className="text-sm text-slate-400 mt-1">
-                Import a saved backup file or restore the most recent browser
-                backup.
+                Data is stored on the server, and this page produces exports for
+                analysis or archive. Local browser restore is no longer
+                supported.
               </p>
             </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={handleImportBackup}
-            />
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessing}
-              className="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Import JSON Backup
-            </button>
-
-            <button
-              onClick={handleCreateLocalBackup}
-              disabled={isProcessing}
-              className="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              <Database className="w-4 h-4" />
-              Save Local Backup
-            </button>
-
-            <button
-              onClick={handleRestoreLocalBackup}
-              disabled={isProcessing}
-              className="w-full bg-amber-600/90 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Restore Local Backup
-            </button>
           </div>
         </div>
       </div>
@@ -584,8 +421,7 @@ export default function ExportPage() {
           </li>
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Create JSON backups and restore them later from the browser or a
-            file
+            Create JSON backups for archive or transfer to another system
           </li>
         </ul>
       </div>

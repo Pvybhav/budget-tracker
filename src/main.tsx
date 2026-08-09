@@ -4,10 +4,10 @@ import "./index.css";
 import App from "./App.tsx";
 import { syncRecurringExpenses } from "./services/recurring.service";
 
-void syncRecurringExpenses();
-
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+void syncRecurringExpenses().finally(() => {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});

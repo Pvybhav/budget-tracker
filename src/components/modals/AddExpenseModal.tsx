@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { db, type Expense } from "../../db/db";
-import { useLiveQuery } from "dexie-react-hooks";
+import type { Expense } from "../../db/db";
+import { useBackendResource } from "../../services/backendHooks";
+import {
+  fetchCards,
+  fetchCategories,
+  fetchExpenses,
+} from "../../services/backend.service";
 import {
   X,
   TrendingUp,
@@ -14,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { getBudgetStatus } from "../../services/budget.service";
 import { syncRecurringExpenses } from "../../services/recurring.service";
+import { createExpense, updateExpense } from "../../services/backendSync";
 
 interface Props {
   isOpen: boolean;
@@ -49,8 +55,8 @@ export default function AddExpenseModal({
   initialExpense,
 }: Props) {
   const navigate = useNavigate();
-  const cards = useLiveQuery(() => db.cards.toArray());
-  const categories = useLiveQuery(() => db.categories.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -83,12 +89,12 @@ export default function AddExpenseModal({
     (c) => c.id === parseInt(formData.categoryId),
   );
 
-  const categoryMonthlySpent = useLiveQuery(async () => {
+  const categoryMonthlySpent = useBackendResource(async () => {
     if (!selectedCategory?.id) return 0;
-    const allExp = await db.expenses
-      .where("categoryId")
-      .equals(selectedCategory.id)
-      .toArray();
+    const allExp = await fetchExpenses();
+    const filtered = allExp.filter(
+      (expense) => expense.categoryId === selectedCategory.id,
+    );
 
     // For monthly-budget categories, EMI expenses contribute their monthly
     // installment (spread across each active month) rather than the full principal.
@@ -96,7 +102,7 @@ export default function AddExpenseModal({
     const isMonthlyBudget = selectedCategory.budgetMode === "monthly";
     const currentMonthStart = new Date(currentYear, currentMonth - 1, 1);
 
-    const monthlyInstallmentOf = (e: (typeof allExp)[number]) => {
+    const monthlyInstallmentOf = (e: (typeof filtered)[number]) => {
       const n = e.emiMonths ?? 1;
       return (
         calcMonthlyEmi(e.amount, e.emiInterestRate ?? 0, n) +
@@ -326,9 +332,9 @@ export default function AddExpenseModal({
     };
 
     if (initialExpense) {
-      await db.expenses.update(initialExpense.id!, payload);
+      await updateExpense(initialExpense.id!, payload);
     } else {
-      await db.expenses.add(payload);
+      await createExpense(payload);
     }
     await syncRecurringExpenses();
     onClose();

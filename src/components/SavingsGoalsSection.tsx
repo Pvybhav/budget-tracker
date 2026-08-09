@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useBackendResource } from "../services/backendHooks";
 import {
   Plus,
   Target,
@@ -8,14 +8,14 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { db, type SavingsGoal } from "../db/db";
+import { type SavingsGoal } from "../db/db";
+import { deleteSavingsGoal } from "../services/backendSync";
+import { fetchSavingsGoals } from "../services/backend.service";
 import { getSavingsGoalSummary } from "../services/savingsGoal.service";
 import AddSavingsGoalModal from "./modals/AddSavingsGoalModal";
 
 export default function SavingsGoalsSection() {
-  const goals = useLiveQuery(() =>
-    db.savingsGoals.orderBy("targetDate").toArray(),
-  );
+  const goals = useBackendResource(() => fetchSavingsGoals(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | undefined>();
 
@@ -37,7 +37,7 @@ export default function SavingsGoalsSection() {
 
   const deleteGoal = async (id?: number) => {
     if (!id) return;
-    await db.savingsGoals.delete(id);
+    await deleteSavingsGoal(id);
   };
 
   return (

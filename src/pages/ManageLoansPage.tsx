@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db, type Loan } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import { type Loan } from "../db/db";
 import AddLoanModal from "../components/modals/AddLoanModal";
 import {
   calcMonthlyEmi,
   getEmiSchedule,
   type EmiScheduleStatus,
 } from "../services/card.service";
+import { deleteLoan } from "../services/backendSync";
+import { fetchLoans } from "../services/backend.service";
 
 function getLoanStatus(loan: Loan): EmiScheduleStatus {
   const start = new Date(loan.startDate);
@@ -26,7 +28,7 @@ function getLoanStatus(loan: Loan): EmiScheduleStatus {
 }
 
 export default function ManageLoansPage() {
-  const loans = useLiveQuery(() => db.loans.toArray());
+  const loans = useBackendResource(() => fetchLoans(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
 
@@ -41,7 +43,7 @@ export default function ManageLoansPage() {
   }, [selectedLoan]);
 
   const handleDelete = async (loan: Loan) => {
-    await db.loans.delete(loan.id!);
+    await deleteLoan(loan.id!);
     if (selectedLoan?.id === loan.id) {
       setSelectedLoan(null);
     }

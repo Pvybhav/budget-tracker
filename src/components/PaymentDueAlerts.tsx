@@ -1,8 +1,13 @@
 import { useMemo } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db, type Card } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import { type Card } from "../db/db";
 import { getCardMetrics } from "../services/card.service";
-import { addPayment } from "../services/payment.service";
+import { createPayment } from "../services/backendSync";
+import {
+  fetchCards,
+  fetchExpenses,
+  fetchPayments,
+} from "../services/backend.service";
 import showConfirm, { showAlert } from "./Confirm";
 
 function daysBetween(a: Date, b: Date) {
@@ -11,9 +16,9 @@ function daysBetween(a: Date, b: Date) {
 }
 
 export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
-  const cards = useLiveQuery(() => db.cards.toArray());
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const payments = useLiveQuery(() => db.payments.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const payments = useBackendResource(() => fetchPayments(), []);
 
   const today = new Date();
 
@@ -88,7 +93,7 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
                     { title: "Mark Paid", confirmText: "Mark Paid" },
                   );
                   if (!ok) return;
-                  await addPayment({
+                  await createPayment({
                     cardId: card.id!,
                     date: new Date().toISOString(),
                     amount: metrics.amountToPayNext,

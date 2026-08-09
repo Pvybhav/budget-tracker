@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
 import {
   BarChart,
   Bar,
@@ -19,6 +18,11 @@ import {
 import { Download } from "lucide-react";
 import { showAlert } from "../components/Confirm";
 import * as XLSX from "xlsx";
+import {
+  fetchExpenses,
+  fetchCategories,
+  fetchCards,
+} from "../services/backend.service";
 
 const COLORS = [
   "#3b82f6",
@@ -33,9 +37,9 @@ const COLORS = [
 
 export default function VisualizePage() {
   const [isExporting, setIsExporting] = useState(false);
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const categories = useLiveQuery(() => db.categories.toArray());
-  const cards = useLiveQuery(() => db.cards.toArray());
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
+  const cards = useBackendResource(() => fetchCards(), []);
 
   if (!expenses || !categories || !cards) {
     return <div className="p-8 text-slate-400">Loading charts...</div>;
@@ -199,7 +203,7 @@ export default function VisualizePage() {
         return;
       }
 
-      const fileName = `CreditWisely_Visual_Report_${months[currentMonth]}_${currentYear}.xlsx`;
+      const fileName = `Budget_Tracker_Visual_Report_${months[currentMonth]}_${currentYear}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } catch (error) {
       console.error("Export failed:", error);

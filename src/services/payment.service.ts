@@ -1,9 +1,10 @@
-import { db, type Payment } from '../db/db';
+import type { Payment } from '../db/db';
+import * as backend from './backendSync';
 
 export async function addPayment(data: Payment) {
-  return await db.payments.add(data);
+  return backend.createPayment(data);
 }
 
 export async function deletePayment(id: number) {
-  return await db.payments.delete(id);
+  return backend.deletePayment(id);
 }

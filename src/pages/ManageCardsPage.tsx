@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db, type Card } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import { type Card } from "../db/db";
 import AddCardModal from "../components/modals/AddCardModal";
 import showConfirm from "../components/Confirm";
 import { getCardMetrics } from "../services/card.service";
+import { deleteCard } from "../services/backendSync";
+import {
+  fetchCards,
+  fetchExpenses,
+  fetchPayments,
+} from "../services/backend.service";
 
 export default function ManageCardsPage() {
-  const cards = useLiveQuery(() => db.cards.toArray());
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const payments = useLiveQuery(() => db.payments.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const payments = useBackendResource(() => fetchPayments(), []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Card | undefined>(undefined);
@@ -19,26 +25,7 @@ export default function ManageCardsPage() {
       { title: "Delete card", confirmText: "Delete" },
     );
     if (ok) {
-      // Cascade delete expenses
-      const expenses = await db.expenses
-        .where("cardId")
-        .equals(card.id!)
-        .toArray();
-      for (const exp of expenses) {
-        await db.expenses.delete(exp.id!);
-      }
-
-      // Cascade delete payments
-      const payments = await db.payments
-        .where("cardId")
-        .equals(card.id!)
-        .toArray();
-      for (const pay of payments) {
-        await db.payments.delete(pay.id!);
-      }
-
-      // Delete card
-      await db.cards.delete(card.id!);
+      await deleteCard(card.id!);
     }
   };
 

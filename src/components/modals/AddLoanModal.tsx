@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { db } from "../../db/db";
+import { createLoan } from "../../services/backendSync";
 import { X, Info } from "lucide-react";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { showAlert } from "../../components/Confirm";
@@ -83,7 +83,7 @@ export default function AddLoanModal({ isOpen, onClose }: Props) {
       return;
     }
 
-    await db.loans.add({
+    await createLoan({
       lender: formData.lender.trim(),
       principal,
       annualInterestRate: interestRate,

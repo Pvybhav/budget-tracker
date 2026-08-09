@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useBackendResource } from "../services/backendHooks";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { db, type Expense, type Category } from "../db/db";
+import { type Expense, type Category } from "../db/db";
 import { calcMonthlyEmi } from "../services/card.service";
 import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
+import { fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
+import { deleteExpense } from "../services/backendSync";
 
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -17,8 +19,8 @@ export default function ManageExpensesPage({
 }: {
   mode?: "monthly" | "yearly" | "emi";
 }) {
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const categories = useLiveQuery(() => db.categories.toArray());
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(
@@ -167,7 +169,7 @@ export default function ManageExpensesPage({
       { title: "Delete expense" },
     );
     if (ok) {
-      await db.expenses.delete(expense.id!);
+      await deleteExpense(expense.id!);
     }
   };
 

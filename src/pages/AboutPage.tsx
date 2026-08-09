@@ -18,8 +18,8 @@ const PHILOSOPHY = [
     icon: ShieldCheck,
     color: "text-emerald-400",
     bg: "bg-emerald-400/10 border-emerald-400/20",
-    title: "Zero tracking. Not even a little.",
-    body: "budget tracker does not read your messages, scrape your bank statements, connect to any server, or collect a single byte of telemetry. There is no backend. There is no account. There is no cloud sync waiting to happen. Every number on this screen was typed in by you, stored in your browser's own IndexedDB, and has never left your device.",
+    title: "Server-backed persistence with ownership.",
+    body: "Budget Tracker securely saves your data to a server-backed store, so your entries persist beyond a single device while still letting you control your own finances.",
   },
   {
     icon: PenLine,
@@ -54,7 +54,7 @@ const FEATURES = [
     icon: BookOpenCheck,
     label: "Category budgets with monthly / yearly modes",
   },
-  { icon: DatabaseZap, label: "IndexedDB — 100% local, zero network calls" },
+  { icon: DatabaseZap, label: "Server persistence with cloud-backed storage" },
   { icon: ShieldCheck, label: "No account, no server, no data collection" },
   { icon: Sparkles, label: "AMC waiver progress across all your cards" },
 ];

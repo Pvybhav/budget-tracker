@@ -1,4 +1,4 @@
-import { db, type Card, type Expense, type Payment } from '../db/db';
+import type { Card, Expense, Payment } from '../db/db';
 
 /**
  * Months between two dates (year*12 + month arithmetic — ignores day).
@@ -256,30 +256,4 @@ export function getAccountAlertStatus(card: Card, metrics: ReturnType<typeof get
   }
 
   return null;
-}
-
-export async function addCard(data: Card) {
-  return await db.cards.add(data);
-}
-
-export async function updateCard(id: number, data: Partial<Card>) {
-  return await db.cards.update(id, data);
-}
-
-export async function deleteCardCascade(card: Card) {
-  if (!card.id) return;
-  // Cascade delete expenses
-  const expenses = await db.expenses.where('cardId').equals(card.id).toArray();
-  for (const exp of expenses) {
-    await db.expenses.delete(exp.id!);
-  }
-  
-  // Cascade delete payments
-  const payments = await db.payments.where('cardId').equals(card.id).toArray();
-  for (const pay of payments) {
-    await db.payments.delete(pay.id!);
-  }
-  
-  // Delete card
-  await db.cards.delete(card.id);
 }

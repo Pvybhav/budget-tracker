@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { AlertTriangle, TrendingDown, X } from "lucide-react";
-import { db } from "../db/db";
+import { useBackendResource } from "../services/backendHooks";
+import {
+  fetchCards,
+  fetchCategories,
+  fetchExpenses,
+  fetchPayments,
+} from "../services/backend.service";
 import { getCategoryBudgetAlert } from "../services/budget.service";
 import {
   getAccountAlertStatus,
@@ -17,10 +22,10 @@ interface AlertItem {
 }
 
 export default function AlertsPanel() {
-  const cards = useLiveQuery(() => db.cards.toArray());
-  const categories = useLiveQuery(() => db.categories.toArray());
-  const expenses = useLiveQuery(() => db.expenses.toArray());
-  const payments = useLiveQuery(() => db.payments.toArray());
+  const cards = useBackendResource(() => fetchCards(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
+  const expenses = useBackendResource(() => fetchExpenses(), []);
+  const payments = useBackendResource(() => fetchPayments(), []);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
   useEffect(() => {

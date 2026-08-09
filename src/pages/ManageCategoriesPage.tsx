@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useBackendResource } from "../services/backendHooks";
 import { Tags, Pencil, Trash2, Plus, Wallet } from "lucide-react";
-import { db, type Category } from "../db/db";
+import { type Category } from "../db/db";
 import showConfirm from "../components/Confirm";
 import AddCategoryModal from "../components/modals/AddCategoryModal";
 import { getBudgetStatus } from "../services/budget.service";
+import { deleteCategory } from "../services/backendSync";
+import { fetchCategories, fetchExpenses } from "../services/backend.service";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
@@ -32,8 +34,8 @@ function getBudgetPreviews(category: Category): string | null {
 }
 
 export default function ManageCategoriesPage() {
-  const categories = useLiveQuery(() => db.categories.toArray());
-  const expenses = useLiveQuery(() => db.expenses.toArray());
+  const categories = useBackendResource(() => fetchCategories(), []);
+  const expenses = useBackendResource(() => fetchExpenses(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(
     undefined,
@@ -95,14 +97,7 @@ export default function ManageCategoriesPage() {
       { title: "Delete category" },
     );
     if (!ok) return;
-    await db.categories.delete(category.id!);
-    const expensesWithCategory = await db.expenses
-      .where("categoryId")
-      .equals(category.id!)
-      .toArray();
-    for (const expense of expensesWithCategory) {
-      await db.expenses.update(expense.id!, { categoryId: undefined });
-    }
+    await deleteCategory(category.id!);
   };
 
   return (
