@@ -1,0 +1,11 @@
+services:
+  - type: web_service
+    name: budget-tracker
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    disk: 1024
+    # Set MONGODB_URI as a secret environment variable in Render dashboard.
