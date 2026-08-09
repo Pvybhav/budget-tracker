@@ -288,12 +288,6 @@ export default function ExportPage() {
     }
   };
 
-  const handleImportBackup = async () => {
-    await showAlert(
-      "Importing local backups is not supported in server-backed mode.",
-    );
-  };
-
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
   return (
