@@ -116,15 +116,6 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleLinkedCardSelectionChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const selectedValues = Array.from(e.target.selectedOptions, (option) =>
-      Number(option.value),
-    );
-    setFormData((prev) => ({ ...prev, linkedCardIds: selectedValues }));
-  };
-
   const handleMasterCardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const masterCardId = e.target.value;
     setFormData((prev) => ({
