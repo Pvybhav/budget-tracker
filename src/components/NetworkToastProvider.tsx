@@ -54,7 +54,7 @@ export default function NetworkToastProvider({
       toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`max-w-sm w-full rounded-2xl border px-4 py-3 shadow-2xl transition-all duration-300 overflow-hidden ${
+          className={`pointer-events-auto max-w-sm w-full rounded-2xl border px-4 py-3 shadow-2xl transition-all duration-300 overflow-hidden ${
             toast.visible
               ? "opacity-100 translate-y-0"
               : "opacity-0 -translate-y-4"
