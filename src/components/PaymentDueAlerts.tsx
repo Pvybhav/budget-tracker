@@ -34,6 +34,7 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
           card as Card,
           cardExpenses,
           cardPayments,
+          cards,
         );
         return {
           card,

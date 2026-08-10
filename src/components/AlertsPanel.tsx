@@ -58,7 +58,7 @@ export default function AlertsPanel() {
       const cardPayments = payments.filter(
         (payment) => payment.cardId === card.id,
       );
-      const metrics = getCardMetrics(card, cardExpenses, cardPayments);
+      const metrics = getCardMetrics(card, cardExpenses, cardPayments, cards);
       const alert = getAccountAlertStatus(card, metrics);
 
       if (!alert) continue;

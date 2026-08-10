@@ -51,7 +51,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
       <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl animate-pulse aspect-[1.586/1]"></div>
     );
 
-  const metrics = getCardMetrics(card, expenses, payments);
+  const metrics = getCardMetrics(card, expenses, payments, []);
   const {
     amountToPayNext,
     availableLimit,

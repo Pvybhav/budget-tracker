@@ -16,6 +16,7 @@ const cardSchema = new Schema(
     totalLimit: { type: Number, required: true },
     amc: Number,
     waiveOffLimit: Number,
+    linkedCardIds: [Number],
   },
   { timestamps: true },
 );

@@ -74,7 +74,12 @@ export default function ManageCardsPage() {
                 expenses?.filter((e) => e.cardId === card.id) || [];
               const cardPayments =
                 payments?.filter((p) => p.cardId === card.id) || [];
-              const metrics = getCardMetrics(card, cardExpenses, cardPayments);
+              const metrics = getCardMetrics(
+                card,
+                cardExpenses,
+                cardPayments,
+                cards || [],
+              );
               const currentBalance = metrics.currentBalance;
               const accountTypeLabel =
                 card.type === "debit"

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { type AccountType, type Card } from "../../db/db";
 import { createCard, updateCard } from "../../services/backendSync";
+import { useBackendResource } from "../../services/backendHooks";
+import { fetchCards } from "../../services/backend.service";
 import { X } from "lucide-react";
 
 interface Props {
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
+  const allCards = useBackendResource(() => fetchCards(), []);
   const [formData, setFormData] = useState({
     title: "",
     type: "credit" as AccountType,
@@ -18,6 +21,9 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
     totalLimit: "",
     amc: "0",
     waiveOffLimit: "0",
+    linkedCardIds: [] as number[],
+    isLinkedCard: false,
+    masterCardId: "",
   });
 
   useEffect(() => {
@@ -30,6 +36,9 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
         totalLimit: initialCard.totalLimit.toString(),
         amc: initialCard.amc?.toString() ?? "0",
         waiveOffLimit: initialCard.waiveOffLimit?.toString() ?? "0",
+        linkedCardIds: initialCard.linkedCardIds ?? [],
+        isLinkedCard: (initialCard.linkedCardIds?.length ?? 0) > 0,
+        masterCardId: initialCard.linkedCardIds?.[0]?.toString() ?? "",
       });
     } else {
       setFormData({
@@ -40,11 +49,34 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
         totalLimit: "",
         amc: "0",
         waiveOffLimit: "0",
+        linkedCardIds: [],
+        isLinkedCard: false,
+        masterCardId: "",
       });
     }
   }, [initialCard, isOpen]);
 
   if (!isOpen) return null;
+
+  const selectedMasterCard = (allCards ?? []).find(
+    (card) => card.id?.toString() === formData.masterCardId,
+  );
+  const shouldUseLinkedValues = formData.isLinkedCard && !!selectedMasterCard;
+  const sharedLimitValue = shouldUseLinkedValues
+    ? (selectedMasterCard?.totalLimit?.toString() ?? formData.totalLimit)
+    : formData.totalLimit;
+  const sharedBillingDate = shouldUseLinkedValues
+    ? (selectedMasterCard?.billingDate?.toString() ?? formData.billingDate)
+    : formData.billingDate;
+  const sharedPaymentDate = shouldUseLinkedValues
+    ? (selectedMasterCard?.paymentDate?.toString() ?? formData.paymentDate)
+    : formData.paymentDate;
+  const sharedAmc = shouldUseLinkedValues
+    ? (selectedMasterCard?.amc?.toString() ?? formData.amc)
+    : formData.amc;
+  const sharedWaiveOffLimit = shouldUseLinkedValues
+    ? (selectedMasterCard?.waiveOffLimit?.toString() ?? formData.waiveOffLimit)
+    : formData.waiveOffLimit;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,17 +84,14 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
     const payload = {
       title: formData.title,
       type: formData.type,
-      billingDate: isCreditAccount
-        ? parseInt(formData.billingDate || "0", 10)
-        : 0,
-      paymentDate: isCreditAccount
-        ? parseInt(formData.paymentDate || "0", 10)
-        : 0,
-      totalLimit: parseFloat(formData.totalLimit || "0"),
-      amc: isCreditAccount ? parseFloat(formData.amc || "0") : 0,
+      billingDate: isCreditAccount ? parseInt(sharedBillingDate || "0", 10) : 0,
+      paymentDate: isCreditAccount ? parseInt(sharedPaymentDate || "0", 10) : 0,
+      totalLimit: parseFloat(sharedLimitValue || "0"),
+      amc: isCreditAccount ? parseFloat(sharedAmc || "0") : 0,
       waiveOffLimit: isCreditAccount
-        ? parseFloat(formData.waiveOffLimit || "0")
+        ? parseFloat(sharedWaiveOffLimit || "0")
         : 0,
+      linkedCardIds: formData.type === "credit" ? formData.linkedCardIds : [],
     };
 
     if (initialCard) {
@@ -76,7 +105,35 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      setFormData({
+        ...formData,
+        [name]: (e.target as HTMLInputElement).checked,
+      });
+      return;
+    }
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleLinkedCardSelectionChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const selectedValues = Array.from(e.target.selectedOptions, (option) =>
+      Number(option.value),
+    );
+    setFormData((prev) => ({ ...prev, linkedCardIds: selectedValues }));
+  };
+
+  const handleMasterCardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const masterCardId = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      masterCardId,
+      linkedCardIds: masterCardId
+        ? prev.linkedCardIds.filter((id) => id.toString() !== masterCardId)
+        : prev.linkedCardIds,
+    }));
   };
 
   return (
@@ -128,66 +185,135 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
           </div>
           {formData.type === "credit" ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Billing Date (1-31)
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max="31"
-                    name="billingDate"
-                    value={formData.billingDate}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
+              <label className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-3 text-sm text-slate-300">
+                <span>Linked card</span>
+                <input
+                  type="checkbox"
+                  name="isLinkedCard"
+                  checked={formData.isLinkedCard}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-slate-700 bg-slate-800 accent-emerald-500"
+                />
+              </label>
+              {formData.isLinkedCard ? (
+                <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Select master credit card{" "}
+                      <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      required={formData.isLinkedCard}
+                      value={formData.masterCardId}
+                      onChange={handleMasterCardChange}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="">Choose a card...</option>
+                      {(allCards ?? [])
+                        .filter(
+                          (card) =>
+                            card.type === "credit" &&
+                            card.id !== initialCard?.id &&
+                            (card.linkedCardIds?.length ?? 0) === 0,
+                        )
+                        .map((card) => (
+                          <option key={card.id} value={card.id}>
+                            {card.title}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  {selectedMasterCard && (
+                    <div className="space-y-2 text-sm text-slate-300">
+                      <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <span className="text-slate-400">Billing Date</span>
+                        <span>{selectedMasterCard.billingDate ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <span className="text-slate-400">Payment Date</span>
+                        <span>{selectedMasterCard.paymentDate ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <span className="text-slate-400">AMC</span>
+                        <span>₹{selectedMasterCard.amc ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <span className="text-slate-400">
+                          Spent to Waive AMC
+                        </span>
+                        <span>₹{selectedMasterCard.waiveOffLimit ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <span className="text-slate-400">Total Limit</span>
+                        <span>₹{selectedMasterCard.totalLimit}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Payment Date (1-31)
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max="31"
-                    name="paymentDate"
-                    value={formData.paymentDate}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Billing Date (1-31)
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      max="31"
+                      name="billingDate"
+                      value={sharedBillingDate}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Payment Date (1-31)
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      max="31"
+                      name="paymentDate"
+                      value={sharedPaymentDate}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    AMC
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    name="amc"
-                    value={formData.amc}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
+              )}
+              {!formData.isLinkedCard && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      AMC
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      name="amc"
+                      value={sharedAmc}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Spent to Waive AMC
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      name="waiveOffLimit"
+                      value={sharedWaiveOffLimit}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Spent to Waive AMC
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    name="waiveOffLimit"
-                    value={formData.waiveOffLimit}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
+              )}
             </>
           ) : (
             <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-400">
@@ -195,19 +321,23 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
               AMC settings are not required.
             </div>
           )}
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              {formData.type === "credit" ? "Total Limit" : "Starting Balance"}
-            </label>
-            <input
-              required
-              type="number"
-              name="totalLimit"
-              value={formData.totalLimit}
-              onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-            />
-          </div>
+          {!formData.isLinkedCard && (
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1">
+                {formData.type === "credit"
+                  ? "Total Limit"
+                  : "Starting Balance"}
+              </label>
+              <input
+                required
+                type="number"
+                name="totalLimit"
+                value={sharedLimitValue}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          )}
           <div className="pt-4">
             <button
               type="submit"

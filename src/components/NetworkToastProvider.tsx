@@ -1,10 +1,11 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   onNetworkLoadingChange,
   onNetworkToast,
-  ToastPayload,
 } from "../services/network.service";
+import type { ToastPayload } from "../services/network.service";
 import { X, Loader2 } from "lucide-react";
 
 interface ToastState extends ToastPayload {

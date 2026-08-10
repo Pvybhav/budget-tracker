@@ -9,6 +9,7 @@ export interface Card {
   totalLimit: number;
   amc?: number;
   waiveOffLimit?: number;
+  linkedCardIds?: number[];
 }
 
 export interface Category {

@@ -110,11 +110,58 @@ export interface AccountAlertStatus {
   detail: string;
 }
 
-export function getCardMetrics(card: Card, expenses: Expense[], payments: Payment[]) {
+function getLinkedCardIds(card: Card, allCards: Card[] = []): number[] {
+  const linkedIds = card.linkedCardIds ?? [];
+  const normalized = linkedIds.filter((id) => typeof id === 'number' && id > 0);
+  const cardId = card.id;
+
+  if (cardId == null) {
+    return normalized;
+  }
+
+  const fromOtherCards = allCards
+    .filter((candidate) => candidate.id !== cardId && (candidate.linkedCardIds ?? []).includes(cardId))
+    .map((candidate) => candidate.id)
+    .filter((id): id is number => typeof id === 'number' && id > 0);
+
+  return Array.from(new Set([...normalized, ...fromOtherCards]));
+}
+
+function getCardScopeExpenses(card: Card, expenses: Expense[], allCards: Card[] = []): Expense[] {
+  const linkedCardIds = getLinkedCardIds(card, allCards);
+  const scopeCardIds = card.id != null ? [card.id, ...linkedCardIds] : linkedCardIds;
+
+  if (scopeCardIds.length === 0) {
+    return expenses;
+  }
+
+  return expenses.filter((expense) => scopeCardIds.includes(expense.cardId));
+}
+
+function getCardScopePayments(card: Card, payments: Payment[], allCards: Card[] = []): Payment[] {
+  const linkedCardIds = getLinkedCardIds(card, allCards);
+  const scopeCardIds = card.id != null ? [card.id, ...linkedCardIds] : linkedCardIds;
+
+  if (scopeCardIds.length === 0) {
+    return payments;
+  }
+
+  return payments.filter((payment) => scopeCardIds.includes(payment.cardId));
+}
+
+export function getCardMetrics(card: Card, expenses: Expense[], payments: Payment[], allCards: Card[] = []) {
   const today = new Date();
   const isCreditAccount = card.type === 'credit';
+  const scopeExpenses = getCardScopeExpenses(card, expenses, allCards);
+  const scopePayments = getCardScopePayments(card, payments, allCards);
+  const linkedCards = allCards.filter((candidate) => candidate.id !== card.id && getLinkedCardIds(candidate, allCards).includes(card.id!));
+  const sharedLimit = Math.max(card.totalLimit, ...linkedCards.map((candidate) => candidate.totalLimit));
+  const sharedWaiveOffLimit = Math.max(
+    card.waiveOffLimit ?? 0,
+    ...linkedCards.map((candidate) => candidate.waiveOffLimit ?? 0),
+  );
 
-  const totalSpent = expenses.reduce((sum, exp) => {
+  const totalSpent = scopeExpenses.reduce((sum, exp) => {
     if (!exp.isEmi) return sum + exp.amount;
     return sum + calcEmiTotalCost(
       exp.amount,
@@ -125,7 +172,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     );
   }, 0);
 
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalPaid = scopePayments.reduce((sum, p) => sum + p.amount, 0);
 
   if (!isCreditAccount) {
     const balance = Math.max(0, card.totalLimit - totalSpent + totalPaid);
@@ -166,7 +213,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   let amountToPayNext = 0;
   const currentCycleExpenses: Expense[] = [];
 
-  for (const exp of expenses) {
+  for (const exp of scopeExpenses) {
     if (!exp.isEmi) {
       const expDate = new Date(exp.date);
       if (expDate >= lastBillDate && expDate < nextBillDate) {
@@ -188,16 +235,16 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     }
   }
 
-  const availableLimit = Math.max(0, card.totalLimit - totalSpent + totalPaid);
-  const currentBalance = card.totalLimit - totalSpent + totalPaid;
+  const availableLimit = Math.max(0, sharedLimit - totalSpent + totalPaid);
+  const currentBalance = sharedLimit - totalSpent + totalPaid;
 
   // AMC Waiver logic
   let amcMessageText = null;
   let remainingToWaive = 0;
   let isAmcWaived = false;
 
-  if ((card.amc ?? 0) > 0 && (card.waiveOffLimit ?? 0) > 0) {
-    remainingToWaive = Math.max(0, (card.waiveOffLimit ?? 0) - totalSpent);
+  if ((card.amc ?? 0) > 0 && sharedWaiveOffLimit > 0) {
+    remainingToWaive = Math.max(0, sharedWaiveOffLimit - totalSpent);
     if (remainingToWaive > 0) {
       amcMessageText = `Spend ₹${remainingToWaive} more to waive AMC`;
     } else {
@@ -216,6 +263,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     amountToPayNext,
     availableLimit,
     currentBalance,
+    limit: sharedLimit,
     amcMessageText,
     remainingToWaive,
     isAmcWaived
@@ -223,8 +271,9 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
 }
 
 export function getAccountAlertStatus(card: Card, metrics: ReturnType<typeof getCardMetrics>): AccountAlertStatus | null {
-  const spentRatio = card.totalLimit > 0 ? metrics.currentBalance / card.totalLimit : 0;
-  const isLowBalance = card.type !== 'credit' && metrics.currentBalance <= Math.max(1000, card.totalLimit * 0.1);
+  const spendingLimit = metrics.limit ?? card.totalLimit;
+  const spentRatio = spendingLimit > 0 ? metrics.currentBalance / spendingLimit : 0;
+  const isLowBalance = card.type !== 'credit' && metrics.currentBalance <= Math.max(1000, spendingLimit * 0.1);
   const isOverLimit = card.type === 'credit' && metrics.availableLimit <= 0;
 
   if (isOverLimit) {
