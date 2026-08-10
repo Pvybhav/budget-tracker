@@ -10,11 +10,13 @@ import { fetchCategories, fetchExpenses } from "../services/backend.service";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
+  quarterly: "Quarterly",
   yearly: "Yearly",
 };
 
 const BUDGET_MODE_COLORS: Record<string, string> = {
   monthly: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
+  quarterly: "text-amber-400 bg-amber-400/10 border-amber-400/30",
   yearly: "text-sky-400 bg-sky-400/10 border-sky-400/30",
 };
 
@@ -28,6 +30,9 @@ function getBudgetPreviews(category: Category): string | null {
   if (amt == null || !mode) return null;
   if (mode === "monthly") {
     return `≈ ${fmtPreview(amt / (52 / 12))}/wk · ${fmtPreview(amt / 30)}/day`;
+  }
+  if (mode === "quarterly") {
+    return `≈ ${fmtPreview(amt / 3)}/mo · ${fmtPreview(amt / (52 / 4))}/wk · ${fmtPreview(amt / (365 / 4))}/day`;
   }
   // yearly
   return `≈ ${fmtPreview(amt / 12)}/mo · ${fmtPreview(amt / 52)}/wk · ${fmtPreview(amt / 365)}/day`;
@@ -46,40 +51,61 @@ export default function ManageCategoriesPage() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  const { monthlySpentMap, yearlySpentMap, expenseCountMap, lastExpenseMap } =
-    useMemo(() => {
-      const monthly = new Map<number, number>();
-      const yearly = new Map<number, number>();
-      const counts = new Map<number, number>();
-      const last = new Map<number, string>();
-      if (!expenses)
-        return {
-          monthlySpentMap: monthly,
-          yearlySpentMap: yearly,
-          expenseCountMap: counts,
-          lastExpenseMap: last,
-        };
-      for (const e of expenses) {
-        if (!e.categoryId) continue;
-        const cid = e.categoryId;
-        const d = new Date(e.date);
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        yearly.set(cid, (yearly.get(cid) || 0) + e.amount);
-        if (y === currentYear && m === currentMonth) {
-          monthly.set(cid, (monthly.get(cid) || 0) + e.amount);
-        }
-        counts.set(cid, (counts.get(cid) || 0) + 1);
-        const prev = last.get(cid);
-        if (!prev || new Date(e.date) > new Date(prev)) last.set(cid, e.date);
-      }
+  const {
+    monthlySpentMap,
+    quarterlySpentMap,
+    yearlySpentMap,
+    expenseCountMap,
+    lastExpenseMap,
+  } = useMemo(() => {
+    const monthly = new Map<number, number>();
+    const quarterly = new Map<number, number>();
+    const yearly = new Map<number, number>();
+    const counts = new Map<number, number>();
+    const last = new Map<number, string>();
+    if (!expenses)
       return {
         monthlySpentMap: monthly,
+        quarterlySpentMap: quarterly,
         yearlySpentMap: yearly,
         expenseCountMap: counts,
         lastExpenseMap: last,
       };
-    }, [expenses, currentYear, currentMonth]);
+    for (const e of expenses) {
+      if (!e.categoryId) continue;
+      const cid = e.categoryId;
+      const d = new Date(e.date);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      yearly.set(cid, (yearly.get(cid) || 0) + e.amount);
+      if (y === currentYear) {
+        if (m === currentMonth) {
+          monthly.set(cid, (monthly.get(cid) || 0) + e.amount);
+        }
+        // Quarter calculation: determine quarter start month for currentMonth
+        const currentQuarterIndex = Math.floor((currentMonth - 1) / 3);
+        const quarterStart = currentQuarterIndex * 3 + 1;
+        const quarterMonths = [
+          quarterStart,
+          quarterStart + 1,
+          quarterStart + 2,
+        ];
+        if (quarterMonths.includes(m)) {
+          quarterly.set(cid, (quarterly.get(cid) || 0) + e.amount);
+        }
+      }
+      counts.set(cid, (counts.get(cid) || 0) + 1);
+      const prev = last.get(cid);
+      if (!prev || new Date(e.date) > new Date(prev)) last.set(cid, e.date);
+    }
+    return {
+      monthlySpentMap: monthly,
+      quarterlySpentMap: quarterly,
+      yearlySpentMap: yearly,
+      expenseCountMap: counts,
+      lastExpenseMap: last,
+    };
+  }, [expenses, currentYear, currentMonth]);
 
   const openAddModal = () => {
     setCategoryToEdit(undefined);
@@ -256,7 +282,9 @@ export default function ManageCategoriesPage() {
                         const spent =
                           category.budgetMode === "yearly"
                             ? (yearlySpentMap.get(category.id!) ?? 0)
-                            : (monthlySpentMap.get(category.id!) ?? 0);
+                            : category.budgetMode === "quarterly"
+                              ? (quarterlySpentMap.get(category.id!) ?? 0)
+                              : (monthlySpentMap.get(category.id!) ?? 0);
                         const budget = category.budgetAmount ?? 0;
                         const budgetStatus = getBudgetStatus(
                           spent,

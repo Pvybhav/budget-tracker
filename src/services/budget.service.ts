@@ -1,4 +1,4 @@
-export type BudgetMode = 'monthly' | 'yearly';
+export type BudgetMode = 'monthly' | 'quarterly' | 'yearly';
 
 import { type Category, type Expense } from '../db/db';
 
@@ -21,6 +21,7 @@ export interface CategoryBudgetAlert {
 
 export function getEffectiveMonthlyBudget(amount: number, mode: BudgetMode): number {
   if (mode === 'monthly') return amount;
+  if (mode === 'quarterly') return amount / 3;
   return amount / 12;
 }
 
@@ -78,10 +79,11 @@ export function getCategoryBudgetAlert(category: Category, expenses: Expense[]):
   }
 
   if (status.isNearLimit) {
+    const periodLabel = category.budgetMode === 'yearly' ? 'year' : category.budgetMode === 'quarterly' ? 'quarter' : 'month';
     return {
       severity: 'warning',
       message: `${category.title} is nearing its limit`,
-      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString('en-IN')} left this ${category.budgetMode === 'yearly' ? 'year' : 'month'}.`,
+      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString('en-IN')} left this ${periodLabel}.`,
     };
   }
 

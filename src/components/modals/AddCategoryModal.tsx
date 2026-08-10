@@ -23,7 +23,7 @@ export default function AddCategoryModal({
     title: "",
     description: "",
     budgetAmount: "",
-    budgetMode: "monthly" as "monthly" | "yearly",
+    budgetMode: "monthly" as "monthly" | "quarterly" | "yearly",
     hasBudget: false,
   });
 
@@ -34,7 +34,8 @@ export default function AddCategoryModal({
         description: initialCategory.description ?? "",
         budgetAmount: initialCategory.budgetAmount?.toString() ?? "",
         budgetMode:
-          (initialCategory.budgetMode as "monthly" | "yearly") ?? "monthly",
+          (initialCategory.budgetMode as "monthly" | "quarterly" | "yearly") ??
+          "monthly",
         hasBudget: initialCategory.budgetAmount != null,
       });
     } else {
@@ -59,6 +60,13 @@ export default function AddCategoryModal({
       return {
         daily: budgetValue / 30,
         weekly: budgetValue / (52 / 12),
+      };
+    }
+    if (formData.budgetMode === "quarterly") {
+      return {
+        monthly: budgetValue / 3,
+        weekly: budgetValue / (52 / 4),
+        daily: budgetValue / (365 / 4),
       };
     }
     // yearly
@@ -194,6 +202,7 @@ export default function AddCategoryModal({
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500"
                   >
                     <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>

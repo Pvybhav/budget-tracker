@@ -449,7 +449,9 @@ export default function AddExpenseModal({
                   <p className="text-xs uppercase tracking-wider font-medium text-slate-400">
                     {selectedCategory.budgetMode === "yearly"
                       ? "Yearly (≈monthly)"
-                      : "Monthly"}{" "}
+                      : selectedCategory.budgetMode === "quarterly"
+                        ? "Quarterly (≈monthly)"
+                        : "Monthly"}{" "}
                     Budget · {selectedCategory.title}
                   </p>
                   <span

@@ -17,7 +17,7 @@ export interface Category {
   title: string;
   description?: string;
   budgetAmount?: number;
-  budgetMode?: 'monthly' | 'yearly';
+  budgetMode?: 'monthly' | 'quarterly' | 'yearly';
 }
 
 export interface Expense {
