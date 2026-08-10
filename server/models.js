@@ -29,7 +29,7 @@ const categorySchema = new Schema(
     budgetAmount: Number,
     budgetMode: {
       type: String,
-      enum: ["monthly", "yearly"],
+      enum: ["monthly", "quarterly", "yearly"],
       default: "monthly",
     },
   },
