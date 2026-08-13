@@ -39,6 +39,8 @@ export default function ManageExpensesPage({
   const [categoryModal, setCategoryModal] = useState<{
     open: boolean;
     category: Category | null;
+    year?: number;
+    month?: number;
   }>({
     open: false,
     category: null,
@@ -184,7 +186,12 @@ export default function ManageExpensesPage({
   };
 
   const openCategoryModal = (category: Category) => {
-    setCategoryModal({ open: true, category });
+    setCategoryModal({
+      open: true,
+      category,
+      year: selectedYear,
+      month: selectedMonth,
+    });
   };
 
   return (
@@ -583,6 +590,8 @@ export default function ManageExpensesPage({
           isOpen={categoryModal.open}
           onClose={() => setCategoryModal({ open: false, category: null })}
           category={categoryModal.category}
+          selectedYear={categoryModal.year}
+          selectedMonth={categoryModal.month}
         />
       )}
     </div>

@@ -7,16 +7,20 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   category: Category;
+  selectedYear?: number;
+  selectedMonth?: number;
 }
 
 export default function CategoryExpensesModal({
   isOpen,
   onClose,
   category,
+  selectedYear,
+  selectedMonth,
 }: Props) {
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
+  const currentYear = selectedYear ?? now.getFullYear();
+  const currentMonth = selectedMonth ?? now.getMonth() + 1;
 
   const monthExpenses = useBackendResource(async () => {
     if (!category.id) return [];
