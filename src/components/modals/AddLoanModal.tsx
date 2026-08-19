@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { createLoan } from "../../services/backendSync";
+import { createLoan, updateLoan } from "../../services/backendSync";
 import { X, Info } from "lucide-react";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { showAlert } from "../../components/Confirm";
+import { type Loan } from "../../db/db";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialLoan?: Loan;
 }
 
 const INTEREST_PRESETS = [
@@ -27,15 +29,33 @@ function fmt(value: number) {
   });
 }
 
-export default function AddLoanModal({ isOpen, onClose }: Props) {
-  const [formData, setFormData] = useState({
-    lender: "",
-    principal: "",
-    interestPreset: 10,
-    customInterest: "",
-    termMonths: 12,
-    startDate: new Date().toISOString().slice(0, 10),
-    note: "",
+export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
+  const [formData, setFormData] = useState(() => {
+    if (initialLoan) {
+      const preset = INTEREST_PRESETS.find(
+        (option) =>
+          option.value >= 0 && option.value === initialLoan.annualInterestRate,
+      );
+      return {
+        lender: initialLoan.lender,
+        principal: initialLoan.principal.toString(),
+        interestPreset: preset?.value ?? -1,
+        customInterest: preset ? "" : initialLoan.annualInterestRate.toString(),
+        termMonths: initialLoan.termMonths,
+        startDate: initialLoan.startDate,
+        note: initialLoan.note ?? "",
+      };
+    }
+
+    return {
+      lender: "",
+      principal: "",
+      interestPreset: 10,
+      customInterest: "",
+      termMonths: 12,
+      startDate: new Date().toISOString().slice(0, 10),
+      note: "",
+    };
   });
 
   if (!isOpen) return null;
@@ -57,6 +77,11 @@ export default function AddLoanModal({ isOpen, onClose }: Props) {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
+    if (name === "interestPreset") {
+      setFormData({ ...formData, interestPreset: Number(value) });
+      return;
+    }
+
     if (type === "number") {
       setFormData({
         ...formData,
@@ -83,15 +108,21 @@ export default function AddLoanModal({ isOpen, onClose }: Props) {
       return;
     }
 
-    await createLoan({
+    const payload = {
       lender: formData.lender.trim(),
       principal,
       annualInterestRate: interestRate,
       termMonths,
       startDate: formData.startDate,
       note: formData.note.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    });
+      createdAt: initialLoan?.createdAt ?? new Date().toISOString(),
+    };
+
+    if (initialLoan?.id) {
+      await updateLoan(initialLoan.id, payload);
+    } else {
+      await createLoan(payload);
+    }
 
     setFormData({
       lender: "",
@@ -117,7 +148,7 @@ export default function AddLoanModal({ isOpen, onClose }: Props) {
 
         <div className="p-6 border-b border-slate-800">
           <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-            Add Personal Loan
+            {initialLoan ? "Edit Personal Loan" : "Add Personal Loan"}
           </h2>
           <p className="mt-2 text-slate-400 text-sm">
             Track a loan with EMI calculations and repayments in one place.
@@ -268,7 +299,7 @@ export default function AddLoanModal({ isOpen, onClose }: Props) {
               type="submit"
               className="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
             >
-              Save Loan
+              {initialLoan ? "Update Loan" : "Save Loan"}
             </button>
           </div>
         </form>

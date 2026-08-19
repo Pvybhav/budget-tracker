@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Payment } from "../../db/db";
 import { useBackendResource } from "../../services/backendHooks";
 import { fetchCards } from "../../services/backend.service";
-import { createPayment } from "../../services/backendSync";
+import { createPayment, updatePayment } from "../../services/backendSync";
 import { X } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +10,14 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialPayment?: Payment;
 }
 
-export default function AddPaymentModal({ isOpen, onClose }: Props) {
+export default function AddPaymentModal({
+  isOpen,
+  onClose,
+  initialPayment,
+}: Props) {
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const [formData, setFormData] = useState({
@@ -23,6 +29,32 @@ export default function AddPaymentModal({ isOpen, onClose }: Props) {
       .toISOString()
       .slice(0, 16),
   });
+
+  useEffect(() => {
+    if (initialPayment) {
+      const date = new Date(initialPayment.date);
+      const localDate = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60000,
+      )
+        .toISOString()
+        .slice(0, 16);
+      setFormData({
+        cardId: initialPayment.cardId.toString(),
+        amount: initialPayment.amount.toString(),
+        date: localDate,
+      });
+    } else if (isOpen) {
+      setFormData({
+        cardId: "",
+        amount: "",
+        date: new Date(
+          new Date().getTime() - new Date().getTimezoneOffset() * 60000,
+        )
+          .toISOString()
+          .slice(0, 16),
+      });
+    }
+  }, [initialPayment, isOpen]);
 
   if (!isOpen) return null;
 
@@ -63,11 +95,17 @@ export default function AddPaymentModal({ isOpen, onClose }: Props) {
       return;
     }
 
-    await createPayment({
+    const payload = {
       cardId: parseInt(formData.cardId),
       amount: parseFloat(formData.amount),
       date: formData.date,
-    });
+    };
+
+    if (initialPayment) {
+      await updatePayment(initialPayment.id!, payload);
+    } else {
+      await createPayment(payload);
+    }
 
     onClose();
     setFormData({ ...formData, amount: "" });
@@ -91,7 +129,7 @@ export default function AddPaymentModal({ isOpen, onClose }: Props) {
 
         <div className="p-6 border-b border-slate-800">
           <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Record a Payment
+            {initialPayment ? "Edit Payment" : "Record a Payment"}
           </h2>
         </div>
 
@@ -149,7 +187,7 @@ export default function AddPaymentModal({ isOpen, onClose }: Props) {
               type="submit"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              Save Payment
+              {initialPayment ? "Update Payment" : "Save Payment"}
             </button>
           </div>
         </form>

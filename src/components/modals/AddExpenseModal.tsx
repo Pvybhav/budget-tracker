@@ -112,7 +112,7 @@ export default function AddExpenseModal({
     };
 
     let spent = 0;
-    for (const e of allExp) {
+    for (const e of filtered) {
       if (isMonthlyBudget && e.isEmi) {
         // Count this installment if the EMI window covers the current month
         const emiStart = new Date(e.date);
@@ -295,6 +295,11 @@ export default function AddExpenseModal({
   // Credit limit blocked = full total cost (principal + interest + processing fee + GST)
   const availableLimitImpact = totalCost;
 
+  const enteredBudgetImpact =
+    selectedCategory?.budgetMode === "monthly" && formData.isEmi
+      ? monthlyPayment
+      : principal;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.cardId) {
@@ -367,9 +372,10 @@ export default function AddExpenseModal({
   const hasBudget =
     selectedCategory?.budgetAmount != null &&
     selectedCategory?.budgetMode != null;
+  const previewSpent = spent + enteredBudgetImpact;
   const budgetStatus = hasBudget
     ? getBudgetStatus(
-        spent,
+        previewSpent,
         selectedCategory!.budgetAmount!,
         selectedCategory!.budgetMode!,
       )
@@ -463,10 +469,16 @@ export default function AddExpenseModal({
                 <div className="flex items-center gap-4 flex-wrap">
                   <div>
                     <span className="text-xs text-slate-500">
-                      Spent this month
+                      Current spend
                     </span>
                     <p className="text-sm font-semibold text-slate-200">
                       ₹{fmt(spent)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-sky-400">New expense</span>
+                    <p className="text-sm font-semibold text-sky-300">
+                      ₹{fmt(enteredBudgetImpact)}
                     </p>
                   </div>
                   <div>
@@ -496,12 +508,20 @@ export default function AddExpenseModal({
                     <span>{budgetStatus.progressClamped}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
-                      style={{
-                        width: `${Math.min(100, budgetStatus.progressClamped)}%`,
-                      }}
-                    />
+                    <div className="h-full flex">
+                      <div
+                        className={`h-full shrink-0 transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
+                        style={{
+                          width: `${Math.min(100, budgetStatus.effectiveBudget > 0 ? (spent / budgetStatus.effectiveBudget) * 100 : 0)}%`,
+                        }}
+                      />
+                      <div
+                        className="h-full shrink-0 bg-sky-400 transition-all"
+                        style={{
+                          width: `${Math.min(100, budgetStatus.effectiveBudget > 0 ? (enteredBudgetImpact / budgetStatus.effectiveBudget) * 100 : 0)}%`,
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

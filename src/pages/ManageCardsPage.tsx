@@ -106,19 +106,37 @@ export default function ManageCardsPage() {
                     {card.type === "credit" ? card.paymentDate : "—"}
                   </td>
                   <td className="px-6 py-4">
-                    ₹{card.totalLimit?.toFixed(2) ?? "0.00"}
+                    ₹
+                    {card.totalLimit?.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) ?? "0.00"}
                   </td>
                   <td className="px-6 py-4 text-emerald-400 font-medium">
-                    ₹{currentBalance.toFixed(2)}
+                    ₹
+                    {currentBalance.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </td>
                   <td className="px-6 py-4">
                     {card.type === "credit"
-                      ? `₹${card.amc?.toFixed(2) ?? "0.00"}`
+                      ? `₹${
+                          card.amc?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) ?? "0.00"
+                        }`
                       : "—"}
                   </td>
                   <td className="px-6 py-4">
                     {card.type === "credit"
-                      ? `₹${card.waiveOffLimit?.toFixed(2) ?? "0.00"}`
+                      ? `₹${
+                          card.waiveOffLimit?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) ?? "0.00"
+                        }`
                       : "—"}
                   </td>
                   <td className="px-6 py-4 text-right">

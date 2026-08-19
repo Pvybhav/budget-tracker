@@ -85,8 +85,12 @@ export default function SavingsGoalsSection() {
                       </span>
                     </div>
                     <div className="text-sm text-slate-400">
-                      Target: ₹{goal.targetAmount.toFixed(2)} by{" "}
-                      {goal.targetDate}
+                      Target: ₹
+                      {goal.targetAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      by {goal.targetDate}
                     </div>
                   </div>
 
@@ -122,8 +126,16 @@ export default function SavingsGoalsSection() {
                       Progress
                     </div>
                     <div className="mt-1 text-lg font-semibold text-slate-100">
-                      ₹{goal.currentAmount.toFixed(2)} / ₹
-                      {goal.targetAmount.toFixed(2)}
+                      ₹
+                      {goal.currentAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      / ₹
+                      {goal.targetAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                     <div className="text-sm text-slate-400">
                       {summary.progressPercent}% complete
@@ -148,7 +160,11 @@ export default function SavingsGoalsSection() {
                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
                     <div className="text-sm text-slate-400">Need to save</div>
                     <div className="mt-1 text-lg font-semibold text-slate-100">
-                      ₹{summary.remainingAmount.toFixed(2)}
+                      ₹
+                      {summary.remainingAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                     <div className="text-sm text-slate-400">
                       {summary.daysLeft > 0

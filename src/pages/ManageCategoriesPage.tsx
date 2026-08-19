@@ -4,6 +4,7 @@ import { Tags, Pencil, Trash2, Plus, Wallet } from "lucide-react";
 import { type Category } from "../db/db";
 import showConfirm from "../components/Confirm";
 import AddCategoryModal from "../components/modals/AddCategoryModal";
+import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
 import { getBudgetStatus } from "../services/budget.service";
 import { deleteCategory } from "../services/backendSync";
 import { fetchCategories, fetchExpenses } from "../services/backend.service";
@@ -22,7 +23,13 @@ const BUDGET_MODE_COLORS: Record<string, string> = {
 
 function fmtPreview(n: number) {
   if (n >= 1000) return "₹" + (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
-  return "₹" + n.toFixed(2);
+  return (
+    "₹" +
+    n.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 }
 
 function getBudgetPreviews(category: Category): string | null {
@@ -45,6 +52,8 @@ export default function ManageCategoriesPage() {
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(
     undefined,
   );
+  const [categoryForExpenses, setCategoryForExpenses] =
+    useState<Category | null>(null);
   const [compactMode, setCompactMode] = useState(false);
 
   const now = new Date();
@@ -77,7 +86,19 @@ export default function ManageCategoriesPage() {
       const d = new Date(e.date);
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
-      yearly.set(cid, (yearly.get(cid) || 0) + e.amount);
+      const category = categories?.find((item) => item.id === cid);
+      const budgetMode = category?.budgetMode ?? "yearly";
+      const currentQuarterIndex = Math.floor((currentMonth - 1) / 3);
+      const isCurrentPeriod =
+        y === currentYear &&
+        (budgetMode === "yearly" ||
+          (budgetMode === "monthly" && m === currentMonth) ||
+          (budgetMode === "quarterly" &&
+            Math.floor((m - 1) / 3) === currentQuarterIndex));
+
+      if (y === currentYear) {
+        yearly.set(cid, (yearly.get(cid) || 0) + e.amount);
+      }
       if (y === currentYear) {
         if (m === currentMonth) {
           monthly.set(cid, (monthly.get(cid) || 0) + e.amount);
@@ -94,7 +115,7 @@ export default function ManageCategoriesPage() {
           quarterly.set(cid, (quarterly.get(cid) || 0) + e.amount);
         }
       }
-      counts.set(cid, (counts.get(cid) || 0) + 1);
+      if (isCurrentPeriod) counts.set(cid, (counts.get(cid) || 0) + 1);
       const prev = last.get(cid);
       if (!prev || new Date(e.date) > new Date(prev)) last.set(cid, e.date);
     }
@@ -105,7 +126,7 @@ export default function ManageCategoriesPage() {
       expenseCountMap: counts,
       lastExpenseMap: last,
     };
-  }, [expenses, currentYear, currentMonth]);
+  }, [categories, expenses, currentYear, currentMonth]);
 
   const openAddModal = () => {
     setCategoryToEdit(undefined);
@@ -115,6 +136,10 @@ export default function ManageCategoriesPage() {
   const openEditModal = (category: Category) => {
     setCategoryToEdit(category);
     setIsModalOpen(true);
+  };
+
+  const openCategoryExpenses = (category: Category) => {
+    setCategoryForExpenses(category);
   };
 
   const handleDelete = async (category: Category) => {
@@ -216,9 +241,12 @@ export default function ManageCategoriesPage() {
                 <div className="min-h-[36px] mt-1">
                   {compactMode ? (
                     <div className="text-xs text-slate-400 flex items-center gap-3">
-                      <div>
+                      <button
+                        onClick={() => openCategoryExpenses(category)}
+                        className="text-left hover:text-slate-200 transition-colors"
+                      >
                         {expenseCountMap.get(category.id!) ?? 0} expenses
-                      </div>
+                      </button>
                       {lastExpenseMap.get(category.id!) && (
                         <div>
                           ·{" "}
@@ -239,9 +267,12 @@ export default function ManageCategoriesPage() {
                         )}
                       </div>
                       <div className="text-xs text-slate-400 mt-2 flex items-center gap-3">
-                        <div>
+                        <button
+                          onClick={() => openCategoryExpenses(category)}
+                          className="text-left hover:text-slate-200 transition-colors"
+                        >
                           {expenseCountMap.get(category.id!) ?? 0} expenses
-                        </div>
+                        </button>
                         {lastExpenseMap.get(category.id!) && (
                           <div>
                             ·{" "}
@@ -263,7 +294,11 @@ export default function ManageCategoriesPage() {
                     <div className="flex items-center gap-2">
                       <Wallet className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                       <span className="text-sm font-semibold text-slate-200">
-                        ₹{category.budgetAmount.toFixed(2)}
+                        ₹
+                        {category.budgetAmount.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full border font-medium ${BUDGET_MODE_COLORS[category.budgetMode] ?? ""}`}
@@ -318,13 +353,19 @@ export default function ManageCategoriesPage() {
                             </div>
 
                             <div className="flex items-center justify-between text-xs text-slate-500 mt-2 gap-2">
-                              <div>₹{spent.toFixed(2)}</div>
+                              <div>
+                                ₹
+                                {spent.toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
                               <div
                                 className={`${over ? "text-red-400 font-medium" : nearLimit ? "text-amber-400 font-medium" : "text-slate-400"}`}
                               >
                                 {over
-                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toFixed(2)}`
-                                  : `${Math.max(0, budgetStatus.remaining).toFixed(2)} left`}
+                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : `${Math.max(0, budgetStatus.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left`}
                               </div>
                             </div>
                             <div
@@ -355,6 +396,14 @@ export default function ManageCategoriesPage() {
         onClose={() => setIsModalOpen(false)}
         initialCategory={categoryToEdit}
       />
+      {categoryForExpenses && (
+        <CategoryExpensesModal
+          isOpen={true}
+          onClose={() => setCategoryForExpenses(null)}
+          category={categoryForExpenses}
+          budgetMode={categoryForExpenses.budgetMode ?? "yearly"}
+        />
+      )}
     </div>
   );
 }

@@ -330,10 +330,23 @@ router.put(
   catchAsync(async (req, res) => {
     const id = toNumericId(req.params.id);
     if (id == null) return res.status(400).json({ error: "Invalid loan id" });
-    const loan = await Loan.findOneAndUpdate({ id }, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const updates = { ...req.body };
+    if (Array.isArray(req.body.repayments)) {
+      updates.repayments = req.body.repayments.map((repayment) => ({
+        paymentNumber: Number(repayment.paymentNumber),
+        paid: Boolean(repayment.paid),
+        ...(repayment.paidDate ? { paidDate: repayment.paidDate } : {}),
+        ...(repayment.note ? { note: repayment.note } : {}),
+      }));
+    }
+    const loan = await Loan.findOneAndUpdate(
+      { id },
+      { $set: updates },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
     if (!loan) return res.status(404).json({ error: "Loan not found" });
     res.json(loan);
   }),

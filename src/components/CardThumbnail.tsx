@@ -134,7 +134,11 @@ export default function CardThumbnail({ card }: { card: Card }) {
                 {card.type === "credit" ? "Available Limit" : "Balance"}
               </p>
               <p className="text-lg font-medium text-emerald-400 tracking-wide drop-shadow-sm truncate">
-                ₹{availableLimit.toFixed(2)}
+                ₹
+                {availableLimit.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <div className="bg-black/20 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
@@ -142,7 +146,11 @@ export default function CardThumbnail({ card }: { card: Card }) {
                 {card.type === "credit" ? "Amount to Pay" : "Pending"}
               </p>
               <p className="text-lg font-medium text-slate-300 tracking-wide drop-shadow-sm truncate">
-                ₹{amountToPayNext.toFixed(2)}
+                ₹
+                {amountToPayNext.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
           </div>
@@ -181,7 +189,11 @@ export default function CardThumbnail({ card }: { card: Card }) {
             <div className="flex justify-between items-center">
               <span className="text-slate-400 text-sm">Total Limit</span>
               <span className="text-slate-200 font-medium tracking-wide">
-                ₹{card.totalLimit.toFixed(2)}
+                ₹
+                {card.totalLimit.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </span>
             </div>
             {card.type === "credit" && (
@@ -207,7 +219,11 @@ export default function CardThumbnail({ card }: { card: Card }) {
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">AMC</span>
                   <span className="text-slate-200 font-medium tracking-wide">
-                    ₹{card.amc?.toFixed(2) ?? "0.00"}
+                    ₹
+                    {card.amc?.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) ?? "0.00"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -215,7 +231,11 @@ export default function CardThumbnail({ card }: { card: Card }) {
                     Waive Off Limit
                   </span>
                   <span className="text-slate-200 font-medium tracking-wide">
-                    ₹{card.waiveOffLimit?.toFixed(2) ?? "0.00"}
+                    ₹
+                    {card.waiveOffLimit?.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) ?? "0.00"}
                   </span>
                 </div>
               </>

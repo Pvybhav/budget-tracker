@@ -78,6 +78,17 @@ const loanSchema = new Schema(
     startDate: { type: String, required: true },
     note: String,
     createdAt: { type: String, required: true },
+    repayments: {
+      type: [
+        {
+          paymentNumber: { type: Number, required: true },
+          paid: { type: Boolean, required: true },
+          paidDate: String,
+          note: String,
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

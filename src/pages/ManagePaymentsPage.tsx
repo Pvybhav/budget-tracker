@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Payment } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { deletePayment } from "../services/backendSync";
 import AddPaymentModal from "../components/modals/AddPaymentModal";
@@ -7,6 +8,19 @@ import { fetchPayments } from "../services/backend.service";
 export default function ManagePaymentsPage() {
   const payments = useBackendResource(() => fetchPayments(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>(
+    undefined,
+  );
+
+  const openAddModal = () => {
+    setPaymentToEdit(undefined);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (payment: Payment) => {
+    setPaymentToEdit(payment);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -15,7 +29,7 @@ export default function ManagePaymentsPage() {
           Manage Payments
         </h1>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openAddModal}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
           Add Payment
@@ -42,9 +56,18 @@ export default function ManagePaymentsPage() {
                   {new Date(payment.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">{payment.cardId}</td>
-                <td className="px-6 py-4">₹{payment.amount.toFixed(2)}</td>
+                <td className="px-6 py-4">
+                  ₹
+                  {payment.amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-blue-400 hover:text-blue-300 mr-3">
+                  <button
+                    onClick={() => openEditModal(payment)}
+                    className="text-blue-400 hover:text-blue-300 mr-3"
+                  >
                     Edit
                   </button>
                   <button
@@ -73,6 +96,7 @@ export default function ManagePaymentsPage() {
       <AddPaymentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        initialPayment={paymentToEdit}
       />
     </div>
   );

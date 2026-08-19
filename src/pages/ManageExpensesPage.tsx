@@ -190,7 +190,7 @@ export default function ManageExpensesPage({
       open: true,
       category,
       year: selectedYear,
-      month: selectedMonth,
+      month: mode === "yearly" ? undefined : selectedMonth,
     });
   };
 
@@ -342,7 +342,11 @@ export default function ManageExpensesPage({
                 : "Visible Total"}
           </p>
           <p className="text-3xl font-bold text-emerald-400">
-            ₹{totalAmount.toFixed(2)}
+            ₹
+            {totalAmount.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
 
@@ -365,7 +369,11 @@ export default function ManageExpensesPage({
             Largest Spend
           </p>
           <p className="text-3xl font-bold text-sky-400">
-            ₹{(biggestExpense?.amount ?? 0).toFixed(2)}
+            ₹
+            {(biggestExpense?.amount ?? 0).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
           <p className="mt-2 text-sm text-slate-500 truncate">
             {biggestExpense?.details || "No expense yet"}
@@ -380,7 +388,11 @@ export default function ManageExpensesPage({
               {mode === "monthly" ? "Month Total" : "Year Total"}
             </p>
             <p className="text-3xl font-bold text-emerald-400">
-              ₹{totalAmount.toFixed(2)}
+              ₹
+              {totalAmount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
 
@@ -399,7 +411,13 @@ export default function ManageExpensesPage({
                         mb.amount > 0 ? "text-slate-200" : "text-slate-700",
                       )}
                     >
-                      ₹{mb.amount > 0 ? mb.amount.toFixed(2) : "0.00"}
+                      ₹
+                      {mb.amount > 0
+                        ? mb.amount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : "0.00"}
                     </div>
                   </div>
                 ))}
@@ -480,7 +498,11 @@ export default function ManageExpensesPage({
                             </span>
                           )}
                           <span className="text-xs text-emerald-400 font-medium">
-                            ₹{monthlyEmi.toFixed(2)}
+                            ₹
+                            {monthlyEmi.toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                             /mo
                           </span>
                         </div>
@@ -492,7 +514,7 @@ export default function ManageExpensesPage({
                       <button
                         onClick={() => openCategoryModal(category)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-medium hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors cursor-pointer"
-                        title={`View ${category.title} expenses this month`}
+                        title={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
                       >
                         {category.title}
                       </button>
@@ -503,7 +525,13 @@ export default function ManageExpensesPage({
                   <td className="px-6 py-4">{expense.cardId}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span>₹{expense.amount.toFixed(2)}</span>
+                      <span>
+                        ₹
+                        {expense.amount.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
                       {isEmi && (
                         <span className="text-xs text-slate-500">
                           principal

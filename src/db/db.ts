@@ -57,6 +57,14 @@ export interface Loan {
   startDate: string;
   note?: string;
   createdAt: string;
+  repayments?: LoanRepayment[];
+}
+
+export interface LoanRepayment {
+  paymentNumber: number;
+  paid: boolean;
+  paidDate?: string;
+  note?: string;
 }
 
 export interface SavingsGoal {

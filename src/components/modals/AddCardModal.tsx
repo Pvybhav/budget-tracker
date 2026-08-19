@@ -227,7 +227,11 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
                       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
                         <span className="text-slate-400">AMC</span>
                         <span>
-                          ₹{selectedMasterCard.amc?.toFixed(2) ?? "0.00"}
+                          ₹
+                          {selectedMasterCard.amc?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) ?? "0.00"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
@@ -236,14 +240,26 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
                         </span>
                         <span>
                           ₹
-                          {selectedMasterCard.waiveOffLimit?.toFixed(2) ??
-                            "0.00"}
+                          {selectedMasterCard.waiveOffLimit?.toLocaleString(
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          ) ?? "0.00"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
                         <span className="text-slate-400">Total Limit</span>
                         <>
-                          ₹{selectedMasterCard.totalLimit?.toFixed(2) ?? "0.00"}
+                          ₹
+                          {selectedMasterCard.totalLimit?.toLocaleString(
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          ) ?? "0.00"}
                         </>
                       </div>
                     </div>

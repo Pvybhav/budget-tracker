@@ -147,7 +147,11 @@ export default function VisualizePage() {
         <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
           <p className="text-slate-200 font-medium mb-1">{payload[0].name}</p>
           <p className="text-emerald-400 font-bold">
-            ₹{payload[0].value.toFixed(2)}
+            ₹
+            {payload[0].value.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
       );

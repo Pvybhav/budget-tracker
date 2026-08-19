@@ -14,7 +14,8 @@ function monthsBetween(date1: Date, date2: Date): number {
  * For 0% interest simply returns principal / months.
  */
 export function calcMonthlyEmi(principal: number, annualRatePct: number, months: number): number {
-  if (annualRatePct === 0 || months === 0) return principal / months;
+  if (months <= 0) return 0;
+  if (annualRatePct === 0) return principal / months;
   const r = annualRatePct / 100 / 12;
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
 }
@@ -246,7 +247,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   if ((card.amc ?? 0) > 0 && sharedWaiveOffLimit > 0) {
     remainingToWaive = Math.max(0, sharedWaiveOffLimit - totalSpent);
     if (remainingToWaive > 0) {
-      amcMessageText = `Spend ₹${remainingToWaive.toFixed(2)} more to waive AMC`;
+      amcMessageText = `Spend ₹${remainingToWaive.toLocaleString("en-IN", {minimumFractionDigits: 2,maximumFractionDigits: 2})} more to waive AMC`;
     } else {
       amcMessageText = "AMC Waived! 🎉";
       isAmcWaived = true;

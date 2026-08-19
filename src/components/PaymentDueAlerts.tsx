@@ -83,14 +83,20 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
               </div>
               <div className="text-xs text-slate-400">
                 Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} • ₹
-                {metrics.amountToPayNext.toFixed(2)}
+                {metrics.amountToPayNext.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={async () => {
                   const ok = await showConfirm(
-                    `Mark ₹${metrics.amountToPayNext.toFixed(2)} as paid for ${card.title}?`,
+                    `Mark ₹${metrics.amountToPayNext.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })} as paid for ${card.title}?`,
                     { title: "Mark Paid", confirmText: "Mark Paid" },
                   );
                   if (!ok) return;
