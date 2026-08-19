@@ -66,7 +66,7 @@ export function getSavingsGoalSummary(goal: SavingsGoal): SavingsGoalSummary {
   } else if (avgDailySavings > 0) {
     etaLabel = `~${etaDays} day${etaDays === 1 ? '' : 's'}`;
   } else {
-    etaLabel = `₹${requiredPerDay.toFixed(0)}/day`;
+    etaLabel = `₹${requiredPerDay.toFixed(2)}/day`;
   }
 
   const estimatedCompletionDate = remainingAmount > 0 && avgDailySavings > 0

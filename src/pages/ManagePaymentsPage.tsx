@@ -42,7 +42,7 @@ export default function ManagePaymentsPage() {
                   {new Date(payment.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">{payment.cardId}</td>
-                <td className="px-6 py-4">₹{payment.amount}</td>
+                <td className="px-6 py-4">₹{payment.amount.toFixed(2)}</td>
                 <td className="px-6 py-4 text-right">
                   <button className="text-blue-400 hover:text-blue-300 mr-3">
                     Edit

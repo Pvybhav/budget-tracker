@@ -193,8 +193,8 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   }
 
   // Calculate next and last billing dates
-  let nextBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
-  let lastBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
+  const nextBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
+  const lastBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
 
   if (today > nextBillDate) {
     nextBillDate.setMonth(nextBillDate.getMonth() + 1);
@@ -202,7 +202,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     lastBillDate.setMonth(lastBillDate.getMonth() - 1);
   }
 
-  let nextPayDate = new Date(today.getFullYear(), today.getMonth(), card.paymentDate ?? today.getDate());
+  const nextPayDate = new Date(today.getFullYear(), today.getMonth(), card.paymentDate ?? today.getDate());
   if (today > nextPayDate || nextPayDate <= nextBillDate) {
     nextPayDate.setMonth(nextPayDate.getMonth() + 1);
   }
@@ -246,7 +246,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   if ((card.amc ?? 0) > 0 && sharedWaiveOffLimit > 0) {
     remainingToWaive = Math.max(0, sharedWaiveOffLimit - totalSpent);
     if (remainingToWaive > 0) {
-      amcMessageText = `Spend ₹${remainingToWaive} more to waive AMC`;
+      amcMessageText = `Spend ₹${remainingToWaive.toFixed(2)} more to waive AMC`;
     } else {
       amcMessageText = "AMC Waived! 🎉";
       isAmcWaived = true;

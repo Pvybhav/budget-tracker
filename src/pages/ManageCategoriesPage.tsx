@@ -22,7 +22,7 @@ const BUDGET_MODE_COLORS: Record<string, string> = {
 
 function fmtPreview(n: number) {
   if (n >= 1000) return "₹" + (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
-  return "₹" + n.toFixed(0);
+  return "₹" + n.toFixed(2);
 }
 
 function getBudgetPreviews(category: Category): string | null {
@@ -263,7 +263,7 @@ export default function ManageCategoriesPage() {
                     <div className="flex items-center gap-2">
                       <Wallet className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                       <span className="text-sm font-semibold text-slate-200">
-                        ₹{category.budgetAmount.toLocaleString("en-IN")}
+                        ₹{category.budgetAmount.toFixed(2)}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full border font-medium ${BUDGET_MODE_COLORS[category.budgetMode] ?? ""}`}
@@ -318,13 +318,13 @@ export default function ManageCategoriesPage() {
                             </div>
 
                             <div className="flex items-center justify-between text-xs text-slate-500 mt-2 gap-2">
-                              <div>₹{spent.toLocaleString("en-IN")} spent</div>
+                              <div>₹{spent.toFixed(2)}</div>
                               <div
                                 className={`${over ? "text-red-400 font-medium" : nearLimit ? "text-amber-400 font-medium" : "text-slate-400"}`}
                               >
                                 {over
-                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toLocaleString("en-IN")}`
-                                  : `${Math.max(0, budgetStatus.remaining).toLocaleString("en-IN")} left`}
+                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toFixed(2)}`
+                                  : `${Math.max(0, budgetStatus.remaining).toFixed(2)} left`}
                               </div>
                             </div>
                             <div

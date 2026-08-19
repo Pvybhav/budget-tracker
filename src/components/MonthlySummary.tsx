@@ -76,18 +76,20 @@ export default function MonthlySummary({ className }: { className?: string }) {
         <div className="col-span-1">
           <div className="text-sm text-slate-400">Spent</div>
           <div className="text-xl font-semibold text-rose-400">
-            ₹{spentThis}
+            ₹{spentThis.toFixed(2)}
           </div>
         </div>
         <div className="col-span-1">
           <div className="text-sm text-slate-400">Paid</div>
           <div className="text-xl font-semibold text-emerald-400">
-            ₹{paidThis}
+            ₹{paidThis.toFixed(2)}
           </div>
         </div>
         <div className="col-span-1 text-right">
           <div className="text-sm text-slate-400">Net</div>
-          <div className="text-xl font-semibold text-slate-100">₹{net}</div>
+          <div className="text-xl font-semibold text-slate-100">
+            ₹{net.toFixed(2)}{" "}
+          </div>
         </div>
       </div>
 

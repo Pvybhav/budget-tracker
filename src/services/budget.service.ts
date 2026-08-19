@@ -74,7 +74,7 @@ export function getCategoryBudgetAlert(category: Category, expenses: Expense[]):
     return {
       severity: 'danger',
       message: `Budget exceeded for ${category.title}`,
-      detail: `₹${status.spent.toLocaleString('en-IN')} spent against ₹${status.effectiveBudget.toLocaleString('en-IN')} budget.`,
+      detail: `₹${status.spent.toFixed(2)} spent against ₹${status.effectiveBudget.toFixed(2)} budget.`,
     };
   }
 
@@ -83,7 +83,7 @@ export function getCategoryBudgetAlert(category: Category, expenses: Expense[]):
     return {
       severity: 'warning',
       message: `${category.title} is nearing its limit`,
-      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString('en-IN')} left this ${periodLabel}.`,
+      detail: `Only ₹${Math.max(0, status.remaining).toFixed(2)} left this ${periodLabel}.`,
     };
   }
 

@@ -10,7 +10,7 @@ import { fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
 import { deleteExpense } from "../services/backendSync";
 
-export function cn(...inputs: (string | undefined | null | false)[]) {
+function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
@@ -342,7 +342,7 @@ export default function ManageExpensesPage({
                 : "Visible Total"}
           </p>
           <p className="text-3xl font-bold text-emerald-400">
-            ₹{totalAmount.toLocaleString()}
+            ₹{totalAmount.toFixed(2)}
           </p>
         </div>
 
@@ -365,10 +365,7 @@ export default function ManageExpensesPage({
             Largest Spend
           </p>
           <p className="text-3xl font-bold text-sky-400">
-            ₹
-            {(biggestExpense?.amount ?? 0).toLocaleString("en-IN", {
-              maximumFractionDigits: 0,
-            })}
+            ₹{(biggestExpense?.amount ?? 0).toFixed(2)}
           </p>
           <p className="mt-2 text-sm text-slate-500 truncate">
             {biggestExpense?.details || "No expense yet"}
@@ -383,7 +380,7 @@ export default function ManageExpensesPage({
               {mode === "monthly" ? "Month Total" : "Year Total"}
             </p>
             <p className="text-3xl font-bold text-emerald-400">
-              ₹{totalAmount.toLocaleString()}
+              ₹{totalAmount.toFixed(2)}
             </p>
           </div>
 
@@ -402,7 +399,7 @@ export default function ManageExpensesPage({
                         mb.amount > 0 ? "text-slate-200" : "text-slate-700",
                       )}
                     >
-                      ₹{mb.amount > 0 ? mb.amount.toLocaleString() : "0"}
+                      ₹{mb.amount > 0 ? mb.amount.toFixed(2) : "0.00"}
                     </div>
                   </div>
                 ))}
@@ -483,11 +480,7 @@ export default function ManageExpensesPage({
                             </span>
                           )}
                           <span className="text-xs text-emerald-400 font-medium">
-                            ₹
-                            {monthlyEmi.toLocaleString("en-IN", {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })}
+                            ₹{monthlyEmi.toFixed(2)}
                             /mo
                           </span>
                         </div>
@@ -510,13 +503,7 @@ export default function ManageExpensesPage({
                   <td className="px-6 py-4">{expense.cardId}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span>
-                        ₹
-                        {expense.amount.toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
+                      <span>₹{expense.amount.toFixed(2)}</span>
                       {isEmi && (
                         <span className="text-xs text-slate-500">
                           principal
