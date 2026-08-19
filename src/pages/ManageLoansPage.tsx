@@ -189,9 +189,9 @@ export default function ManageLoansPage() {
     alert("This feature is not yet implemented. Please check back later.");
 
     return;
-    if (selectedLoan) {
-      window.open(`/loans/${selectedLoan.id}`, "_blank");
-    }
+    // if (selectedLoan) {
+    //   window.open(`/loans/${selectedLoan.id}`, "_blank");
+    // }
   };
 
   return (
