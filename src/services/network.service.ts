@@ -1,4 +1,4 @@
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = "success" | "error" | "info";
 
 export interface ToastPayload {
   id: number;
@@ -11,6 +11,7 @@ const toastListeners = new Set<(toast: ToastPayload) => void>();
 
 let activeRequestCount = 0;
 let nextToastId = 1;
+const recentErrorToasts = new Map<string, number>();
 
 function notifyLoading() {
   loadingListeners.forEach((listener) => listener(activeRequestCount));
@@ -20,9 +21,7 @@ function notifyToast(toast: ToastPayload) {
   toastListeners.forEach((listener) => listener(toast));
 }
 
-export function onNetworkLoadingChange(
-  listener: (activeRequests: number) => void,
-) {
+export function onNetworkLoadingChange(listener: (activeRequests: number) => void) {
   loadingListeners.add(listener);
   listener(activeRequestCount);
   return () => {
@@ -51,10 +50,14 @@ export function finishNetworkRequest() {
   notifyLoading();
 }
 
-export function showNetworkToast(
-  message: string,
-  type: ToastType = 'info',
-) {
+export function showNetworkToast(message: string, type: ToastType = "info") {
+  if (type === "error") {
+    const lastShownAt = recentErrorToasts.get(message) ?? 0;
+    if (Date.now() - lastShownAt < 5000) {
+      return;
+    }
+    recentErrorToasts.set(message, Date.now());
+  }
   const toast: ToastPayload = {
     id: nextToastId++,
     type,

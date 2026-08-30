@@ -32,15 +32,7 @@ export default function MonthlySummary({ className }: { className?: string }) {
     }, 0);
 
     const prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-    const prevEnd = new Date(
-      start.getFullYear(),
-      start.getMonth(),
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
+    const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0, 23, 59, 59, 999);
     const spentLast = (expenses || []).reduce((sum, e) => {
       const d = new Date(e.date);
       if (d >= prevStart && d <= prevEnd) return sum + e.amount;
@@ -52,23 +44,16 @@ export default function MonthlySummary({ className }: { className?: string }) {
 
   const net = Math.max(0, spentThis - paidThis);
 
-  const pctChange =
-    spentLast === 0
-      ? 0
-      : Math.round(((spentThis - spentLast) / spentLast) * 100);
+  const pctChange = spentLast === 0 ? 0 : Math.round(((spentThis - spentLast) / spentLast) * 100);
 
   return (
-    <div
-      className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-5 ${className || ""}`}
-    >
+    <div className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-5 ${className || ""}`}>
       <div className="flex items-center justify-between mb-2">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
             Monthly Summary
           </div>
-          <div className="text-lg font-bold text-slate-100">
-            Spending at a glance
-          </div>
+          <div className="text-lg font-bold text-slate-100">Spending at a glance</div>
         </div>
       </div>
 

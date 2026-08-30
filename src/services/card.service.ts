@@ -1,12 +1,11 @@
-import type { Card, Expense, Payment } from '../db/db';
+import type { Card, Expense, Payment } from "../db/db";
 
 /**
  * Months between two dates (year*12 + month arithmetic — ignores day).
  * Positive when date2 is later than date1.
  */
 function monthsBetween(date1: Date, date2: Date): number {
-  return (date2.getFullYear() - date1.getFullYear()) * 12 +
-    (date2.getMonth() - date1.getMonth());
+  return (date2.getFullYear() - date1.getFullYear()) * 12 + (date2.getMonth() - date1.getMonth());
 }
 
 /**
@@ -58,10 +57,7 @@ function getScheduleStatus(dueDate: Date): EmiScheduleStatus {
     return "completed";
   }
 
-  if (
-    due.getFullYear() === today.getFullYear() &&
-    due.getMonth() === today.getMonth()
-  ) {
+  if (due.getFullYear() === today.getFullYear() && due.getMonth() === today.getMonth()) {
     return "due";
   }
 
@@ -106,14 +102,14 @@ export function getEmiSchedule(
 }
 
 export interface AccountAlertStatus {
-  severity: 'warning' | 'danger';
+  severity: "warning" | "danger";
   message: string;
   detail: string;
 }
 
 function getLinkedCardIds(card: Card, allCards: Card[] = []): number[] {
   const linkedIds = card.linkedCardIds ?? [];
-  const normalized = linkedIds.filter((id) => typeof id === 'number' && id > 0);
+  const normalized = linkedIds.filter((id) => typeof id === "number" && id > 0);
   const cardId = card.id;
 
   if (cardId == null) {
@@ -121,9 +117,11 @@ function getLinkedCardIds(card: Card, allCards: Card[] = []): number[] {
   }
 
   const fromOtherCards = allCards
-    .filter((candidate) => candidate.id !== cardId && (candidate.linkedCardIds ?? []).includes(cardId))
+    .filter(
+      (candidate) => candidate.id !== cardId && (candidate.linkedCardIds ?? []).includes(cardId),
+    )
     .map((candidate) => candidate.id)
-    .filter((id): id is number => typeof id === 'number' && id > 0);
+    .filter((id): id is number => typeof id === "number" && id > 0);
 
   return Array.from(new Set([...normalized, ...fromOtherCards]));
 }
@@ -150,13 +148,24 @@ function getCardScopePayments(card: Card, payments: Payment[], allCards: Card[] 
   return payments.filter((payment) => scopeCardIds.includes(payment.cardId));
 }
 
-export function getCardMetrics(card: Card, expenses: Expense[], payments: Payment[], allCards: Card[] = []) {
+export function getCardMetrics(
+  card: Card,
+  expenses: Expense[],
+  payments: Payment[],
+  allCards: Card[] = [],
+) {
   const today = new Date();
-  const isCreditAccount = card.type === 'credit';
+  const isCreditAccount = card.type === "credit";
   const scopeExpenses = getCardScopeExpenses(card, expenses, allCards);
   const scopePayments = getCardScopePayments(card, payments, allCards);
-  const linkedCards = allCards.filter((candidate) => candidate.id !== card.id && getLinkedCardIds(candidate, allCards).includes(card.id!));
-  const sharedLimit = Math.max(card.totalLimit, ...linkedCards.map((candidate) => candidate.totalLimit));
+  const linkedCards = allCards.filter(
+    (candidate) =>
+      candidate.id !== card.id && getLinkedCardIds(candidate, allCards).includes(card.id!),
+  );
+  const sharedLimit = Math.max(
+    card.totalLimit,
+    ...linkedCards.map((candidate) => candidate.totalLimit),
+  );
   const sharedWaiveOffLimit = Math.max(
     card.waiveOffLimit ?? 0,
     ...linkedCards.map((candidate) => candidate.waiveOffLimit ?? 0),
@@ -164,12 +173,15 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
 
   const totalSpent = scopeExpenses.reduce((sum, exp) => {
     if (!exp.isEmi) return sum + exp.amount;
-    return sum + calcEmiTotalCost(
-      exp.amount,
-      exp.emiInterestRate ?? 0,
-      exp.emiMonths ?? 1,
-      exp.emiProcessingFee ?? 0,
-      exp.emiGst ?? 0,
+    return (
+      sum +
+      calcEmiTotalCost(
+        exp.amount,
+        exp.emiInterestRate ?? 0,
+        exp.emiMonths ?? 1,
+        exp.emiProcessingFee ?? 0,
+        exp.emiGst ?? 0,
+      )
     );
   }, 0);
 
@@ -194,8 +206,16 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   }
 
   // Calculate next and last billing dates
-  const nextBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
-  const lastBillDate = new Date(today.getFullYear(), today.getMonth(), card.billingDate ?? today.getDate());
+  const nextBillDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    card.billingDate ?? today.getDate(),
+  );
+  const lastBillDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    card.billingDate ?? today.getDate(),
+  );
 
   if (today > nextBillDate) {
     nextBillDate.setMonth(nextBillDate.getMonth() + 1);
@@ -203,7 +223,11 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     lastBillDate.setMonth(lastBillDate.getMonth() - 1);
   }
 
-  const nextPayDate = new Date(today.getFullYear(), today.getMonth(), card.paymentDate ?? today.getDate());
+  const nextPayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    card.paymentDate ?? today.getDate(),
+  );
   if (today > nextPayDate || nextPayDate <= nextBillDate) {
     nextPayDate.setMonth(nextPayDate.getMonth() + 1);
   }
@@ -247,7 +271,7 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
   if ((card.amc ?? 0) > 0 && sharedWaiveOffLimit > 0) {
     remainingToWaive = Math.max(0, sharedWaiveOffLimit - totalSpent);
     if (remainingToWaive > 0) {
-      amcMessageText = `Spend ₹${remainingToWaive.toLocaleString("en-IN", {minimumFractionDigits: 2,maximumFractionDigits: 2})} more to waive AMC`;
+      amcMessageText = `Spend ₹${remainingToWaive.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} more to waive AMC`;
     } else {
       amcMessageText = "AMC Waived! 🎉";
       isAmcWaived = true;
@@ -267,41 +291,45 @@ export function getCardMetrics(card: Card, expenses: Expense[], payments: Paymen
     limit: sharedLimit,
     amcMessageText,
     remainingToWaive,
-    isAmcWaived
+    isAmcWaived,
   };
 }
 
-export function getAccountAlertStatus(card: Card, metrics: ReturnType<typeof getCardMetrics>): AccountAlertStatus | null {
+export function getAccountAlertStatus(
+  card: Card,
+  metrics: ReturnType<typeof getCardMetrics>,
+): AccountAlertStatus | null {
   const spendingLimit = metrics.limit ?? card.totalLimit;
   const spentRatio = spendingLimit > 0 ? metrics.currentBalance / spendingLimit : 0;
-  const isLowBalance = card.type !== 'credit' && metrics.currentBalance <= Math.max(1000, spendingLimit * 0.1);
-  const isOverLimit = card.type === 'credit' && metrics.availableLimit <= 0;
+  const isLowBalance =
+    card.type !== "credit" && metrics.currentBalance <= Math.max(1000, spendingLimit * 0.1);
+  const isOverLimit = card.type === "credit" && metrics.availableLimit <= 0;
 
   if (isOverLimit) {
     return {
-      severity: 'danger',
+      severity: "danger",
       message: `${card.title} is over its limit`,
-      detail: `Available limit is ₹${metrics.availableLimit.toLocaleString('en-IN')} after current spend.`,
+      detail: `Available limit is ₹${metrics.availableLimit.toLocaleString("en-IN")} after current spend.`,
     };
   }
 
   if (isLowBalance) {
     return {
-      severity: 'warning',
+      severity: "warning",
       message: `${card.title} balance is running low`,
-      detail: `Current balance is ₹${metrics.currentBalance.toLocaleString('en-IN')}.`,
+      detail: `Current balance is ₹${metrics.currentBalance.toLocaleString("en-IN")}.`,
     };
   }
 
-  if (card.type === 'credit' && spentRatio <= 0.8 && metrics.availableLimit > 0) {
+  if (card.type === "credit" && spentRatio <= 0.8 && metrics.availableLimit > 0) {
     return null;
   }
 
-  if (card.type === 'credit' && spentRatio <= 0.9) {
+  if (card.type === "credit" && spentRatio <= 0.9) {
     return {
-      severity: 'warning',
+      severity: "warning",
       message: `${card.title} is nearing its credit limit`,
-      detail: `Only ₹${metrics.availableLimit.toLocaleString('en-IN')} of limit remains.`,
+      detail: `Only ₹${metrics.availableLimit.toLocaleString("en-IN")} of limit remains.`,
     };
   }
 

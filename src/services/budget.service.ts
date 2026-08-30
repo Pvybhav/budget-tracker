@@ -1,6 +1,6 @@
-export type BudgetMode = 'monthly' | 'quarterly' | 'yearly';
+export type BudgetMode = "monthly" | "quarterly" | "yearly";
 
-import { type Category, type Expense } from '../db/db';
+import { type Category, type Expense } from "../db/db";
 
 export interface BudgetStatus {
   effectiveBudget: number;
@@ -10,34 +10,34 @@ export interface BudgetStatus {
   progressClamped: number;
   isOverBudget: boolean;
   isNearLimit: boolean;
-  statusLabel: 'On track' | 'Near limit' | 'Over budget';
+  statusLabel: "On track" | "Near limit" | "Over budget";
 }
 
 export interface CategoryBudgetAlert {
-  severity: 'warning' | 'danger';
+  severity: "warning" | "danger";
   message: string;
   detail: string;
 }
 
 export function getEffectiveMonthlyBudget(amount: number, mode: BudgetMode): number {
-  if (mode === 'monthly') return amount;
-  if (mode === 'quarterly') return amount / 3;
+  if (mode === "monthly") return amount;
+  if (mode === "quarterly") return amount / 3;
   return amount / 12;
 }
 
-export function getBudgetStatus(spent: number, budgetAmount: number, mode: BudgetMode): BudgetStatus {
-  const effectiveBudget = getEffectiveMonthlyBudget(budgetAmount, mode);
+export function getBudgetStatus(spent: number, budgetAmount: number): BudgetStatus {
+  const effectiveBudget = budgetAmount;
   const remaining = effectiveBudget - spent;
   const progressPercent = effectiveBudget > 0 ? (spent / effectiveBudget) * 100 : 0;
   const progressClamped = Math.min(100, Math.round(progressPercent));
   const isOverBudget = remaining < 0;
   const isNearLimit = !isOverBudget && progressClamped >= 80;
 
-  let statusLabel: BudgetStatus['statusLabel'] = 'On track';
+  let statusLabel: BudgetStatus["statusLabel"] = "On track";
   if (isOverBudget) {
-    statusLabel = 'Over budget';
+    statusLabel = "Over budget";
   } else if (isNearLimit) {
-    statusLabel = 'Near limit';
+    statusLabel = "Near limit";
   }
 
   return {
@@ -52,38 +52,48 @@ export function getBudgetStatus(spent: number, budgetAmount: number, mode: Budge
   };
 }
 
-export function getCategoryBudgetAlert(category: Category, expenses: Expense[]): CategoryBudgetAlert | null {
+export function getCategoryBudgetAlert(
+  category: Category,
+  expenses: Expense[],
+): CategoryBudgetAlert | null {
   if (!category.budgetAmount || !category.budgetMode) return null;
-
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  const monthExpenses = expenses.filter((expense) => expense.categoryId === category.id);
-
+  const currentQuarter = Math.floor((currentMonth - 1) / 3);
   let spent = 0;
-  for (const expense of monthExpenses) {
+  for (const expense of expenses) {
+    if (expense.categoryId !== category.id) continue;
     const date = new Date(expense.date);
-    const isCurrentMonth = date.getFullYear() === currentYear && date.getMonth() + 1 === currentMonth;
-    if (!isCurrentMonth) continue;
-
+    const isCurrentPeriod =
+      date.getFullYear() === currentYear &&
+      (category.budgetMode === "yearly" ||
+        (category.budgetMode === "quarterly" &&
+          Math.floor(date.getMonth() / 3) === currentQuarter) ||
+        (category.budgetMode === "monthly" && date.getMonth() + 1 === currentMonth));
+    if (!isCurrentPeriod) continue;
     spent += expense.amount;
   }
-
-  const status = getBudgetStatus(spent, category.budgetAmount, category.budgetMode);
+  const status = getBudgetStatus(spent, category.budgetAmount);
   if (status.isOverBudget) {
     return {
-      severity: 'danger',
+      severity: "danger",
       message: `Budget exceeded for ${category.title}`,
-      detail: `₹${status.spent.toLocaleString("en-IN", {minimumFractionDigits: 2,maximumFractionDigits: 2})} spent against ₹${status.effectiveBudget.toLocaleString("en-IN", {minimumFractionDigits: 2,maximumFractionDigits: 2})} budget.`,
+      detail: `₹${status.spent.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} spent against ₹${status.effectiveBudget.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} budget.`,
     };
   }
 
   if (status.isNearLimit) {
-    const periodLabel = category.budgetMode === 'yearly' ? 'year' : category.budgetMode === 'quarterly' ? 'quarter' : 'month';
+    const periodLabel =
+      category.budgetMode === "yearly"
+        ? "year"
+        : category.budgetMode === "quarterly"
+          ? "quarter"
+          : "month";
     return {
-      severity: 'warning',
+      severity: "warning",
       message: `${category.title} is nearing its limit`,
-      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString("en-IN", {minimumFractionDigits: 2,maximumFractionDigits: 2})} left this ${periodLabel}.`,
+      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left this ${periodLabel}.`,
     };
   }
 

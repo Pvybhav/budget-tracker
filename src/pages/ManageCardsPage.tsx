@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { type Card } from "../db/db";
 import AddCardModal from "../components/modals/AddCardModal";
+import RewardPointsSection from "../components/RewardPointsSection";
 import showConfirm from "../components/Confirm";
 import { getCardMetrics } from "../services/card.service";
 import { deleteCard } from "../services/backendSync";
@@ -9,12 +10,16 @@ import {
   fetchCards,
   fetchExpenses,
   fetchPayments,
+  fetchIncomes,
+  fetchTransfers,
 } from "../services/backend.service";
 
 export default function ManageCardsPage() {
   const cards = useBackendResource(() => fetchCards(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const payments = useBackendResource(() => fetchPayments(), []);
+  const incomes = useBackendResource(() => fetchIncomes(), []);
+  const transfers = useBackendResource(() => fetchTransfers(), []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<Card | undefined>(undefined);
@@ -42,9 +47,7 @@ export default function ManageCardsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-slate-100">
-          Manage Accounts
-        </h1>
+        <h1 className="text-3xl font-semibold text-slate-100">Manage Accounts</h1>
         <button
           onClick={openAddModal}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -70,41 +73,48 @@ export default function ManageCardsPage() {
           </thead>
           <tbody className="divide-y divide-slate-800/50">
             {cards?.map((card) => {
-              const cardExpenses =
-                expenses?.filter((e) => e.cardId === card.id) || [];
-              const cardPayments =
-                payments?.filter((p) => p.cardId === card.id) || [];
-              const metrics = getCardMetrics(
-                card,
-                cardExpenses,
-                cardPayments,
-                cards || [],
-              );
-              const currentBalance = metrics.currentBalance;
+              const cardExpenses = expenses?.filter((e) => e.cardId === card.id) || [];
+              const cardPayments = payments?.filter((p) => p.cardId === card.id) || [];
+              const metrics = getCardMetrics(card, cardExpenses, cardPayments, cards || []);
+              const accountIncome =
+                incomes
+                  ?.filter((income) => income.accountId === card.id)
+                  .reduce((sum, income) => sum + income.amount, 0) ?? 0;
+              const transferIn =
+                transfers
+                  ?.filter((transfer) => transfer.toAccountId === card.id)
+                  .reduce((sum, transfer) => sum + transfer.amount, 0) ?? 0;
+              const transferOut =
+                transfers
+                  ?.filter((transfer) => transfer.fromAccountId === card.id)
+                  .reduce((sum, transfer) => sum + transfer.amount, 0) ?? 0;
+              const currentBalance =
+                card.type === "credit"
+                  ? metrics.currentBalance
+                  : metrics.currentBalance + accountIncome + transferIn - transferOut;
               const accountTypeLabel =
                 card.type === "debit"
                   ? "Debit Card"
-                  : card.type === "meal"
-                    ? "Meal Card"
-                    : card.type === "wallet"
-                      ? "UPI Wallet"
-                      : card.type === "other"
-                        ? "Other"
-                        : "Credit Card";
+                  : card.type === "bank"
+                    ? "Bank Account"
+                    : card.type === "meal"
+                      ? "Meal Card"
+                      : card.type === "wallet"
+                        ? "UPI Wallet"
+                        : card.type === "cash"
+                          ? "Cash"
+                          : card.type === "gift"
+                            ? "Gift Card"
+                            : card.type === "other"
+                              ? "Other"
+                              : "Credit Card";
 
               return (
-                <tr
-                  key={card.id}
-                  className="hover:bg-slate-800/20 transition-colors"
-                >
+                <tr key={card.id} className="hover:bg-slate-800/20 transition-colors">
                   <td className="px-6 py-4">{card.title}</td>
                   <td className="px-6 py-4">{accountTypeLabel}</td>
-                  <td className="px-6 py-4">
-                    {card.type === "credit" ? card.billingDate : "—"}
-                  </td>
-                  <td className="px-6 py-4">
-                    {card.type === "credit" ? card.paymentDate : "—"}
-                  </td>
+                  <td className="px-6 py-4">{card.type === "credit" ? card.billingDate : "—"}</td>
+                  <td className="px-6 py-4">{card.type === "credit" ? card.paymentDate : "—"}</td>
                   <td className="px-6 py-4">
                     ₹
                     {card.totalLimit?.toLocaleString("en-IN", {
@@ -158,11 +168,8 @@ export default function ManageCardsPage() {
             })}
             {(!cards || cards.length === 0) && (
               <tr>
-                <td
-                  colSpan={8}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
-                  No cards found.
+                <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                  No accounts found.
                 </td>
               </tr>
             )}
@@ -175,6 +182,8 @@ export default function ManageCardsPage() {
         onClose={() => setIsModalOpen(false)}
         initialCard={cardToEdit}
       />
+
+      <RewardPointsSection />
     </div>
   );
 }

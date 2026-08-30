@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createLoan, updateLoan } from "../../services/backendSync";
 import { X, Info } from "lucide-react";
 import { calcMonthlyEmi } from "../../services/card.service";
-import { showAlert } from "../../components/Confirm";
+import showLoan, { showAlert, showConfirm } from "../../components/Confirm";
 import { type Loan } from "../../db/db";
 
 interface Props {
@@ -33,8 +33,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
   const [formData, setFormData] = useState(() => {
     if (initialLoan) {
       const preset = INTEREST_PRESETS.find(
-        (option) =>
-          option.value >= 0 && option.value === initialLoan.annualInterestRate,
+        (option) => option.value >= 0 && option.value === initialLoan.annualInterestRate,
       );
       return {
         lender: initialLoan.lender,
@@ -67,15 +66,11 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
       : formData.interestPreset;
   const termMonths = formData.termMonths;
   const monthlyEmi =
-    principal > 0 && termMonths > 0
-      ? calcMonthlyEmi(principal, interestRate, termMonths)
-      : 0;
+    principal > 0 && termMonths > 0 ? calcMonthlyEmi(principal, interestRate, termMonths) : 0;
   const totalCost = monthlyEmi * termMonths;
   const totalInterest = totalCost - principal;
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (name === "interestPreset") {
       setFormData({ ...formData, interestPreset: Number(value) });
@@ -93,7 +88,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!formData.lender.trim()) {
       await showAlert("Please add a lender name.");
@@ -119,6 +114,11 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
     };
 
     if (initialLoan?.id) {
+      const ok = await showConfirm(`Save changes to the loan from "${payload.lender}"?`, {
+        title: "Confirm update",
+        confirmText: "Save changes",
+      });
+      if (!ok) return;
       await updateLoan(initialLoan.id, payload);
     } else {
       await createLoan(payload);
@@ -171,9 +171,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Start Date
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Start Date</label>
               <input
                 type="date"
                 name="startDate"
@@ -218,9 +216,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Interest Rate
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Interest Rate</label>
               <select
                 name="interestPreset"
                 value={formData.interestPreset}
@@ -248,9 +244,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Notes
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Notes</label>
               <input
                 type="text"
                 name="note"
@@ -269,27 +263,19 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between text-slate-400">
                 <span>Monthly EMI</span>
-                <span className="text-slate-100 font-semibold">
-                  ₹{fmt(monthlyEmi)}
-                </span>
+                <span className="text-slate-100 font-semibold">₹{fmt(monthlyEmi)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Total Cost</span>
-                <span className="text-slate-100 font-semibold">
-                  ₹{fmt(totalCost)}
-                </span>
+                <span className="text-slate-100 font-semibold">₹{fmt(totalCost)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Total Interest</span>
-                <span className="text-slate-100 font-semibold">
-                  ₹{fmt(totalInterest)}
-                </span>
+                <span className="text-slate-100 font-semibold">₹{fmt(totalInterest)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Repayment months</span>
-                <span className="text-slate-100 font-semibold">
-                  {termMonths}
-                </span>
+                <span className="text-slate-100 font-semibold">{termMonths}</span>
               </div>
             </div>
           </div>

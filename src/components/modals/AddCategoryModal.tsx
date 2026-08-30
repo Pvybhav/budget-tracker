@@ -14,11 +14,7 @@ function fmtPreview(n: number) {
   return "₹" + n.toFixed(0);
 }
 
-export default function AddCategoryModal({
-  isOpen,
-  onClose,
-  initialCategory,
-}: Props) {
+export default function AddCategoryModal({ isOpen, onClose, initialCategory }: Props) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -33,9 +29,7 @@ export default function AddCategoryModal({
         title: initialCategory.title,
         description: initialCategory.description ?? "",
         budgetAmount: initialCategory.budgetAmount?.toString() ?? "",
-        budgetMode:
-          (initialCategory.budgetMode as "monthly" | "quarterly" | "yearly") ??
-          "monthly",
+        budgetMode: (initialCategory.budgetMode as "monthly" | "quarterly" | "yearly") ?? "monthly",
         hasBudget: initialCategory.budgetAmount != null,
       });
     } else {
@@ -82,12 +76,8 @@ export default function AddCategoryModal({
     const payload: Category = {
       title: formData.title.trim(),
       description: formData.description.trim() || undefined,
-      budgetAmount:
-        formData.hasBudget && formData.budgetAmount ? budgetValue : undefined,
-      budgetMode:
-        formData.hasBudget && formData.budgetAmount
-          ? formData.budgetMode
-          : undefined,
+      budgetAmount: formData.hasBudget && formData.budgetAmount ? budgetValue : undefined,
+      budgetMode: formData.hasBudget && formData.budgetAmount ? formData.budgetMode : undefined,
     };
 
     if (initialCategory?.id) {
@@ -99,9 +89,7 @@ export default function AddCategoryModal({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -140,8 +128,7 @@ export default function AddCategoryModal({
 
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1">
-              Description{" "}
-              <span className="text-slate-600 text-xs">(optional)</span>
+              Description <span className="text-slate-600 text-xs">(optional)</span>
             </label>
             <textarea
               name="description"
@@ -158,9 +145,7 @@ export default function AddCategoryModal({
               type="checkbox"
               id="hasBudget"
               checked={formData.hasBudget}
-              onChange={(e) =>
-                setFormData({ ...formData, hasBudget: e.target.checked })
-              }
+              onChange={(e) => setFormData({ ...formData, hasBudget: e.target.checked })}
               className="w-4 h-4 accent-violet-500"
             />
             <label

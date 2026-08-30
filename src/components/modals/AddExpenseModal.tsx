@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
 import type { Expense } from "../../db/db";
 import { useBackendResource } from "../../services/backendHooks";
-import {
-  fetchCards,
-  fetchCategories,
-  fetchExpenses,
-} from "../../services/backend.service";
-import {
-  X,
-  TrendingUp,
-  TrendingDown,
-  Tags,
-  AlertTriangle,
-  Info,
-} from "lucide-react";
+import { fetchCards, fetchCategories, fetchExpenses } from "../../services/backend.service";
+import { X, TrendingUp, TrendingDown, Tags, AlertTriangle, Info } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
@@ -49,11 +38,7 @@ function fmt(n: number) {
   });
 }
 
-export default function AddExpenseModal({
-  isOpen,
-  onClose,
-  initialExpense,
-}: Props) {
+export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Props) {
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
@@ -67,9 +52,7 @@ export default function AddExpenseModal({
     categoryId: "",
     details: "",
     amount: "",
-    date: new Date(
-      new Date().getTime() - new Date().getTimezoneOffset() * 60000,
-    )
+    date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16),
     // EMI
@@ -85,16 +68,12 @@ export default function AddExpenseModal({
     recurringEndDate: "",
   });
 
-  const selectedCategory = categories?.find(
-    (c) => c.id === parseInt(formData.categoryId),
-  );
+  const selectedCategory = categories?.find((c) => c.id === parseInt(formData.categoryId));
 
   const categoryMonthlySpent = useBackendResource(async () => {
     if (!selectedCategory?.id) return 0;
     const allExp = await fetchExpenses();
-    const filtered = allExp.filter(
-      (expense) => expense.categoryId === selectedCategory.id,
-    );
+    const filtered = allExp.filter((expense) => expense.categoryId === selectedCategory.id);
 
     // For monthly-budget categories, EMI expenses contribute their monthly
     // installment (spread across each active month) rather than the full principal.
@@ -125,10 +104,7 @@ export default function AddExpenseModal({
       } else {
         // Non-EMI, or non-monthly budget: count full amount for current month only
         const d = new Date(e.date);
-        if (
-          d.getFullYear() === currentYear &&
-          d.getMonth() + 1 === currentMonth
-        ) {
+        if (d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth) {
           spent += e.amount;
         }
       }
@@ -141,10 +117,7 @@ export default function AddExpenseModal({
         spent -= monthlyInstallmentOf(initialExpense);
       } else {
         const d = new Date(initialExpense.date);
-        if (
-          d.getFullYear() === currentYear &&
-          d.getMonth() + 1 === currentMonth
-        ) {
+        if (d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth) {
           spent -= initialExpense.amount;
         }
       }
@@ -162,9 +135,7 @@ export default function AddExpenseModal({
   useEffect(() => {
     if (initialExpense) {
       const interestRate = initialExpense.emiInterestRate ?? 0;
-      const presetExists = INTEREST_PRESETS.some(
-        (p) => p.value === interestRate && p.value !== -1,
-      );
+      const presetExists = INTEREST_PRESETS.some((p) => p.value === interestRate && p.value !== -1);
       setFormData({
         cardId: initialExpense.cardId.toString(),
         categoryId: initialExpense.categoryId?.toString() ?? "",
@@ -188,9 +159,7 @@ export default function AddExpenseModal({
         categoryId: "",
         details: "",
         amount: "",
-        date: new Date(
-          new Date().getTime() - new Date().getTimezoneOffset() * 60000,
-        )
+        date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
           .toISOString()
           .slice(0, 16),
         isEmi: false,
@@ -219,9 +188,7 @@ export default function AddExpenseModal({
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-bold text-slate-100 mb-4">
-            No Cards Found
-          </h2>
+          <h2 className="text-xl font-bold text-slate-100 mb-4">No Cards Found</h2>
           <p className="text-slate-400 mb-6">
             You need to add a credit card before logging an expense.
           </p>
@@ -252,12 +219,10 @@ export default function AddExpenseModal({
           <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto mb-4">
             <Tags className="w-6 h-6 text-violet-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mb-2">
-            No Categories Found
-          </h2>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">No Categories Found</h2>
           <p className="text-slate-400 mb-6 text-sm">
-            A category is required for every expense. Add at least one category
-            before logging an expense.
+            A category is required for every expense. Add at least one category before logging an
+            expense.
           </p>
           <button
             onClick={() => {
@@ -284,21 +249,15 @@ export default function AddExpenseModal({
   const months = formData.emiMonths;
 
   const monthlyEmi =
-    principal > 0 && months > 0
-      ? calcMonthlyEmi(principal, effectiveInterestRate, months)
-      : 0;
-  const totalInterest =
-    effectiveInterestRate > 0 ? monthlyEmi * months - principal : 0;
-  const monthlyPayment =
-    monthlyEmi + (processingFeeAmount + gstAmount) / months;
+    principal > 0 && months > 0 ? calcMonthlyEmi(principal, effectiveInterestRate, months) : 0;
+  const totalInterest = effectiveInterestRate > 0 ? monthlyEmi * months - principal : 0;
+  const monthlyPayment = monthlyEmi + (processingFeeAmount + gstAmount) / months;
   const totalCost = principal + totalInterest + processingFeeAmount + gstAmount;
   // Credit limit blocked = full total cost (principal + interest + processing fee + GST)
   const availableLimitImpact = totalCost;
 
   const enteredBudgetImpact =
-    selectedCategory?.budgetMode === "monthly" && formData.isEmi
-      ? monthlyPayment
-      : principal;
+    selectedCategory?.budgetMode === "monthly" && formData.isEmi ? monthlyPayment : principal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,20 +279,11 @@ export default function AddExpenseModal({
       isEmi: formData.isEmi || undefined,
       emiMonths: formData.isEmi ? months : undefined,
       emiInterestRate: formData.isEmi ? effectiveInterestRate : undefined,
-      emiProcessingFee:
-        formData.isEmi && processingFeeAmount > 0
-          ? processingFeeAmount
-          : undefined,
+      emiProcessingFee: formData.isEmi && processingFeeAmount > 0 ? processingFeeAmount : undefined,
       emiGst: formData.isEmi && gstAmount > 0 ? gstAmount : undefined,
-      recurringFrequency: formData.isRecurring
-        ? formData.recurringFrequency
-        : undefined,
-      recurringInterval: formData.isRecurring
-        ? formData.recurringInterval
-        : undefined,
-      recurringEndDate: formData.isRecurring
-        ? formData.recurringEndDate || undefined
-        : undefined,
+      recurringFrequency: formData.isRecurring ? formData.recurringFrequency : undefined,
+      recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
+      recurringEndDate: formData.isRecurring ? formData.recurringEndDate || undefined : undefined,
     };
 
     if (initialExpense) {
@@ -345,9 +295,7 @@ export default function AddExpenseModal({
     onClose();
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
       setFormData({
@@ -358,9 +306,7 @@ export default function AddExpenseModal({
       setFormData({
         ...formData,
         [name]:
-          name === "emiMonths" ||
-          name === "emiInterestPreset" ||
-          name === "recurringInterval"
+          name === "emiMonths" || name === "emiInterestPreset" || name === "recurringInterval"
             ? parseInt(value)
             : value,
       });
@@ -369,16 +315,10 @@ export default function AddExpenseModal({
 
   // Budget indicator logic
   const spent = categoryMonthlySpent ?? 0;
-  const hasBudget =
-    selectedCategory?.budgetAmount != null &&
-    selectedCategory?.budgetMode != null;
+  const hasBudget = selectedCategory?.budgetAmount != null && selectedCategory?.budgetMode != null;
   const previewSpent = spent + enteredBudgetImpact;
   const budgetStatus = hasBudget
-    ? getBudgetStatus(
-        previewSpent,
-        selectedCategory!.budgetAmount!,
-        selectedCategory!.budgetMode!,
-      )
+    ? getBudgetStatus(previewSpent, selectedCategory!.budgetAmount!, selectedCategory!.budgetMode!)
     : null;
   const isOverBudget = budgetStatus?.isOverBudget ?? false;
   const isNearLimit = budgetStatus?.isNearLimit ?? false;
@@ -399,10 +339,7 @@ export default function AddExpenseModal({
           </h2>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 space-y-4 overflow-y-auto flex-1"
-        >
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Card */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1">
@@ -468,12 +405,8 @@ export default function AddExpenseModal({
                 </div>
                 <div className="flex items-center gap-4 flex-wrap">
                   <div>
-                    <span className="text-xs text-slate-500">
-                      Current spend
-                    </span>
-                    <p className="text-sm font-semibold text-slate-200">
-                      ₹{fmt(spent)}
-                    </p>
+                    <span className="text-xs text-slate-500">Current spend</span>
+                    <p className="text-sm font-semibold text-slate-200">₹{fmt(spent)}</p>
                   </div>
                   <div>
                     <span className="text-xs text-sky-400">New expense</span>
@@ -497,8 +430,7 @@ export default function AddExpenseModal({
                       ) : (
                         <TrendingUp className="w-3.5 h-3.5" />
                       )}
-                      {isOverBudget ? "-" : "+"}₹
-                      {fmt(Math.abs(budgetStatus.remaining))}
+                      {isOverBudget ? "-" : "+"}₹{fmt(Math.abs(budgetStatus.remaining))}
                     </p>
                   </div>
                 </div>
@@ -531,8 +463,7 @@ export default function AddExpenseModal({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1">
-              Description{" "}
-              <span className="text-slate-600 text-xs">(optional)</span>
+              Description <span className="text-slate-600 text-xs">(optional)</span>
             </label>
             <input
               type="text"
@@ -587,9 +518,7 @@ export default function AddExpenseModal({
                 onChange={handleChange}
                 className="w-4 h-4 accent-amber-400"
               />
-              <span className="font-medium text-slate-200 text-sm">
-                Convert to EMI
-              </span>
+              <span className="font-medium text-slate-200 text-sm">Convert to EMI</span>
               {formData.isEmi && principal > 0 && (
                 <span className="ml-auto text-xs text-amber-400 font-medium">
                   ₹{fmt(monthlyPayment)} / month
@@ -618,9 +547,7 @@ export default function AddExpenseModal({
                       ))}
                       {/* Allow any value 2-60 that isn't in presets */}
                       {!EMI_MONTH_OPTIONS.includes(formData.emiMonths) && (
-                        <option value={formData.emiMonths}>
-                          {formData.emiMonths} months
-                        </option>
+                        <option value={formData.emiMonths}>{formData.emiMonths} months</option>
                       )}
                     </select>
                     {/* Custom month input */}
@@ -631,15 +558,10 @@ export default function AddExpenseModal({
                       step="1"
                       placeholder="Or type 2–60"
                       value={
-                        EMI_MONTH_OPTIONS.includes(formData.emiMonths)
-                          ? ""
-                          : formData.emiMonths
+                        EMI_MONTH_OPTIONS.includes(formData.emiMonths) ? "" : formData.emiMonths
                       }
                       onChange={(e) => {
-                        const v = Math.min(
-                          60,
-                          Math.max(2, parseInt(e.target.value) || 2),
-                        );
+                        const v = Math.min(60, Math.max(2, parseInt(e.target.value) || 2));
                         setFormData({ ...formData, emiMonths: v });
                       }}
                       className="mt-1.5 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-amber-500 placeholder-slate-600"
@@ -683,9 +605,7 @@ export default function AddExpenseModal({
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
                       Processing Fee (₹)
-                      <span className="text-slate-600 ml-1 text-[10px]">
-                        — one-time
-                      </span>
+                      <span className="text-slate-600 ml-1 text-[10px]">— one-time</span>
                     </label>
                     <input
                       type="number"
@@ -701,9 +621,7 @@ export default function AddExpenseModal({
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
                       GST Amount (₹)
-                      <span className="text-slate-600 ml-1 text-[10px]">
-                        — on fee/interest
-                      </span>
+                      <span className="text-slate-600 ml-1 text-[10px]">— on fee/interest</span>
                     </label>
                     <input
                       type="number"
@@ -721,11 +639,9 @@ export default function AddExpenseModal({
                 <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-300 leading-relaxed">
-                    <span className="font-semibold">
-                      Even No Cost EMIs attract GST
-                    </span>{" "}
-                    on the processing fee charged by your bank. Check your bank
-                    statement for the exact amounts.
+                    <span className="font-semibold">Even No Cost EMIs attract GST</span> on the
+                    processing fee charged by your bank. Check your bank statement for the exact
+                    amounts.
                   </p>
                 </div>
 
@@ -738,22 +654,16 @@ export default function AddExpenseModal({
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                       <div className="flex justify-between">
                         <span className="text-slate-500">Principal</span>
-                        <span className="text-slate-200 font-medium">
-                          ₹{fmt(principal)}
-                        </span>
+                        <span className="text-slate-200 font-medium">₹{fmt(principal)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Total Interest</span>
                         <span
                           className={
-                            totalInterest > 0
-                              ? "text-red-400 font-medium"
-                              : "text-slate-600"
+                            totalInterest > 0 ? "text-red-400 font-medium" : "text-slate-600"
                           }
                         >
-                          {totalInterest > 0
-                            ? `₹${fmt(totalInterest)}`
-                            : "₹0 (No Cost)"}
+                          {totalInterest > 0 ? `₹${fmt(totalInterest)}` : "₹0 (No Cost)"}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -765,18 +675,14 @@ export default function AddExpenseModal({
                               : "text-slate-600"
                           }
                         >
-                          {processingFeeAmount > 0
-                            ? `₹${fmt(processingFeeAmount)}`
-                            : "—"}
+                          {processingFeeAmount > 0 ? `₹${fmt(processingFeeAmount)}` : "—"}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">GST</span>
                         <span
                           className={
-                            gstAmount > 0
-                              ? "text-amber-400 font-medium"
-                              : "text-slate-600"
+                            gstAmount > 0 ? "text-amber-400 font-medium" : "text-slate-600"
                           }
                         >
                           {gstAmount > 0 ? `₹${fmt(gstAmount)}` : "—"}
@@ -784,40 +690,26 @@ export default function AddExpenseModal({
                       </div>
                       <div className="flex justify-between col-span-2">
                         <span className="text-slate-500">Duration</span>
-                        <span className="text-slate-200 font-medium">
-                          {months} months
-                        </span>
+                        <span className="text-slate-200 font-medium">{months} months</span>
                       </div>
                     </div>
                     <div className="border-t border-slate-700 pt-2 mt-1 space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-slate-400 font-medium">
-                          Monthly payment
-                        </span>
-                        <span className="text-emerald-400 font-bold">
-                          ₹{fmt(monthlyPayment)}
-                        </span>
+                        <span className="text-slate-400 font-medium">Monthly payment</span>
+                        <span className="text-emerald-400 font-bold">₹{fmt(monthlyPayment)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400 font-medium">
-                          Total cost
-                        </span>
-                        <span className="text-slate-200 font-bold">
-                          ₹{fmt(totalCost)}
-                        </span>
+                        <span className="text-slate-400 font-medium">Total cost</span>
+                        <span className="text-slate-200 font-bold">₹{fmt(totalCost)}</span>
                       </div>
                       <div className="flex justify-between border-t border-slate-800 pt-1.5">
-                        <span className="text-slate-500">
-                          Credit limit blocked
-                        </span>
+                        <span className="text-slate-500">Credit limit blocked</span>
                         <span className="text-orange-400 font-medium">
                           ₹{fmt(availableLimitImpact)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">
-                          Counts toward AMC waiver
-                        </span>
+                        <span className="text-slate-500">Counts toward AMC waiver</span>
                         <span className="text-violet-400 font-medium">
                           ₹{fmt(availableLimitImpact)}
                         </span>
@@ -870,8 +762,8 @@ export default function AddExpenseModal({
                   />
                 </div>
                 <p className="text-xs text-slate-500">
-                  The first occurrence is the entry you save now. Future copies
-                  are added automatically based on the cadence and end date.
+                  The first occurrence is the entry you save now. Future copies are added
+                  automatically based on the cadence and end date.
                 </p>
               </div>
             )}

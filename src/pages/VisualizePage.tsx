@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
   LineChart,
   Line,
 } from "recharts";
@@ -22,7 +21,93 @@ import {
   fetchExpenses,
   fetchCategories,
   fetchCards,
+  fetchIncomes,
 } from "../services/backend.service";
+
+interface TooltipProps {
+  readonly active?: boolean;
+  readonly payload?: Array<{
+    value: number;
+    payload: {
+      name: string;
+      amount: number;
+      categoryBreakdown?: Array<{ name: string; amount: number }>;
+    };
+  }>;
+}
+interface TrendTooltipProps extends TooltipProps {
+  readonly label?: string | number;
+}
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
+  if (active && payload?.length) {
+    const categoryName = payload[0].payload.name;
+    return (
+      <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
+        {" "}
+        <p className="text-slate-200 font-medium mb-1">{categoryName}</p>{" "}
+        <p className="text-emerald-400 font-bold">
+          {" "}
+          ₹{" "}
+          {payload[0].value.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}{" "}
+        </p>{" "}
+      </div>
+    );
+  }
+  return null;
+};
+const TrendTooltip = ({ active, payload, label }: TrendTooltipProps) => {
+  if (active && payload?.length) {
+    const categoryBreakdown = payload[0].payload.categoryBreakdown ?? [];
+    return (
+      <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
+        {" "}
+        <p className="text-slate-200 font-medium mb-1">{label}</p>{" "}
+        <p className="text-emerald-400 font-bold mb-2">
+          {" "}
+          Total: ₹{" "}
+          {payload[0].value.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}{" "}
+        </p>{" "}
+        {categoryBreakdown.length > 0 && (
+          <ul className="space-y-1">
+            {" "}
+            {categoryBreakdown.map((cat: { name: string; amount: number }) => (
+              <li key={cat.name} className="flex items-center justify-between gap-4 text-sm">
+                {" "}
+                <span className="text-slate-300">{cat.name}</span>{" "}
+                <span className="text-slate-100 font-medium">
+                  {" "}
+                  ₹{" "}
+                  {cat.amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                </span>{" "}
+              </li>
+            ))}{" "}
+          </ul>
+        )}{" "}
+      </div>
+    );
+  }
+  return null;
+};
+interface ChartCardProps {
+  readonly title: string;
+  readonly children: React.ReactNode;
+}
+const ChartCard = ({ title, children }: ChartCardProps) => (
+  <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col h-[400px]">
+    {" "}
+    <h3 className="text-slate-200 font-semibold mb-6 text-lg">{title}</h3>{" "}
+    <div className="flex-1 w-full min-h-0">{children}</div>{" "}
+  </div>
+);
 
 const COLORS = [
   "#3b82f6",
@@ -42,8 +127,9 @@ export default function VisualizePage() {
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
   const cards = useBackendResource(() => fetchCards(), []);
+  const incomes = useBackendResource(() => fetchIncomes(), []);
 
-  if (!expenses || !categories || !cards) {
+  if (!expenses || !categories || !cards || !incomes) {
     return <div className="p-8 text-slate-400">Loading charts...</div>;
   }
 
@@ -66,18 +152,14 @@ export default function VisualizePage() {
     "December",
   ];
 
-  const selectedMonthLabel = new Date(
-    selectedYear,
-    selectedMonth,
-    1,
-  ).toLocaleString("default", {
+  const selectedMonthLabel = new Date(selectedYear, selectedMonth, 1).toLocaleString("default", {
     month: "long",
     year: "numeric",
   });
 
   // 1. Category-wise spent in the selected month
   const monthlyCategoryData = categories
-    .map((cat) => {
+    .map((cat, index) => {
       const total = expenses
         .filter((exp) => {
           const d = new Date(exp.date);
@@ -88,20 +170,20 @@ export default function VisualizePage() {
           );
         })
         .reduce((sum, exp) => sum + exp.amount, 0);
-      return { name: cat.title, amount: total };
+      return { name: cat.title, amount: total, fill: COLORS[index % COLORS.length] };
     })
     .filter((d) => d.amount > 0);
 
   // 2. Category-wise spent for the year
   const yearlyCategoryData = categories
-    .map((cat) => {
+    .map((cat, index) => {
       const total = expenses
         .filter((exp) => {
           const d = new Date(exp.date);
           return d.getFullYear() === currentYear && exp.categoryId === cat.id;
         })
         .reduce((sum, exp) => sum + exp.amount, 0);
-      return { name: cat.title, amount: total };
+      return { name: cat.title, amount: total, fill: COLORS[index % COLORS.length] };
     })
     .filter((d) => d.amount > 0);
 
@@ -112,82 +194,73 @@ export default function VisualizePage() {
       month: "short",
       year: "numeric",
     });
-    const total = expenses
-      .filter((exp) => {
-        const d = new Date(exp.date);
-        return (
-          d.getMonth() === date.getMonth() &&
-          d.getFullYear() === date.getFullYear()
-        );
-      })
-      .reduce((sum, exp) => sum + exp.amount, 0);
-    return { month: label, amount: total };
+    const monthExpenses = expenses.filter((exp) => {
+      const d = new Date(exp.date);
+      return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+    });
+    const total = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const categoryBreakdown = categories
+      .map((cat) => ({
+        name: cat.title,
+        amount: monthExpenses
+          .filter((exp) => exp.categoryId === cat.id)
+          .reduce((sum, exp) => sum + exp.amount, 0),
+      }))
+      .filter((d) => d.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+    return { month: label, amount: total, categoryBreakdown };
   });
-
   // 4. Category share by month and year
   const categoryShareMonthlyData = monthlyCategoryData;
   const categoryShareYearlyData = yearlyCategoryData;
-
-  const ChartCard = ({
-    title,
-    children,
-  }: {
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col h-[400px]">
-      <h3 className="text-slate-200 font-semibold mb-6 text-lg">{title}</h3>
-      <div className="flex-1 w-full min-h-0">{children}</div>
-    </div>
-  );
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
-          <p className="text-slate-200 font-medium mb-1">{payload[0].name}</p>
-          <p className="text-emerald-400 font-bold">
-            ₹
-            {payload[0].value.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
+  // 5. Income vs Expense for the last 6 months
+  const incomeVsExpenseData = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(currentYear, currentMonth - (5 - index), 1);
+    const label = date.toLocaleString("default", { month: "short", year: "numeric" });
+    const expenseTotal = expenses
+      .filter((exp) => {
+        const d = new Date(exp.date);
+        return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0);
+    const incomeTotal = incomes
+      .filter((inc) => {
+        const d = new Date(inc.date);
+        return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+      })
+      .reduce((sum, inc) => sum + inc.amount, 0);
+    return { month: label, income: incomeTotal, expense: expenseTotal };
+  });
+  // 6. Income by category for the selected month
+  const incomeByCategoryData = Object.entries(
+    incomes
+      .filter((inc) => {
+        const d = new Date(inc.date);
+        return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+      })
+      .reduce<Record<string, number>>((acc, inc) => {
+        const key = inc.category ?? "other";
+        acc[key] = (acc[key] ?? 0) + inc.amount;
+        return acc;
+      }, {}),
+  ).map(([name, amount], index) => ({ name, amount, fill: COLORS[index % COLORS.length] }));
   const handleExportReport = async () => {
     setIsExporting(true);
     try {
       const wb = XLSX.utils.book_new();
-
       const trendSheet = [
         ["Month", "Spending (₹)"],
         ...monthlyTrendData.map((row) => [row.month, row.amount]),
         [],
-        [
-          "Total (6 months)",
-          monthlyTrendData.reduce((sum, row) => sum + row.amount, 0),
-        ],
+        ["Total (6 months)", monthlyTrendData.reduce((sum, row) => sum + row.amount, 0)],
       ];
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet(trendSheet),
-        "Spending Trend",
-      );
-
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(trendSheet), "Spending Trend");
       if (categoryShareMonthlyData.length > 0) {
         const monthlySheet = [
           ["Category", "Amount (₹)"],
           ...categoryShareMonthlyData.map((row) => [row.name, row.amount]),
           [],
-          [
-            "Total",
-            categoryShareMonthlyData.reduce((sum, row) => sum + row.amount, 0),
-          ],
+          ["Total", categoryShareMonthlyData.reduce((sum, row) => sum + row.amount, 0)],
         ];
         XLSX.utils.book_append_sheet(
           wb,
@@ -195,16 +268,12 @@ export default function VisualizePage() {
           "Category Share (Month)",
         );
       }
-
       if (categoryShareYearlyData.length > 0) {
         const yearlySheet = [
           ["Category", "Amount (₹)"],
           ...categoryShareYearlyData.map((row) => [row.name, row.amount]),
           [],
-          [
-            "Total",
-            categoryShareYearlyData.reduce((sum, row) => sum + row.amount, 0),
-          ],
+          ["Total", categoryShareYearlyData.reduce((sum, row) => sum + row.amount, 0)],
         ];
         XLSX.utils.book_append_sheet(
           wb,
@@ -212,12 +281,10 @@ export default function VisualizePage() {
           "Category Share (Year)",
         );
       }
-
       if (wb.SheetNames.length === 0) {
         await showAlert("No chart data available to export.");
         return;
       }
-
       const fileName = `Budget_Tracker_Visual_Report_${months[currentMonth]}_${currentYear}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } catch (error) {
@@ -227,93 +294,103 @@ export default function VisualizePage() {
       setIsExporting(false);
     }
   };
-
   return (
     <div className="space-y-8 pb-12">
+      {" "}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {" "}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Visualize</h1>
+          {" "}
+          <h1 className="text-3xl font-bold text-white mb-2">Visualize</h1>{" "}
           <p className="text-slate-400">
-            Spending and category share trends for {selectedMonthLabel}
-          </p>
-        </div>
+            {" "}
+            Spending and category share trends for {selectedMonthLabel}{" "}
+          </p>{" "}
+        </div>{" "}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {" "}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200">
+            {" "}
             <label htmlFor="visualize-month" className="text-slate-400">
-              Month
-            </label>
+              {" "}
+              Month{" "}
+            </label>{" "}
             <select
               id="visualize-month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 outline-none ring-0"
             >
+              {" "}
               {months.map((month, index) => (
                 <option key={month} value={index}>
-                  {month}
+                  {" "}
+                  {month}{" "}
                 </option>
-              ))}
-            </select>
-          </div>
+              ))}{" "}
+            </select>{" "}
+          </div>{" "}
           <div className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200">
+            {" "}
             <label htmlFor="visualize-year" className="text-slate-400">
-              Year
-            </label>
+              {" "}
+              Year{" "}
+            </label>{" "}
             <select
               id="visualize-year"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 outline-none ring-0"
             >
-              {[selectedYear - 1, selectedYear, selectedYear + 1].map(
-                (year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
+              {" "}
+              {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
+                <option key={year} value={year}>
+                  {" "}
+                  {year}{" "}
+                </option>
+              ))}{" "}
+            </select>{" "}
+          </div>{" "}
           <button
             type="button"
             onClick={handleExportReport}
             disabled={isExporting}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Download className="w-4 h-4" />
-            {isExporting ? "Preparing report..." : "Export visual report"}
-          </button>
-        </div>
-      </div>
-
+            {" "}
+            <Download className="w-4 h-4" />{" "}
+            {isExporting ? "Preparing report..." : "Export visual report"}{" "}
+          </button>{" "}
+        </div>{" "}
+      </div>{" "}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {" "}
         <ChartCard title="Spending Trend (Last 6 Months)">
+          {" "}
           {monthlyTrendData.some((row) => row.amount > 0) ? (
             <ResponsiveContainer width="100%" height="100%">
+              {" "}
               <LineChart data={monthlyTrendData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#334155"
-                  vertical={false}
-                />
+                {" "}
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />{" "}
                 <XAxis
                   dataKey="month"
                   stroke="#94a3b8"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                />
+                />{" "}
                 <YAxis
                   stroke="#94a3b8"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => `₹${value}`}
-                />
+                />{" "}
                 <Tooltip
-                  content={<CustomTooltip />}
+                  content={<TrendTooltip />}
                   cursor={{ stroke: "#1e293b", strokeWidth: 2 }}
-                />
+                />{" "}
                 <Line
                   type="monotone"
                   dataKey="amount"
@@ -321,121 +398,185 @@ export default function VisualizePage() {
                   strokeWidth={3}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
-                />
-              </LineChart>
+                />{" "}
+              </LineChart>{" "}
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-slate-500 italic">
-              No spending data available
+              {" "}
+              No spending data available{" "}
             </div>
-          )}
-        </ChartCard>
-
+          )}{" "}
+        </ChartCard>{" "}
         <ChartCard title={`Spending by Category (${selectedMonthLabel})`}>
+          {" "}
           {monthlyCategoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyCategoryData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#334155"
-                  vertical={false}
-                />
+              {" "}
+              <BarChart
+                data={monthlyCategoryData}
+                margin={{ top: 0, right: 0, left: 0, bottom: 24 }}
+              >
+                {" "}
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />{" "}
                 <XAxis
                   dataKey="name"
                   stroke="#94a3b8"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                />
+                  interval={0}
+                  angle={-35}
+                  textAnchor="end"
+                  height={60}
+                />{" "}
                 <YAxis
                   stroke="#94a3b8"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => `₹${value}`}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ fill: "#1e293b" }}
-                />
-                <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                />{" "}
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#1e293b" }} />{" "}
+                <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />{" "}
+              </BarChart>{" "}
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-slate-500 italic">
-              No data for {selectedMonthLabel}
+              {" "}
+              No data for {selectedMonthLabel}{" "}
             </div>
-          )}
-        </ChartCard>
-
+          )}{" "}
+        </ChartCard>{" "}
         <ChartCard title={`Category Share (${selectedMonthLabel})`}>
+          {" "}
           {categoryShareMonthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
+              {" "}
               <PieChart>
+                {" "}
                 <Pie
                   data={categoryShareMonthlyData}
                   cx="50%"
-                  cy="45%"
+                  cy="38%"
                   labelLine={false}
-                  outerRadius={100}
+                  outerRadius="70%"
                   fill="#8884d8"
                   dataKey="amount"
-                >
-                  {categoryShareMonthlyData.map((_, index) => (
-                    <Cell
-                      key={`cell-month-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ paddingTop: "20px" }}
-                />
-              </PieChart>
+                />{" "}
+                <Tooltip content={<CustomTooltip />} />{" "}
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
+              </PieChart>{" "}
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-slate-500 italic">
-              No category share data for {selectedMonthLabel}
+              {" "}
+              No category share data for {selectedMonthLabel}{" "}
             </div>
-          )}
-        </ChartCard>
-
+          )}{" "}
+        </ChartCard>{" "}
         <ChartCard title="Category Share (This Year)">
+          {" "}
           {categoryShareYearlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
+              {" "}
               <PieChart>
+                {" "}
                 <Pie
                   data={categoryShareYearlyData}
+                  cx="50%"
+                  cy="38%"
+                  labelLine={false}
+                  outerRadius="70%"
+                  fill="#8884d8"
+                  dataKey="amount"
+                />{" "}
+                <Tooltip content={<CustomTooltip />} />{" "}
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
+              </PieChart>{" "}
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-500 italic">
+              {" "}
+              No category share data for this year{" "}
+            </div>
+          )}{" "}
+        </ChartCard>{" "}
+      </div>{" "}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {" "}
+        <ChartCard title="Income vs Expense (Last 6 Months)">
+          {" "}
+          {incomeVsExpenseData.some((row) => row.income > 0 || row.expense > 0) ? (
+            <ResponsiveContainer width="100%" height="100%">
+              {" "}
+              <BarChart data={incomeVsExpenseData}>
+                {" "}
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />{" "}
+                <XAxis
+                  dataKey="month"
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />{" "}
+                <YAxis
+                  stroke="#94a3b8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `₹${value}`}
+                />{" "}
+                <Tooltip
+                  contentStyle={{
+                    background: "#1e293b",
+                    border: "1px solid #334155",
+                    borderRadius: 8,
+                  }}
+                  formatter={(value) =>
+                    `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  }
+                />{" "}
+                <Legend />{" "}
+                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />{" "}
+                <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />{" "}
+              </BarChart>{" "}
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-500 italic">
+              {" "}
+              No income/expense data available{" "}
+            </div>
+          )}{" "}
+        </ChartCard>{" "}
+        <ChartCard title={`Income by Category (${selectedMonthLabel})`}>
+          {" "}
+          {incomeByCategoryData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              {" "}
+              <PieChart>
+                {" "}
+                <Pie
+                  data={incomeByCategoryData}
                   cx="50%"
                   cy="45%"
                   labelLine={false}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="amount"
-                >
-                  {categoryShareYearlyData.map((_, index) => (
-                    <Cell
-                      key={`cell-year-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ paddingTop: "20px" }}
-                />
-              </PieChart>
+                />{" "}
+                <Tooltip content={<CustomTooltip />} />{" "}
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
+              </PieChart>{" "}
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-slate-500 italic">
-              No category share data for this year
+              {" "}
+              No income recorded for {selectedMonthLabel}{" "}
             </div>
-          )}
-        </ChartCard>
-      </div>
+          )}{" "}
+        </ChartCard>{" "}
+      </div>{" "}
     </div>
   );
 }

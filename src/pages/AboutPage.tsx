@@ -71,8 +71,8 @@ export default function AboutPage() {
           Budget Tracker
         </h1>
         <p className="text-xl text-slate-400 leading-relaxed max-w-xl mx-auto">
-          An offline-first credit card companion that trusts you — and only you
-          — with your own financial data.
+          An offline-first credit card companion that trusts you — and only you — with your own
+          financial data.
         </p>
       </header>
 
@@ -89,10 +89,10 @@ export default function AboutPage() {
             </span>
           </h2>
           <p className="mt-3 text-slate-400 leading-relaxed">
-            The personal finance space is crowded with apps that promise insight
-            in exchange for access — to your SMS, your accounts, your habits.
-            Budget Tracker was built from the frustration that no such trade
-            should be necessary. Here is what that looks like in practice:
+            The personal finance space is crowded with apps that promise insight in exchange for
+            access — to your SMS, your accounts, your habits. Budget Tracker was built from the
+            frustration that no such trade should be necessary. Here is what that looks like in
+            practice:
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -104,15 +104,10 @@ export default function AboutPage() {
               <span
                 className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${bg}`}
               >
-                <Icon
-                  style={{ width: "1.125rem", height: "1.125rem" }}
-                  className={color}
-                />
+                <Icon style={{ width: "1.125rem", height: "1.125rem" }} className={color} />
               </span>
               <div>
-                <p className={`text-sm font-semibold mb-1.5 ${color}`}>
-                  {title}
-                </p>
+                <p className={`text-sm font-semibold mb-1.5 ${color}`}>{title}</p>
                 <p className="text-xs text-slate-400 leading-relaxed">{body}</p>
               </div>
             </div>
@@ -127,15 +122,10 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">
             What's inside
           </p>
-          <h2 className="text-xl font-bold text-slate-100 mb-6">
-            Feature highlights
-          </h2>
+          <h2 className="text-xl font-bold text-slate-100 mb-6">Feature highlights</h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {FEATURES.map(({ icon: Icon, label }) => (
-              <li
-                key={label}
-                className="flex items-start gap-3 text-sm text-slate-300"
-              >
+              <li key={label} className="flex items-start gap-3 text-sm text-slate-300">
                 <Icon className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                 {label}
               </li>
@@ -150,12 +140,10 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
             The human behind it
           </p>
-          <h2 className="text-2xl font-bold text-slate-100">
-            Meet the Creator
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-100">Meet the Creator</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
-            Budget Tracker is a solo side-project, built out of genuine need and
-            maintained with genuine care.
+            Budget Tracker is a solo side-project, built out of genuine need and maintained with
+            genuine care.
           </p>
         </div>
 

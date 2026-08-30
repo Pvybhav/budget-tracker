@@ -1,5 +1,5 @@
-import type { Expense } from '../db/db';
-import * as backend from './backendSync';
+import type { Expense } from "../db/db";
+import * as backend from "./backendSync";
 
 export async function addExpense(data: Expense) {
   return backend.createExpense(data);

@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import {
-  onNetworkLoadingChange,
-  onNetworkToast,
-} from "../services/network.service";
+import { onNetworkLoadingChange, onNetworkToast } from "../services/network.service";
 import type { ToastPayload } from "../services/network.service";
 import { X, Loader2 } from "lucide-react";
 
@@ -12,11 +9,7 @@ interface ToastState extends ToastPayload {
   visible: boolean;
 }
 
-export default function NetworkToastProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function NetworkToastProvider({ children }: { children: ReactNode }) {
   const [loadingCount, setLoadingCount] = useState(0);
   const [toasts, setToasts] = useState<ToastState[]>([]);
 
@@ -37,9 +30,7 @@ export default function NetworkToastProvider({
     const timers = toasts.map((toast) =>
       window.setTimeout(() => {
         setToasts((current) =>
-          current.map((item) =>
-            item.id === toast.id ? { ...item, visible: false } : item,
-          ),
+          current.map((item) => (item.id === toast.id ? { ...item, visible: false } : item)),
         );
       }, 4000),
     );
@@ -55,9 +46,7 @@ export default function NetworkToastProvider({
         <div
           key={toast.id}
           className={`pointer-events-auto max-w-sm w-full rounded-2xl border px-4 py-3 shadow-2xl transition-all duration-300 overflow-hidden ${
-            toast.visible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-4"
+            toast.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
           } ${
             toast.type === "success"
               ? "bg-emerald-500/95 border-emerald-300 text-slate-950"
@@ -72,9 +61,7 @@ export default function NetworkToastProvider({
               type="button"
               className="text-slate-900/80 hover:text-slate-900"
               onClick={() => {
-                setToasts((current) =>
-                  current.filter((item) => item.id !== toast.id),
-                );
+                setToasts((current) => current.filter((item) => item.id !== toast.id));
               }}
             >
               <X className="w-4 h-4" />
@@ -99,9 +86,7 @@ export default function NetworkToastProvider({
           {loadingCount > 0 && (
             <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-950/95 px-4 py-3 shadow-2xl backdrop-blur-sm">
               <Loader2 className="h-5 w-5 animate-spin text-sky-400" />
-              <span className="text-sm text-slate-100">
-                Network activity in progress...
-              </span>
+              <span className="text-sm text-slate-100">Network activity in progress...</span>
             </div>
           )}
         </div>,

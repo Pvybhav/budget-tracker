@@ -1,17 +1,11 @@
 import { useMemo, useState } from "react";
 import { useBackendResource } from "../services/backendHooks";
-import {
-  Plus,
-  Target,
-  TrendingUp,
-  CalendarDays,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Plus, Target, TrendingUp, CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { type SavingsGoal } from "../db/db";
 import { deleteSavingsGoal } from "../services/backendSync";
 import { fetchSavingsGoals } from "../services/backend.service";
 import { getSavingsGoalSummary } from "../services/savingsGoal.service";
+import showConfirm from "./Confirm";
 import AddSavingsGoalModal from "./modals/AddSavingsGoalModal";
 
 export default function SavingsGoalsSection() {
@@ -20,9 +14,7 @@ export default function SavingsGoalsSection() {
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | undefined>();
 
   const sortedGoals = useMemo(() => {
-    return [...(goals ?? [])].sort((a, b) =>
-      a.targetDate.localeCompare(b.targetDate),
-    );
+    return [...(goals ?? [])].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
   }, [goals]);
 
   const openCreateModal = () => {
@@ -37,7 +29,11 @@ export default function SavingsGoalsSection() {
 
   const deleteGoal = async (id?: number) => {
     if (!id) return;
-    await deleteSavingsGoal(id);
+    const ok = await showConfirm("Delete this savings goal?", {
+      title: "Delete goal",
+      confirmText: "Delete",
+    });
+    if (ok) await deleteSavingsGoal(id);
   };
 
   return (
@@ -69,17 +65,12 @@ export default function SavingsGoalsSection() {
           {sortedGoals.map((goal) => {
             const summary = getSavingsGoalSummary(goal);
             return (
-              <div
-                key={goal.id}
-                className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"
-              >
+              <div key={goal.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Target className="h-4 w-4 text-emerald-400" />
-                      <h3 className="font-semibold text-slate-100">
-                        {goal.title}
-                      </h3>
+                      <h3 className="font-semibold text-slate-100">{goal.title}</h3>
                       <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-400">
                         {summary.status}
                       </span>
@@ -174,9 +165,7 @@ export default function SavingsGoalsSection() {
                   </div>
                 </div>
 
-                {goal.note && (
-                  <div className="mt-3 text-sm text-slate-400">{goal.note}</div>
-                )}
+                {goal.note && <div className="mt-3 text-sm text-slate-400">{goal.note}</div>}
               </div>
             );
           })}

@@ -2,15 +2,14 @@ import { useState } from "react";
 import type { Payment } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { deletePayment } from "../services/backendSync";
+import showConfirm from "../components/Confirm";
 import AddPaymentModal from "../components/modals/AddPaymentModal";
 import { fetchPayments } from "../services/backend.service";
 
 export default function ManagePaymentsPage() {
   const payments = useBackendResource(() => fetchPayments(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>(
-    undefined,
-  );
+  const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>(undefined);
 
   const openAddModal = () => {
     setPaymentToEdit(undefined);
@@ -25,9 +24,7 @@ export default function ManagePaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-slate-100">
-          Manage Payments
-        </h1>
+        <h1 className="text-3xl font-semibold text-slate-100">Manage Payments</h1>
         <button
           onClick={openAddModal}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -48,13 +45,8 @@ export default function ManagePaymentsPage() {
           </thead>
           <tbody className="divide-y divide-slate-800/50">
             {payments?.map((payment) => (
-              <tr
-                key={payment.id}
-                className="hover:bg-slate-800/20 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  {new Date(payment.date).toLocaleDateString()}
-                </td>
+              <tr key={payment.id} className="hover:bg-slate-800/20 transition-colors">
+                <td className="px-6 py-4">{new Date(payment.date).toLocaleDateString()}</td>
                 <td className="px-6 py-4">{payment.cardId}</td>
                 <td className="px-6 py-4">
                   ₹
@@ -71,7 +63,13 @@ export default function ManagePaymentsPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => deletePayment(payment.id!)}
+                    onClick={async () => {
+                      const ok = await showConfirm(
+                        `Delete this payment of ₹${payment.amount.toLocaleString("en-IN")}?`,
+                        { title: "Delete payment", confirmText: "Delete" },
+                      );
+                      if (ok) await deletePayment(payment.id!);
+                    }}
                     className="text-red-400 hover:text-red-300"
                   >
                     Delete
@@ -81,10 +79,7 @@ export default function ManagePaymentsPage() {
             ))}
             {(!payments || payments.length === 0) && (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
+                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                   No payments found.
                 </td>
               </tr>

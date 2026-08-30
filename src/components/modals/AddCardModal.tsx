@@ -88,9 +88,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
       paymentDate: isCreditAccount ? parseInt(sharedPaymentDate || "0", 10) : 0,
       totalLimit: parseFloat(sharedLimitValue || "0"),
       amc: isCreditAccount ? parseFloat(sharedAmc || "0") : 0,
-      waiveOffLimit: isCreditAccount
-        ? parseFloat(sharedWaiveOffLimit || "0")
-        : 0,
+      waiveOffLimit: isCreditAccount ? parseFloat(sharedWaiveOffLimit || "0") : 0,
       linkedCardIds: formData.type === "credit" ? formData.linkedCardIds : [],
     };
 
@@ -102,9 +100,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
     onClose();
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
       setFormData({
@@ -145,9 +141,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Account Name
-            </label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Account Name</label>
             <input
               required
               type="text"
@@ -158,9 +152,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Account Type
-            </label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Account Type</label>
             <select
               name="type"
               value={formData.type}
@@ -190,8 +182,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
                 <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Select master credit card{" "}
-                      <span className="text-red-400">*</span>
+                      Select master credit card <span className="text-red-400">*</span>
                     </label>
                     <select
                       required={formData.isLinkedCard}
@@ -235,31 +226,23 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
                         </span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
-                        <span className="text-slate-400">
-                          Spent to Waive AMC
-                        </span>
+                        <span className="text-slate-400">Spent to Waive AMC</span>
                         <span>
                           ₹
-                          {selectedMasterCard.waiveOffLimit?.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          ) ?? "0.00"}
+                          {selectedMasterCard.waiveOffLimit?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) ?? "0.00"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2">
                         <span className="text-slate-400">Total Limit</span>
                         <>
                           ₹
-                          {selectedMasterCard.totalLimit?.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          ) ?? "0.00"}
+                          {selectedMasterCard.totalLimit?.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) ?? "0.00"}
                         </>
                       </div>
                     </div>
@@ -302,9 +285,7 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
               {!formData.isLinkedCard && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      AMC
-                    </label>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">AMC</label>
                     <input
                       required
                       type="number"
@@ -332,16 +313,14 @@ export default function AddCardModal({ isOpen, onClose, initialCard }: Props) {
             </>
           ) : (
             <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 text-sm text-slate-400">
-              This account type uses a balance-based view, so billing dates and
-              AMC settings are not required.
+              This account type uses a balance-based view, so billing dates and AMC settings are not
+              required.
             </div>
           )}
           {!formData.isLinkedCard && (
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1">
-                {formData.type === "credit"
-                  ? "Total Limit"
-                  : "Starting Balance"}
+                {formData.type === "credit" ? "Total Limit" : "Starting Balance"}
               </label>
               <input
                 required

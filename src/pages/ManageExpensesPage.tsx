@@ -14,25 +14,19 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-export default function ManageExpensesPage({
-  mode,
-}: {
-  mode?: "monthly" | "yearly" | "emi";
-}) {
+export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearly" | "emi" }) {
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(
-    undefined,
-  );
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<
-    "date-desc" | "date-asc" | "amount-desc" | "amount-asc"
-  >("date-desc");
+  const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "amount-desc" | "amount-asc">(
+    "date-desc",
+  );
   const [showEmiOnly, setShowEmiOnly] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
 
@@ -54,8 +48,7 @@ export default function ManageExpensesPage({
     const expenseDate = new Date(expense.date);
     if (mode === "monthly") {
       return (
-        expenseDate.getFullYear() === selectedYear &&
-        expenseDate.getMonth() + 1 === selectedMonth
+        expenseDate.getFullYear() === selectedYear && expenseDate.getMonth() + 1 === selectedMonth
       );
     }
     if (mode === "yearly") {
@@ -98,11 +91,9 @@ export default function ManageExpensesPage({
         .join(" ")
         .toLowerCase();
 
-      const matchesSearch =
-        normalizedQuery.length === 0 || haystack.includes(normalizedQuery);
+      const matchesSearch = normalizedQuery.length === 0 || haystack.includes(normalizedQuery);
       const matchesCategory =
-        selectedCategoryId === "all" ||
-        expense.categoryId?.toString() === selectedCategoryId;
+        selectedCategoryId === "all" || expense.categoryId?.toString() === selectedCategoryId;
       const matchesEmi = !showEmiOnly || !!expense.isEmi;
 
       return matchesSearch && matchesCategory && matchesEmi;
@@ -123,28 +114,16 @@ export default function ManageExpensesPage({
     });
 
     return result;
-  }, [
-    categories,
-    periodFilteredExpenses,
-    searchQuery,
-    selectedCategoryId,
-    showEmiOnly,
-    sortBy,
-  ]);
+  }, [categories, periodFilteredExpenses, searchQuery, selectedCategoryId, showEmiOnly, sortBy]);
 
-  const totalAmount =
-    filteredExpenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+  const totalAmount = filteredExpenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
 
   const expenseCount = filteredExpenses?.length || 0;
-  const emiCount =
-    filteredExpenses?.filter((expense) => expense.isEmi).length || 0;
-  const biggestExpense = filteredExpenses?.reduce<Expense | undefined>(
-    (max, expense) => {
-      if (!max || expense.amount > max.amount) return expense;
-      return max;
-    },
-    undefined,
-  );
+  const emiCount = filteredExpenses?.filter((expense) => expense.isEmi).length || 0;
+  const biggestExpense = filteredExpenses?.reduce<Expense | undefined>((max, expense) => {
+    if (!max || expense.amount > max.amount) return expense;
+    return max;
+  }, undefined);
 
   const monthlyBreakdown =
     mode === "yearly"
@@ -166,10 +145,9 @@ export default function ManageExpensesPage({
   };
 
   const handleDelete = async (expense: Expense) => {
-    const ok = await showConfirm(
-      "Are you sure you want to delete this expense?",
-      { title: "Delete expense" },
-    );
+    const ok = await showConfirm("Are you sure you want to delete this expense?", {
+      title: "Delete expense",
+    });
     if (ok) {
       await deleteExpense(expense.id!);
     }
@@ -217,15 +195,11 @@ export default function ManageExpensesPage({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-300">
           <div className="font-semibold mb-1">Completed</div>
-          <div className="text-slate-400">
-            EMI repayment cycle finished for this expense.
-          </div>
+          <div className="text-slate-400">EMI repayment cycle finished for this expense.</div>
         </div>
         <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
           <div className="font-semibold mb-1">Ongoing</div>
-          <div className="text-slate-300">
-            EMI is active and current this month.
-          </div>
+          <div className="text-slate-300">EMI is active and current this month.</div>
         </div>
         <div className="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-4 text-sm text-sky-200">
           <div className="font-semibold mb-1">Upcoming</div>
@@ -446,32 +420,19 @@ export default function ManageExpensesPage({
               const isEmi = !!expense.isEmi;
               const emiMonths = expense.emiMonths ?? 1;
               const monthlyEmi = isEmi
-                ? calcMonthlyEmi(
-                    expense.amount,
-                    expense.emiInterestRate ?? 0,
-                    emiMonths,
-                  ) +
+                ? calcMonthlyEmi(expense.amount, expense.emiInterestRate ?? 0, emiMonths) +
                   (expense.emiProcessingFee ?? 0) / emiMonths +
                   (expense.emiGst ?? 0) / emiMonths
                 : 0;
               return (
-                <tr
-                  key={expense.id}
-                  className="hover:bg-slate-800/20 transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    {new Date(expense.date).toLocaleDateString()}
-                  </td>
+                <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
+                  <td className="px-6 py-4">{new Date(expense.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4 max-w-xs">
                     <div className="flex flex-col gap-1">
                       {expense.details ? (
-                        <span className="truncate block max-w-[200px]">
-                          {expense.details}
-                        </span>
+                        <span className="truncate block max-w-[200px]">{expense.details}</span>
                       ) : (
-                        <span className="italic text-slate-600 text-sm">
-                          No description
-                        </span>
+                        <span className="italic text-slate-600 text-sm">No description</span>
                       )}
                       {(isEmi || expense.recurringFrequency) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -482,16 +443,12 @@ export default function ManageExpensesPage({
                           )}
                           {expense.recurringFrequency && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
-                              {expense.recurringFrequency
-                                .charAt(0)
-                                .toUpperCase() +
+                              {expense.recurringFrequency.charAt(0).toUpperCase() +
                                 expense.recurringFrequency.slice(1)}
                             </span>
                           )}
                           {(expense.emiInterestRate ?? 0) === 0 ? (
-                            <span className="text-xs text-slate-500">
-                              No Cost
-                            </span>
+                            <span className="text-xs text-slate-500">No Cost</span>
                           ) : (
                             <span className="text-xs text-slate-500">
                               {expense.emiInterestRate}% p.a.
@@ -532,11 +489,7 @@ export default function ManageExpensesPage({
                           maximumFractionDigits: 2,
                         })}
                       </span>
-                      {isEmi && (
-                        <span className="text-xs text-slate-500">
-                          principal
-                        </span>
-                      )}
+                      {isEmi && <span className="text-xs text-slate-500">principal</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -582,10 +535,7 @@ export default function ManageExpensesPage({
             })}
             {filteredExpenses.length === 0 && (
               <tr>
-                <td
-                  colSpan={7}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
+                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                   No expenses found for the selected filters.
                 </td>
               </tr>

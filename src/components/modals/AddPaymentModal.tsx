@@ -4,7 +4,7 @@ import { useBackendResource } from "../../services/backendHooks";
 import { fetchCards } from "../../services/backend.service";
 import { createPayment, updatePayment } from "../../services/backendSync";
 import { X } from "lucide-react";
-import { showAlert } from "../../components/Confirm";
+import showConfirm, { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -13,19 +13,13 @@ interface Props {
   initialPayment?: Payment;
 }
 
-export default function AddPaymentModal({
-  isOpen,
-  onClose,
-  initialPayment,
-}: Props) {
+export default function AddPaymentModal({ isOpen, onClose, initialPayment }: Props) {
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const [formData, setFormData] = useState({
     cardId: "",
     amount: "",
-    date: new Date(
-      new Date().getTime() - new Date().getTimezoneOffset() * 60000,
-    )
+    date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16),
   });
@@ -33,9 +27,7 @@ export default function AddPaymentModal({
   useEffect(() => {
     if (initialPayment) {
       const date = new Date(initialPayment.date);
-      const localDate = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60000,
-      )
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
         .toISOString()
         .slice(0, 16);
       setFormData({
@@ -47,9 +39,7 @@ export default function AddPaymentModal({
       setFormData({
         cardId: "",
         amount: "",
-        date: new Date(
-          new Date().getTime() - new Date().getTimezoneOffset() * 60000,
-        )
+        date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
           .toISOString()
           .slice(0, 16),
       });
@@ -68,9 +58,7 @@ export default function AddPaymentModal({
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-bold text-slate-100 mb-4">
-            No Cards Found
-          </h2>
+          <h2 className="text-xl font-bold text-slate-100 mb-4">No Cards Found</h2>
           <p className="text-slate-400 mb-6">
             You need to add a credit card before recording a payment.
           </p>
@@ -88,7 +76,7 @@ export default function AddPaymentModal({
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!formData.cardId) {
       await showAlert("Please select a card");
@@ -102,6 +90,11 @@ export default function AddPaymentModal({
     };
 
     if (initialPayment) {
+      const ok = await showConfirm(
+        `Save changes to this payment of ₹${payload.amount.toLocaleString("en-IN")}?`,
+        { title: "Confirm update", confirmText: "Save changes" },
+      );
+      if (!ok) return;
       await updatePayment(initialPayment.id!, payload);
     } else {
       await createPayment(payload);
@@ -111,9 +104,7 @@ export default function AddPaymentModal({
     setFormData({ ...formData, amount: "" });
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -135,9 +126,7 @@ export default function AddPaymentModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Select Card
-            </label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Select Card</label>
             <select
               required
               name="cardId"
@@ -155,9 +144,7 @@ export default function AddPaymentModal({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Amount Paid
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Amount Paid</label>
               <input
                 required
                 type="number"
@@ -169,9 +156,7 @@ export default function AddPaymentModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Date & Time
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Date & Time</label>
               <input
                 required
                 type="datetime-local"

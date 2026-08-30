@@ -6,8 +6,7 @@ export default function SavingsGoalsPage() {
       <div>
         <h1 className="text-3xl font-semibold text-slate-100">Savings Goals</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Plan for major purchases with a target amount, deadline, and
-          progress-based ETA.
+          Plan for major purchases with a target amount, deadline, and progress-based ETA.
         </p>
       </div>
 

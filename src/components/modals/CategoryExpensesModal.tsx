@@ -23,8 +23,7 @@ export default function CategoryExpensesModal({
   const now = new Date();
   const currentYear = selectedYear ?? now.getFullYear();
   const currentMonth = selectedMonth ?? now.getMonth() + 1;
-  const periodMode =
-    budgetMode ?? (selectedMonth === undefined ? "yearly" : "monthly");
+  const periodMode = budgetMode ?? (selectedMonth === undefined ? "yearly" : "monthly");
   const isYearly = periodMode === "yearly";
   const isQuarterly = periodMode === "quarterly";
   const currentQuarterIndex = Math.floor((currentMonth - 1) / 3);
@@ -43,14 +42,7 @@ export default function CategoryExpensesModal({
             : d.getMonth() + 1 === currentMonth))
       );
     });
-  }, [
-    category.id,
-    currentYear,
-    currentMonth,
-    isYearly,
-    isQuarterly,
-    currentQuarterIndex,
-  ]);
+  }, [category.id, currentYear, currentMonth, isYearly, isQuarterly, currentQuarterIndex]);
 
   const cards = useBackendResource(() => fetchCards(), []);
 
@@ -98,13 +90,10 @@ export default function CategoryExpensesModal({
             <span className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
               <Tags className="w-4 h-4 text-violet-400" />
             </span>
-            <h2 className="text-xl font-bold text-slate-100">
-              {category.title}
-            </h2>
+            <h2 className="text-xl font-bold text-slate-100">{category.title}</h2>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Expenses in{" "}
-            <span className="text-slate-300 font-medium">{periodName}</span>
+            Expenses in <span className="text-slate-300 font-medium">{periodName}</span>
           </p>
         </div>
 
@@ -133,70 +122,64 @@ export default function CategoryExpensesModal({
         <div className="overflow-y-auto flex-1 px-4 pb-4">
           {!monthExpenses || monthExpenses.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-slate-500">
-                No expenses in {periodName} for this category.
-              </p>
+              <p className="text-slate-500">No expenses in {periodName} for this category.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {(isYearly
-                ? expensesByMonth
-                : [{ month: -1, expenses: sortedExpenses }]
-              ).map((group) => (
-                <div key={group.month} className="space-y-2">
-                  {isYearly && (
-                    <h3 className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-lg border border-slate-700 border-l-4 border-l-emerald-400 bg-slate-800/95 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-lg shadow-slate-950/30 backdrop-blur">
-                      <span className="truncate">
-                        {new Date(currentYear, group.month, 1).toLocaleString(
-                          "default",
-                          { month: "long" },
-                        )}
-                      </span>
-                      <span className="shrink-0 rounded-md bg-emerald-400/10 px-2 py-1 text-xs font-bold text-emerald-300">
-                        ₹
-                        {group.expenses
-                          .reduce((sum, expense) => sum + expense.amount, 0)
-                          .toLocaleString("en-IN", {
+              {(isYearly ? expensesByMonth : [{ month: -1, expenses: sortedExpenses }]).map(
+                (group) => (
+                  <div key={group.month} className="space-y-2">
+                    {isYearly && (
+                      <h3 className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-lg border border-slate-700 border-l-4 border-l-emerald-400 bg-slate-800/95 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-lg shadow-slate-950/30 backdrop-blur">
+                        <span className="truncate">
+                          {new Date(currentYear, group.month, 1).toLocaleString("default", {
+                            month: "long",
+                          })}
+                        </span>
+                        <span className="shrink-0 rounded-md bg-emerald-400/10 px-2 py-1 text-xs font-bold text-emerald-300">
+                          ₹
+                          {group.expenses
+                            .reduce((sum, expense) => sum + expense.amount, 0)
+                            .toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                        </span>
+                      </h3>
+                    )}
+                    {group.expenses.map((expense) => (
+                      <div
+                        key={expense.id}
+                        className="flex items-center justify-between gap-3 bg-slate-800/40 rounded-xl px-4 py-3 border border-slate-800 hover:border-slate-700 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-200 truncate">
+                            {expense.details || (
+                              <span className="italic text-slate-500">No description</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {new Date(expense.date).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                            {" · "}
+                            {getCardTitle(expense.cardId)}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold text-slate-200 flex-shrink-0">
+                          ₹
+                          {expense.amount.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
-                      </span>
-                    </h3>
-                  )}
-                  {group.expenses.map((expense) => (
-                    <div
-                      key={expense.id}
-                      className="flex items-center justify-between gap-3 bg-slate-800/40 rounded-xl px-4 py-3 border border-slate-800 hover:border-slate-700 transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-200 truncate">
-                          {expense.details || (
-                            <span className="italic text-slate-500">
-                              No description
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {new Date(expense.date).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                          {" · "}
-                          {getCardTitle(expense.cardId)}
                         </p>
                       </div>
-                      <p className="text-sm font-semibold text-slate-200 flex-shrink-0">
-                        ₹
-                        {expense.amount.toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                    ))}
+                  </div>
+                ),
+              )}
             </div>
           )}
         </div>

@@ -15,18 +15,21 @@ const app = express();
 const port = process.env.PORT || 4000;
 const mongoUri = process.env.MONGODB_URI;
 
-if (!mongoUri) {
-  console.error(
-    "Missing MONGODB_URI in environment. Copy server/.env.example to server/.env and update the URI.",
-  );
-  process.exit(1);
-}
-
 const staticPath = path.join(__dirname, "../dist");
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.static(staticPath));
+app.use("/api", (req, res, next) => {
+  if (
+    req.path === "/health" ||
+    req.path.startsWith("/auth") ||
+    mongoose.connection.readyState === 1
+  ) {
+    return next();
+  }
+  res.status(503).json({ error: "Database unavailable" });
+});
 app.use("/api", apiRouter);
 
 app.get("*", (req, res) => {
@@ -38,15 +41,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
-mongoose
-  .connect(mongoUri)
-  .then(() => {
-    console.log("Connected to MongoDB Atlas");
-    app.listen(port, () => {
-      console.log(`Backend API listening on http://localhost:${port}`);
+app.listen(port, () => {
+  console.log(`Backend API listening on http://localhost:${port}`);
+});
+if (!mongoUri) {
+  console.error(
+    "Missing MONGODB_URI in environment. Copy server/.env.example to server/.env and update the URI.",
+  );
+} else {
+  mongoose
+    .connect(mongoUri)
+    .then(() => {
+      console.log("Connected to MongoDB Atlas");
+    })
+    .catch((error) => {
+      console.error("MongoDB connection failed:", error);
     });
-  })
-  .catch((error) => {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  });
+}
