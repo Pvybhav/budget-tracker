@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createLoan, updateLoan } from "../../services/backendSync";
 import { X, Info } from "lucide-react";
 import { calcMonthlyEmi } from "../../services/card.service";
-import showLoan, { showAlert, showConfirm } from "../../components/Confirm";
+import { showAlert, showConfirm } from "../../components/Confirm";
 import { type Loan } from "../../db/db";
 
 interface Props {

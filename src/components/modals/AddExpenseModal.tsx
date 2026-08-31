@@ -6,7 +6,7 @@ import { X, TrendingUp, TrendingDown, Tags, AlertTriangle, Info } from "lucide-r
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
-import { getBudgetStatus } from "../../services/budget.service";
+import { getBudgetStatus, getEffectiveMonthlyBudget } from "../../services/budget.service";
 import { syncRecurringExpenses } from "../../services/recurring.service";
 import { createExpense, updateExpense } from "../../services/backendSync";
 
@@ -318,7 +318,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   const hasBudget = selectedCategory?.budgetAmount != null && selectedCategory?.budgetMode != null;
   const previewSpent = spent + enteredBudgetImpact;
   const budgetStatus = hasBudget
-    ? getBudgetStatus(previewSpent, selectedCategory!.budgetAmount!, selectedCategory!.budgetMode!)
+    ? getBudgetStatus(previewSpent, getEffectiveMonthlyBudget(selectedCategory!.budgetAmount!, selectedCategory!.budgetMode!),)
     : null;
   const isOverBudget = budgetStatus?.isOverBudget ?? false;
   const isNearLimit = budgetStatus?.isNearLimit ?? false;
