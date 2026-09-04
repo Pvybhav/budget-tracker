@@ -5,10 +5,10 @@ export async function addExpense(data: Expense) {
   return backend.createExpense(data);
 }
 
-export async function updateExpense(id: number, data: Partial<Expense>) {
+export async function updateExpense(id: string, data: Partial<Expense>) {
   return backend.updateExpense(id, data);
 }
 
-export async function deleteExpense(id: number) {
+export async function deleteExpense(id: string) {
   return backend.deleteExpense(id);
 }

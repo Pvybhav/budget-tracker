@@ -1,5 +1,6 @@
 import { type Category, type Expense } from "../db/db";
 import { getEffectiveMonthlyBudget, type BudgetMode } from "./budget.service";
+import { convertCurrency, formatMoney } from "./currency.service";
 export interface DailySpendingPace {
   dailySpent: number;
   daysElapsed: number;
@@ -7,7 +8,7 @@ export interface DailySpendingPace {
   averageDaily: number;
 }
 export interface BudgetForecast {
-  categoryId?: number;
+  categoryId?: string;
   categoryTitle?: string;
   effectiveBudget: number;
   currentSpent: number;
@@ -25,8 +26,9 @@ export function getCurrentMonthDays(year: number, month: number): number {
 }
 export function getSpendingInCurrentPeriod(
   expenses: Expense[],
-  categoryId?: number,
+  categoryId?: string,
   mode: BudgetMode = "monthly",
+  currency: string = "INR",
 ): number {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -51,7 +53,7 @@ export function getSpendingInCurrentPeriod(
       const expDate = new Date(exp.date);
       return expDate >= periodStart && expDate <= periodEnd;
     })
-    .reduce((sum, exp) => sum + exp.amount, 0);
+    .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, currency), 0);
 }
 export function calculateDailySpendingPace(
   spending: number,
@@ -90,6 +92,7 @@ export function calculateDailySpendingPace(
 export function forecastCategoryBudget(
   category: Category,
   expenses: Expense[],
+  currency: string = "INR",
 ): BudgetForecast | null {
   if (!category.budgetAmount || !category.budgetMode) {
     return null;
@@ -98,7 +101,12 @@ export function forecastCategoryBudget(
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
   const effectiveBudget = getEffectiveMonthlyBudget(category.budgetAmount, category.budgetMode);
-  const currentSpent = getSpendingInCurrentPeriod(expenses, category.id, category.budgetMode);
+  const currentSpent = getSpendingInCurrentPeriod(
+    expenses,
+    category.id,
+    category.budgetMode,
+    currency,
+  );
   const dailyPace = calculateDailySpendingPace(
     currentSpent,
     currentYear,
@@ -124,7 +132,7 @@ export function forecastCategoryBudget(
   let riskMessage = "On track to stay within budget";
   if (forecastPercentage >= 100) {
     riskLevel = "danger";
-    riskMessage = `Projected to exceed by ₹${exceedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    riskMessage = `Projected to exceed by ${formatMoney(exceedAmount, currency)}`;
   } else if (forecastPercentage >= 80) {
     riskLevel = "warning";
     riskMessage = `Approaching budget limit (${forecastPercentage.toFixed(0)}% projected)`;
@@ -147,9 +155,10 @@ export function forecastCategoryBudget(
 export function forecastAllCategoryBudgets(
   categories: Category[],
   expenses: Expense[],
+  currency: string = "INR",
 ): BudgetForecast[] {
   return categories
-    .map((cat) => forecastCategoryBudget(cat, expenses))
+    .map((cat) => forecastCategoryBudget(cat, expenses, currency))
     .filter((forecast): forecast is BudgetForecast => forecast !== null)
     .sort((a, b) => b.forecastPercentage - a.forecastPercentage);
 }

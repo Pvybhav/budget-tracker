@@ -6,8 +6,8 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -37,9 +37,9 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
     }
   };
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-200">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 text-slate-900 dark:text-slate-200">
       {" "}
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-2xl">
         {" "}
         <div className="mb-6 text-center">
           {" "}
@@ -49,12 +49,12 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
             {mode === "login" ? "Sign in" : "Create account"}{" "}
           </h1>{" "}
         </div>{" "}
-        <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950 p-1">
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 p-1">
           {" "}
           <button
             type="button"
             onClick={() => setMode("login")}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "login" ? "bg-blue-600 text-white" : "text-slate-300 hover:text-white"}`}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "login" ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"}`}
           >
             {" "}
             Login{" "}
@@ -62,7 +62,7 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
           <button
             type="button"
             onClick={() => setMode("signup")}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-blue-600 text-white" : "text-slate-300 hover:text-white"}`}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"}`}
           >
             {" "}
             Sign up{" "}
@@ -73,41 +73,49 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
           {mode === "signup" && (
             <label className="block">
               {" "}
-              <span className="mb-2 block text-sm text-slate-300">Full name</span>{" "}
+              <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
+                Full name
+              </span>{" "}
               <input
                 type="text"
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none transition focus:border-blue-500"
-                autoComplete="name"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
                 placeholder="Jane Doe"
+                autoComplete="name"
               />{" "}
             </label>
           )}{" "}
           <label className="block">
             {" "}
-            <span className="mb-2 block text-sm text-slate-300">Username</span>{" "}
+            <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
+              Username
+            </span>{" "}
             <input
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none transition focus:border-blue-500"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
+              placeholder="user@example.com"
               autoComplete="username"
             />{" "}
           </label>{" "}
           <label className="block">
             {" "}
-            <span className="mb-2 block text-sm text-slate-300">Password</span>{" "}
+            <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
+              Password
+            </span>{" "}
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none transition focus:border-blue-500"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
+              placeholder="••••••••"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
             />{" "}
           </label>{" "}
           {error && (
-            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <div className="rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-200">
               {" "}
               {error}{" "}
             </div>
@@ -127,13 +135,13 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
                 : "Create account"}{" "}
           </button>{" "}
         </form>{" "}
-        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-sm text-slate-400">
+        <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3 text-sm text-slate-600 dark:text-slate-400">
           {" "}
           {mode === "login" ? (
             <>
               {" "}
-              Demo credentials: <span className="font-medium text-slate-200">admin</span> /{" "}
-              <span className="font-medium text-slate-200">admin123</span>{" "}
+              <span className="font-medium">Demo account:</span> Use any username and password
+              (minimum 8 characters){" "}
             </>
           ) : (
             <> Passwords must be at least 8 characters long. </>

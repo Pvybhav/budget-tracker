@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchExpenses, fetchPayments } from "../services/backend.service";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -11,6 +12,7 @@ function endOfMonth(d: Date) {
 }
 
 export default function MonthlySummary({ className }: { className?: string }) {
+  const displayCurrency = useDisplayCurrency();
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const payments = useBackendResource(() => fetchPayments(), []);
 
@@ -21,13 +23,17 @@ export default function MonthlySummary({ className }: { className?: string }) {
   const { spentThis, paidThis, spentLast } = useMemo(() => {
     const spentThis = (expenses || []).reduce((sum, e) => {
       const d = new Date(e.date);
-      if (d >= start && d <= end) return sum + e.amount;
+      if (d >= start && d <= end) {
+        return sum + convertCurrency(e.amount, e.currency, displayCurrency);
+      }
       return sum;
     }, 0);
 
     const paidThis = (payments || []).reduce((sum, p) => {
       const d = new Date(p.date);
-      if (d >= start && d <= end) return sum + p.amount;
+      if (d >= start && d <= end) {
+        return sum + convertCurrency(p.amount, p.currency, displayCurrency);
+      }
       return sum;
     }, 0);
 
@@ -35,25 +41,31 @@ export default function MonthlySummary({ className }: { className?: string }) {
     const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0, 23, 59, 59, 999);
     const spentLast = (expenses || []).reduce((sum, e) => {
       const d = new Date(e.date);
-      if (d >= prevStart && d <= prevEnd) return sum + e.amount;
+      if (d >= prevStart && d <= prevEnd) {
+        return sum + convertCurrency(e.amount, e.currency, displayCurrency);
+      }
       return sum;
     }, 0);
 
     return { spentThis, paidThis, spentLast };
-  }, [expenses, payments, start, end]);
+  }, [expenses, payments, start, end, displayCurrency]);
 
   const net = Math.max(0, spentThis - paidThis);
 
   const pctChange = spentLast === 0 ? 0 : Math.round(((spentThis - spentLast) / spentLast) * 100);
 
   return (
-    <div className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-5 ${className || ""}`}>
+    <div
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5 ${className || ""}`}
+    >
       <div className="flex items-center justify-between mb-2">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
             Monthly Summary
           </div>
-          <div className="text-lg font-bold text-slate-100">Spending at a glance</div>
+          <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Spending at a glance
+          </div>
         </div>
       </div>
 
@@ -61,31 +73,19 @@ export default function MonthlySummary({ className }: { className?: string }) {
         <div className="col-span-1">
           <div className="text-sm text-slate-400">Spent</div>
           <div className="text-xl font-semibold text-rose-400">
-            ₹
-            {spentThis.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {formatMoney(spentThis, displayCurrency)}
           </div>
         </div>
         <div className="col-span-1">
           <div className="text-sm text-slate-400">Paid</div>
           <div className="text-xl font-semibold text-emerald-400">
-            ₹
-            {paidThis.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {formatMoney(paidThis, displayCurrency)}
           </div>
         </div>
         <div className="col-span-1 text-right">
           <div className="text-sm text-slate-400">Net</div>
-          <div className="text-xl font-semibold text-slate-100">
-            ₹
-            {net.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}{" "}
+          <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            {formatMoney(net, displayCurrency)}{" "}
           </div>
         </div>
       </div>

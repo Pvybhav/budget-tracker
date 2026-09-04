@@ -9,6 +9,8 @@ import { calcMonthlyEmi } from "../../services/card.service";
 import { getBudgetStatus, getEffectiveMonthlyBudget } from "../../services/budget.service";
 import { syncRecurringExpenses } from "../../services/recurring.service";
 import { createExpense, updateExpense } from "../../services/backendSync";
+import CurrencySelect from "../CurrencySelect";
+import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
 
 interface Props {
   isOpen: boolean;
@@ -30,13 +32,6 @@ const INTEREST_PRESETS = [
   { label: "24% p.a.", value: 24 },
   { label: "Custom", value: -1 },
 ];
-
-function fmt(n: number) {
-  return n.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Props) {
   const navigate = useNavigate();
@@ -66,9 +61,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     recurringFrequency: "monthly" as Expense["recurringFrequency"],
     recurringInterval: 1,
     recurringEndDate: "",
+    currency: getDisplayCurrency(),
   });
 
-  const selectedCategory = categories?.find((c) => c.id === parseInt(formData.categoryId));
+  const selectedCategory = categories?.find((c) => c.id === formData.categoryId);
 
   const categoryMonthlySpent = useBackendResource(async () => {
     if (!selectedCategory?.id) return 0;
@@ -152,6 +148,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         recurringFrequency: initialExpense.recurringFrequency ?? "monthly",
         recurringInterval: initialExpense.recurringInterval ?? 1,
         recurringEndDate: initialExpense.recurringEndDate ?? "",
+        currency: initialExpense.currency ?? getDisplayCurrency(),
       });
     } else {
       setFormData({
@@ -172,6 +169,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         recurringFrequency: "monthly",
         recurringInterval: 1,
         recurringEndDate: "",
+        currency: getDisplayCurrency(),
       });
     }
   }, [initialExpense, isOpen]);
@@ -181,15 +179,17 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   if (cards && cards.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl relative p-6 text-center">
+        <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-md shadow-2xl relative p-6 text-center">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-xl font-bold text-slate-100 mb-4">No Cards Found</h2>
-          <p className="text-slate-400 mb-6">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            No Cards Found
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
             You need to add a credit card before logging an expense.
           </p>
           <button
@@ -209,18 +209,20 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   if (categories && categories.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl relative p-6 text-center">
+        <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-md shadow-2xl relative p-6 text-center">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
           <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto mb-4">
             <Tags className="w-6 h-6 text-violet-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mb-2">No Categories Found</h2>
-          <p className="text-slate-400 mb-6 text-sm">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            No Categories Found
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
             A category is required for every expense. Add at least one category before logging an
             expense.
           </p>
@@ -271,8 +273,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     }
 
     const payload: Omit<Expense, "id"> = {
-      cardId: parseInt(formData.cardId),
-      categoryId: parseInt(formData.categoryId),
+      cardId: formData.cardId,
+      categoryId: formData.categoryId,
       details: formData.details.trim() || undefined,
       amount: principal,
       date: formData.date,
@@ -284,6 +286,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       recurringFrequency: formData.isRecurring ? formData.recurringFrequency : undefined,
       recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
       recurringEndDate: formData.isRecurring ? formData.recurringEndDate || undefined : undefined,
+      currency: formData.currency,
     };
 
     if (initialExpense) {
@@ -318,22 +321,25 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   const hasBudget = selectedCategory?.budgetAmount != null && selectedCategory?.budgetMode != null;
   const previewSpent = spent + enteredBudgetImpact;
   const budgetStatus = hasBudget
-    ? getBudgetStatus(previewSpent, getEffectiveMonthlyBudget(selectedCategory!.budgetAmount!, selectedCategory!.budgetMode!),)
+    ? getBudgetStatus(
+        previewSpent,
+        getEffectiveMonthlyBudget(selectedCategory!.budgetAmount!, selectedCategory!.budgetMode!),
+      )
     : null;
   const isOverBudget = budgetStatus?.isOverBudget ?? false;
   const isNearLimit = budgetStatus?.isNearLimit ?? false;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[92vh]">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative flex flex-col max-h-[92vh]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white z-10"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 border-b border-slate-800 flex-shrink-0">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
           <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
             {initialExpense ? "Edit Expense" : "Log an Expense"}
           </h2>
@@ -342,7 +348,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Card */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               Select Card <span className="text-red-400">*</span>
             </label>
             <select
@@ -350,7 +356,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
               name="cardId"
               value={formData.cardId}
               onChange={handleChange}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             >
               <option value="">Select a card...</option>
               {cards?.map((card) => (
@@ -363,7 +369,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               Category <span className="text-red-400">*</span>
             </label>
             <select
@@ -371,7 +377,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
               name="categoryId"
               value={formData.categoryId}
               onChange={handleChange}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             >
               <option value="">Select a category...</option>
               {categories?.map((cat) => (
@@ -389,7 +395,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
             >
               <div className="flex-1">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className="text-xs uppercase tracking-wider font-medium text-slate-400">
+                  <p className="text-xs uppercase tracking-wider font-medium text-slate-500 dark:text-slate-400">
                     {selectedCategory.budgetMode === "yearly"
                       ? "Yearly (≈monthly)"
                       : selectedCategory.budgetMode === "quarterly"
@@ -406,18 +412,20 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                 <div className="flex items-center gap-4 flex-wrap">
                   <div>
                     <span className="text-xs text-slate-500">Current spend</span>
-                    <p className="text-sm font-semibold text-slate-200">₹{fmt(spent)}</p>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      {formatMoney(spent, formData.currency)}
+                    </p>
                   </div>
                   <div>
                     <span className="text-xs text-sky-400">New expense</span>
                     <p className="text-sm font-semibold text-sky-300">
-                      ₹{fmt(enteredBudgetImpact)}
+                      {formatMoney(enteredBudgetImpact, formData.currency)}
                     </p>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Budget</span>
-                    <p className="text-sm font-semibold text-slate-200">
-                      ₹{fmt(budgetStatus.effectiveBudget)}
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      {formatMoney(budgetStatus.effectiveBudget, formData.currency)}
                     </p>
                   </div>
                   <div>
@@ -430,7 +438,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       ) : (
                         <TrendingUp className="w-3.5 h-3.5" />
                       )}
-                      {isOverBudget ? "-" : "+"}₹{fmt(Math.abs(budgetStatus.remaining))}
+                      {isOverBudget ? "-" : "+"}
+                      {formatMoney(Math.abs(budgetStatus.remaining), formData.currency)}
                     </p>
                   </div>
                 </div>
@@ -439,7 +448,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                     <span>Usage</span>
                     <span>{budgetStatus.progressClamped}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div className="h-full flex">
                       <div
                         className={`h-full shrink-0 transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
@@ -462,7 +471,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               Description <span className="text-slate-600 text-xs">(optional)</span>
             </label>
             <input
@@ -470,7 +479,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
               name="details"
               value={formData.details}
               onChange={handleChange}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 placeholder-slate-500"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-400 dark:placeholder-slate-500"
               placeholder="e.g. Amazon Purchase"
             />
           </div>
@@ -478,22 +487,28 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
           {/* Amount + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Amount <span className="text-red-400">*</span>
               </label>
-              <input
-                required
-                type="number"
-                step="0.01"
-                min="0"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
-              />
+              <div className="flex gap-2">
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />
+                <CurrencySelect
+                  value={formData.currency}
+                  onChange={(currency) => setFormData({ ...formData, currency })}
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Date & Time <span className="text-red-400">*</span>
               </label>
               <input
@@ -502,15 +517,15 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           {/* ── EMI SECTION ── */}
-          <div className="border border-slate-700 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
             {/* Toggle header */}
-            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none bg-slate-800/40 hover:bg-slate-800/60 transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none bg-slate-100 dark:bg-slate-100 dark:bg-slate-800/40 hover:bg-slate-100 dark:bg-slate-800/60 transition-colors">
               <input
                 type="checkbox"
                 name="isEmi"
@@ -518,27 +533,29 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                 onChange={handleChange}
                 className="w-4 h-4 accent-amber-400"
               />
-              <span className="font-medium text-slate-200 text-sm">Convert to EMI</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200 text-sm">
+                Convert to EMI
+              </span>
               {formData.isEmi && principal > 0 && (
                 <span className="ml-auto text-xs text-amber-400 font-medium">
-                  ₹{fmt(monthlyPayment)} / month
+                  {formatMoney(monthlyPayment, formData.currency)} / month
                 </span>
               )}
             </label>
 
             {formData.isEmi && (
-              <div className="p-4 space-y-4 border-t border-slate-700 bg-slate-800/20">
+              <div className="p-4 space-y-4 border-t border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/20">
                 {/* Duration + Interest */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                       Duration (months)
                     </label>
                     <select
                       name="emiMonths"
                       value={formData.emiMonths}
                       onChange={handleChange}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-amber-500"
                     >
                       {EMI_MONTH_OPTIONS.map((m) => (
                         <option key={m} value={m}>
@@ -564,19 +581,19 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                         const v = Math.min(60, Math.max(2, parseInt(e.target.value) || 2));
                         setFormData({ ...formData, emiMonths: v });
                       }}
-                      className="mt-1.5 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                      className="mt-1.5 w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-amber-500 placeholder-slate-400 dark:placeholder-slate-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                       Interest Rate
                     </label>
                     <select
                       name="emiInterestPreset"
                       value={formData.emiInterestPreset}
                       onChange={handleChange}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-amber-500"
                     >
                       {INTEREST_PRESETS.map((p) => (
                         <option key={p.value} value={p.value}>
@@ -594,7 +611,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                         name="emiCustomInterest"
                         value={formData.emiCustomInterest}
                         onChange={handleChange}
-                        className="mt-1.5 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                        className="mt-1.5 w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-amber-500 placeholder-slate-400 dark:placeholder-slate-600"
                       />
                     )}
                   </div>
@@ -603,8 +620,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                 {/* Processing Fee + GST row */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      Processing Fee (₹)
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                      Processing Fee
                       <span className="text-slate-600 ml-1 text-[10px]">— one-time</span>
                     </label>
                     <input
@@ -615,12 +632,12 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       value={formData.emiProcessingFee}
                       onChange={handleChange}
                       placeholder="e.g. 199"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-amber-500 placeholder-slate-400 dark:placeholder-slate-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      GST Amount (₹)
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                      GST Amount
                       <span className="text-slate-600 ml-1 text-[10px]">— on fee/interest</span>
                     </label>
                     <input
@@ -631,7 +648,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       value={formData.emiGst}
                       onChange={handleChange}
                       placeholder="e.g. 35.82"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-amber-500 placeholder-slate-400 dark:placeholder-slate-600"
                     />
                   </div>
                 </div>
@@ -647,14 +664,16 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
 
                 {/* Live EMI breakdown */}
                 {principal > 0 && months > 0 && (
-                  <div className="bg-slate-900/70 rounded-xl border border-slate-700 p-3 space-y-2">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <div className="bg-slate-50 rounded-xl border border-slate-200 dark:bg-slate-900/70 dark:border-slate-700 p-3 space-y-2">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <Info className="w-3.5 h-3.5" /> EMI Breakdown
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                       <div className="flex justify-between">
                         <span className="text-slate-500">Principal</span>
-                        <span className="text-slate-200 font-medium">₹{fmt(principal)}</span>
+                        <span className="text-slate-700 dark:text-slate-200 font-medium">
+                          {formatMoney(principal, formData.currency)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Total Interest</span>
@@ -663,7 +682,9 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                             totalInterest > 0 ? "text-red-400 font-medium" : "text-slate-600"
                           }
                         >
-                          {totalInterest > 0 ? `₹${fmt(totalInterest)}` : "₹0 (No Cost)"}
+                          {totalInterest > 0
+                            ? formatMoney(totalInterest, formData.currency)
+                            : `${formatMoney(0, formData.currency)} (No Cost)`}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -675,7 +696,9 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                               : "text-slate-600"
                           }
                         >
-                          {processingFeeAmount > 0 ? `₹${fmt(processingFeeAmount)}` : "—"}
+                          {processingFeeAmount > 0
+                            ? formatMoney(processingFeeAmount, formData.currency)
+                            : "—"}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -685,33 +708,43 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                             gstAmount > 0 ? "text-amber-400 font-medium" : "text-slate-600"
                           }
                         >
-                          {gstAmount > 0 ? `₹${fmt(gstAmount)}` : "—"}
+                          {gstAmount > 0 ? formatMoney(gstAmount, formData.currency) : "—"}
                         </span>
                       </div>
                       <div className="flex justify-between col-span-2">
                         <span className="text-slate-500">Duration</span>
-                        <span className="text-slate-200 font-medium">{months} months</span>
+                        <span className="text-slate-700 dark:text-slate-200 font-medium">
+                          {months} months
+                        </span>
                       </div>
                     </div>
-                    <div className="border-t border-slate-700 pt-2 mt-1 space-y-1.5 text-xs">
+                    <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-1 space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-slate-400 font-medium">Monthly payment</span>
-                        <span className="text-emerald-400 font-bold">₹{fmt(monthlyPayment)}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">
+                          Monthly payment
+                        </span>
+                        <span className="text-emerald-400 font-bold">
+                          {formatMoney(monthlyPayment, formData.currency)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400 font-medium">Total cost</span>
-                        <span className="text-slate-200 font-bold">₹{fmt(totalCost)}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">
+                          Total cost
+                        </span>
+                        <span className="text-slate-700 dark:text-slate-200 font-bold">
+                          {formatMoney(totalCost, formData.currency)}
+                        </span>
                       </div>
-                      <div className="flex justify-between border-t border-slate-800 pt-1.5">
+                      <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-1.5">
                         <span className="text-slate-500">Credit limit blocked</span>
                         <span className="text-orange-400 font-medium">
-                          ₹{fmt(availableLimitImpact)}
+                          {formatMoney(availableLimitImpact, formData.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Counts toward AMC waiver</span>
                         <span className="text-violet-400 font-medium">
-                          ₹{fmt(availableLimitImpact)}
+                          {formatMoney(availableLimitImpact, formData.currency)}
                         </span>
                       </div>
                     </div>
@@ -721,8 +754,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
             )}
           </div>
 
-          <div className="border border-slate-700 rounded-xl p-4 bg-slate-800/20 space-y-3">
-            <label className="flex items-center justify-between gap-3 text-sm font-medium text-slate-300">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-slate-100 dark:bg-slate-800/20 space-y-3">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
               <span>Recurring transaction</span>
               <input
                 type="checkbox"
@@ -739,7 +772,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                     name="recurringFrequency"
                     value={formData.recurringFrequency}
                     onChange={handleChange}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="weekly">Weekly</option>
@@ -751,14 +784,14 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                     name="recurringInterval"
                     value={formData.recurringInterval}
                     onChange={handleChange}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
                   />
                   <input
                     type="date"
                     name="recurringEndDate"
                     value={formData.recurringEndDate}
                     onChange={handleChange}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <p className="text-xs text-slate-500">

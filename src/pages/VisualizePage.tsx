@@ -23,9 +23,16 @@ import {
   fetchCards,
   fetchIncomes,
 } from "../services/backend.service";
+import {
+  convertCurrency,
+  formatMoney,
+  getCurrencySymbol,
+  useDisplayCurrency,
+} from "../services/currency.service";
 
 interface TooltipProps {
   readonly active?: boolean;
+  readonly currency?: string;
   readonly payload?: Array<{
     value: number;
     payload: {
@@ -38,7 +45,7 @@ interface TooltipProps {
 interface TrendTooltipProps extends TooltipProps {
   readonly label?: string | number;
 }
-const CustomTooltip = ({ active, payload }: TooltipProps) => {
+const CustomTooltip = ({ active, payload, currency }: TooltipProps) => {
   if (active && payload?.length) {
     const categoryName = payload[0].payload.name;
     return (
@@ -47,18 +54,14 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
         <p className="text-slate-200 font-medium mb-1">{categoryName}</p>{" "}
         <p className="text-emerald-400 font-bold">
           {" "}
-          ₹{" "}
-          {payload[0].value.toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}{" "}
+          {formatMoney(payload[0].value, currency)}{" "}
         </p>{" "}
       </div>
     );
   }
   return null;
 };
-const TrendTooltip = ({ active, payload, label }: TrendTooltipProps) => {
+const TrendTooltip = ({ active, payload, label, currency }: TrendTooltipProps) => {
   if (active && payload?.length) {
     const categoryBreakdown = payload[0].payload.categoryBreakdown ?? [];
     return (
@@ -67,11 +70,7 @@ const TrendTooltip = ({ active, payload, label }: TrendTooltipProps) => {
         <p className="text-slate-200 font-medium mb-1">{label}</p>{" "}
         <p className="text-emerald-400 font-bold mb-2">
           {" "}
-          Total: ₹{" "}
-          {payload[0].value.toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}{" "}
+          Total: {formatMoney(payload[0].value, currency)}{" "}
         </p>{" "}
         {categoryBreakdown.length > 0 && (
           <ul className="space-y-1">
@@ -79,14 +78,10 @@ const TrendTooltip = ({ active, payload, label }: TrendTooltipProps) => {
             {categoryBreakdown.map((cat: { name: string; amount: number }) => (
               <li key={cat.name} className="flex items-center justify-between gap-4 text-sm">
                 {" "}
-                <span className="text-slate-300">{cat.name}</span>{" "}
-                <span className="text-slate-100 font-medium">
+                <span className="text-slate-700 dark:text-slate-300">{cat.name}</span>{" "}
+                <span className="text-slate-900 dark:text-slate-100 font-medium">
                   {" "}
-                  ₹{" "}
-                  {cat.amount.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {formatMoney(cat.amount, currency)}{" "}
                 </span>{" "}
               </li>
             ))}{" "}
@@ -102,9 +97,9 @@ interface ChartCardProps {
   readonly children: React.ReactNode;
 }
 const ChartCard = ({ title, children }: ChartCardProps) => (
-  <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col h-[400px]">
+  <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col h-[400px] shadow-sm dark:border-slate-800 dark:bg-slate-900">
     {" "}
-    <h3 className="text-slate-200 font-semibold mb-6 text-lg">{title}</h3>{" "}
+    <h3 className="text-slate-900 font-semibold mb-6 text-lg dark:text-slate-200">{title}</h3>{" "}
     <div className="flex-1 w-full min-h-0">{children}</div>{" "}
   </div>
 );
@@ -121,6 +116,7 @@ const COLORS = [
 ];
 
 export default function VisualizePage() {
+  const displayCurrency = useDisplayCurrency();
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -130,7 +126,7 @@ export default function VisualizePage() {
   const incomes = useBackendResource(() => fetchIncomes(), []);
 
   if (!expenses || !categories || !cards || !incomes) {
-    return <div className="p-8 text-slate-400">Loading charts...</div>;
+    return <div className="p-8 text-slate-600 dark:text-slate-400">Loading charts...</div>;
   }
 
   const now = new Date();
@@ -169,7 +165,7 @@ export default function VisualizePage() {
             exp.categoryId === cat.id
           );
         })
-        .reduce((sum, exp) => sum + exp.amount, 0);
+        .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, displayCurrency), 0);
       return { name: cat.title, amount: total, fill: COLORS[index % COLORS.length] };
     })
     .filter((d) => d.amount > 0);
@@ -182,7 +178,7 @@ export default function VisualizePage() {
           const d = new Date(exp.date);
           return d.getFullYear() === currentYear && exp.categoryId === cat.id;
         })
-        .reduce((sum, exp) => sum + exp.amount, 0);
+        .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, displayCurrency), 0);
       return { name: cat.title, amount: total, fill: COLORS[index % COLORS.length] };
     })
     .filter((d) => d.amount > 0);
@@ -198,13 +194,19 @@ export default function VisualizePage() {
       const d = new Date(exp.date);
       return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
     });
-    const total = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const total = monthExpenses.reduce(
+      (sum, exp) => sum + convertCurrency(exp.amount, exp.currency, displayCurrency),
+      0,
+    );
     const categoryBreakdown = categories
       .map((cat) => ({
         name: cat.title,
         amount: monthExpenses
           .filter((exp) => exp.categoryId === cat.id)
-          .reduce((sum, exp) => sum + exp.amount, 0),
+          .reduce(
+            (sum, exp) => sum + convertCurrency(exp.amount, exp.currency, displayCurrency),
+            0,
+          ),
       }))
       .filter((d) => d.amount > 0)
       .sort((a, b) => b.amount - a.amount);
@@ -222,13 +224,13 @@ export default function VisualizePage() {
         const d = new Date(exp.date);
         return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
       })
-      .reduce((sum, exp) => sum + exp.amount, 0);
+      .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, displayCurrency), 0);
     const incomeTotal = incomes
       .filter((inc) => {
         const d = new Date(inc.date);
         return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
       })
-      .reduce((sum, inc) => sum + inc.amount, 0);
+      .reduce((sum, inc) => sum + convertCurrency(inc.amount, inc.currency, displayCurrency), 0);
     return { month: label, income: incomeTotal, expense: expenseTotal };
   });
   // 6. Income by category for the selected month
@@ -240,7 +242,7 @@ export default function VisualizePage() {
       })
       .reduce<Record<string, number>>((acc, inc) => {
         const key = inc.category ?? "other";
-        acc[key] = (acc[key] ?? 0) + inc.amount;
+        acc[key] = (acc[key] ?? 0) + convertCurrency(inc.amount, inc.currency, displayCurrency);
         return acc;
       }, {}),
   ).map(([name, amount], index) => ({ name, amount, fill: COLORS[index % COLORS.length] }));
@@ -249,7 +251,7 @@ export default function VisualizePage() {
     try {
       const wb = XLSX.utils.book_new();
       const trendSheet = [
-        ["Month", "Spending (₹)"],
+        ["Month", `Spending (${displayCurrency})`],
         ...monthlyTrendData.map((row) => [row.month, row.amount]),
         [],
         ["Total (6 months)", monthlyTrendData.reduce((sum, row) => sum + row.amount, 0)],
@@ -257,7 +259,7 @@ export default function VisualizePage() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(trendSheet), "Spending Trend");
       if (categoryShareMonthlyData.length > 0) {
         const monthlySheet = [
-          ["Category", "Amount (₹)"],
+          ["Category", `Amount (${displayCurrency})`],
           ...categoryShareMonthlyData.map((row) => [row.name, row.amount]),
           [],
           ["Total", categoryShareMonthlyData.reduce((sum, row) => sum + row.amount, 0)],
@@ -270,7 +272,7 @@ export default function VisualizePage() {
       }
       if (categoryShareYearlyData.length > 0) {
         const yearlySheet = [
-          ["Category", "Amount (₹)"],
+          ["Category", `Amount (${displayCurrency})`],
           ...categoryShareYearlyData.map((row) => [row.name, row.amount]),
           [],
           ["Total", categoryShareYearlyData.reduce((sum, row) => sum + row.amount, 0)],
@@ -301,17 +303,17 @@ export default function VisualizePage() {
         {" "}
         <div>
           {" "}
-          <h1 className="text-3xl font-bold text-white mb-2">Visualize</h1>{" "}
-          <p className="text-slate-400">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Visualize</h1>{" "}
+          <p className="text-slate-600 dark:text-slate-400">
             {" "}
             Spending and category share trends for {selectedMonthLabel}{" "}
           </p>{" "}
         </div>{" "}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {" "}
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             {" "}
-            <label htmlFor="visualize-month" className="text-slate-400">
+            <label htmlFor="visualize-month" className="text-slate-600 dark:text-slate-400">
               {" "}
               Month{" "}
             </label>{" "}
@@ -319,7 +321,7 @@ export default function VisualizePage() {
               id="visualize-month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 outline-none ring-0"
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-900 outline-none ring-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               {" "}
               {months.map((month, index) => (
@@ -330,9 +332,9 @@ export default function VisualizePage() {
               ))}{" "}
             </select>{" "}
           </div>{" "}
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             {" "}
-            <label htmlFor="visualize-year" className="text-slate-400">
+            <label htmlFor="visualize-year" className="text-slate-600 dark:text-slate-400">
               {" "}
               Year{" "}
             </label>{" "}
@@ -340,7 +342,7 @@ export default function VisualizePage() {
               id="visualize-year"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 outline-none ring-0"
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-900 outline-none ring-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               {" "}
               {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
@@ -385,10 +387,10 @@ export default function VisualizePage() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `₹${value}`}
+                  tickFormatter={(value) => `${getCurrencySymbol(displayCurrency)}${value}`}
                 />{" "}
                 <Tooltip
-                  content={<TrendTooltip />}
+                  content={<TrendTooltip currency={displayCurrency} />}
                   cursor={{ stroke: "#1e293b", strokeWidth: 2 }}
                 />{" "}
                 <Line
@@ -435,9 +437,12 @@ export default function VisualizePage() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `₹${value}`}
+                  tickFormatter={(value) => `${getCurrencySymbol(displayCurrency)}${value}`}
                 />{" "}
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#1e293b" }} />{" "}
+                <Tooltip
+                  content={<CustomTooltip currency={displayCurrency} />}
+                  cursor={{ fill: "#1e293b" }}
+                />{" "}
                 <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />{" "}
               </BarChart>{" "}
             </ResponsiveContainer>
@@ -464,7 +469,7 @@ export default function VisualizePage() {
                   fill="#8884d8"
                   dataKey="amount"
                 />{" "}
-                <Tooltip content={<CustomTooltip />} />{" "}
+                <Tooltip content={<CustomTooltip currency={displayCurrency} />} />{" "}
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
               </PieChart>{" "}
             </ResponsiveContainer>
@@ -491,7 +496,7 @@ export default function VisualizePage() {
                   fill="#8884d8"
                   dataKey="amount"
                 />{" "}
-                <Tooltip content={<CustomTooltip />} />{" "}
+                <Tooltip content={<CustomTooltip currency={displayCurrency} />} />{" "}
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
               </PieChart>{" "}
             </ResponsiveContainer>
@@ -525,7 +530,7 @@ export default function VisualizePage() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `₹${value}`}
+                  tickFormatter={(value) => `${getCurrencySymbol(displayCurrency)}${value}`}
                 />{" "}
                 <Tooltip
                   contentStyle={{
@@ -533,9 +538,7 @@ export default function VisualizePage() {
                     border: "1px solid #334155",
                     borderRadius: 8,
                   }}
-                  formatter={(value) =>
-                    `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  }
+                  formatter={(value) => formatMoney(Number(value), displayCurrency)}
                 />{" "}
                 <Legend />{" "}
                 <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />{" "}
@@ -565,7 +568,7 @@ export default function VisualizePage() {
                   fill="#8884d8"
                   dataKey="amount"
                 />{" "}
-                <Tooltip content={<CustomTooltip />} />{" "}
+                <Tooltip content={<CustomTooltip currency={displayCurrency} />} />{" "}
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />{" "}
               </PieChart>{" "}
             </ResponsiveContainer>

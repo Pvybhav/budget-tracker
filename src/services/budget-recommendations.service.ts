@@ -1,7 +1,8 @@
 import { type Category, type Expense } from "../db/db";
 import { getEffectiveMonthlyBudget } from "./budget.service";
+import { convertCurrency, formatMoney } from "./currency.service";
 export interface CategorySpendingAnalysis {
-  categoryId?: number;
+  categoryId?: string;
   categoryTitle?: string;
   monthlyAverageSpending: number;
   maxMonthlySpending: number;
@@ -14,7 +15,7 @@ export interface CategorySpendingAnalysis {
   trend: "increasing" | "decreasing" | "stable";
 }
 export interface BudgetRecommendation {
-  categoryId?: number;
+  categoryId?: string;
   categoryTitle?: string;
   currentBudget?: number;
   recommendedBudget: number;
@@ -30,8 +31,9 @@ export interface BudgetRecommendation {
 }
 export function getMonthlySpendingByCategory(
   expenses: Expense[],
-  categoryId: number,
+  categoryId: string,
   monthsToAnalyze: number = 6,
+  currency: string = "INR",
 ): number[] {
   const now = new Date();
   const monthlyData: number[] = [];
@@ -53,7 +55,7 @@ export function getMonthlySpendingByCategory(
         const expDate = new Date(exp.date);
         return expDate >= monthStart && expDate <= monthEnd;
       })
-      .reduce((sum, exp) => sum + exp.amount, 0);
+      .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, currency), 0);
     monthlyData.push(monthTotal);
   }
   return monthlyData;
@@ -93,8 +95,14 @@ export function analyzeCategorySpending(
   category: Category,
   expenses: Expense[],
   monthsToAnalyze: number = 6,
+  currency: string = "INR",
 ): CategorySpendingAnalysis {
-  const monthlySpending = getMonthlySpendingByCategory(expenses, category.id!, monthsToAnalyze);
+  const monthlySpending = getMonthlySpendingByCategory(
+    expenses,
+    category.id!,
+    monthsToAnalyze,
+    currency,
+  );
   const stats = calculateStatistics(monthlySpending);
   const trend = calculateTrend(monthlySpending);
   const frequentlyExceeded = category.budgetAmount
@@ -128,11 +136,12 @@ export function getSmartBudgetRecommendations(
   categories: Category[],
   expenses: Expense[],
   monthsToAnalyze: number = 6,
+  currency: string = "INR",
 ): BudgetRecommendation[] {
   const analysisMonths = Math.min(6, Math.max(3, Math.floor(monthsToAnalyze)));
   return categories
     .map((category) => {
-      const analysis = analyzeCategorySpending(category, expenses, analysisMonths);
+      const analysis = analyzeCategorySpending(category, expenses, analysisMonths, currency);
       if (analysis.monthlyAverageSpending === 0) {
         return null;
       }
@@ -142,7 +151,12 @@ export function getSmartBudgetRecommendations(
       const savingsOpportunity = currentBudget
         ? Math.max(0, currentBudget - analysis.recommendedBudget)
         : 0;
-      const monthlySpending = getMonthlySpendingByCategory(expenses, category.id!, analysisMonths);
+      const monthlySpending = getMonthlySpendingByCategory(
+        expenses,
+        category.id!,
+        analysisMonths,
+        currency,
+      );
       const budgetForComparison = currentBudget ?? 0;
       const overBudgetMonths = currentBudget
         ? monthlySpending.filter((spending) => spending > budgetForComparison).length
@@ -150,19 +164,19 @@ export function getSmartBudgetRecommendations(
       let reasoning = "";
       let riskLevel: BudgetRecommendation["riskLevel"] = "medium";
       if (!currentBudget) {
-        reasoning = `No budget set. Based on ${analysis.analysisMonths} months of spending, recommend ₹${analysis.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month.`;
+        reasoning = `No budget set. Based on ${analysis.analysisMonths} months of spending, recommend ${formatMoney(analysis.recommendedBudget, currency)}/month.`;
         riskLevel = "low";
       } else if (analysis.frequentlyExceeded) {
-        reasoning = `Exceeded the current budget in ${overBudgetMonths} of the last ${analysis.analysisMonths} months. Recommend ₹${analysis.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month.`;
+        reasoning = `Exceeded the current budget in ${overBudgetMonths} of the last ${analysis.analysisMonths} months. Recommend ${formatMoney(analysis.recommendedBudget, currency)}/month.`;
         riskLevel = "high";
       } else if (currentBudget < analysis.monthlyAverageSpending) {
-        reasoning = `Current budget is below average spending. Recommend increasing to ₹${analysis.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month.`;
+        reasoning = `Current budget is below average spending. Recommend increasing to ${formatMoney(analysis.recommendedBudget, currency)}/month.`;
         riskLevel = "high";
       } else if (currentBudget > analysis.maxMonthlySpending * 1.3) {
-        reasoning = `Budget is significantly higher than typical spending. Consider reducing to ₹${analysis.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month to save ₹${savingsOpportunity.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month.`;
+        reasoning = `Budget is significantly higher than typical spending. Consider reducing to ${formatMoney(analysis.recommendedBudget, currency)}/month to save ${formatMoney(savingsOpportunity, currency)}/month.`;
         riskLevel = "low";
       } else {
-        reasoning = `Budget aligns well with spending patterns. Maintain current budget or adjust to ₹${analysis.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/month.`;
+        reasoning = `Budget aligns well with spending patterns. Maintain current budget or adjust to ${formatMoney(analysis.recommendedBudget, currency)}/month.`;
       }
       return {
         categoryId: category.id,

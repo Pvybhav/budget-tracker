@@ -1,13 +1,15 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { formatMoney } from "./currency.service";
 
 export interface SavingsGoal {
-  id?: number;
+  id?: string;
   title: string;
   targetAmount: number;
   targetDate: string;
   currentAmount: number;
   createdAt: string;
   note?: string;
+  currency?: string;
 }
 
 export interface SavingsGoalSummary {
@@ -68,7 +70,7 @@ export function getSavingsGoalSummary(goal: SavingsGoal): SavingsGoalSummary {
   } else if (avgDailySavings > 0) {
     etaLabel = `~${etaDays} day${etaDays === 1 ? "" : "s"}`;
   } else {
-    etaLabel = `₹${requiredPerDay.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day`;
+    etaLabel = `${formatMoney(requiredPerDay, goal.currency)}/day`;
   }
 
   const estimatedCompletionDate =

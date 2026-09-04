@@ -14,6 +14,8 @@ import SmartBudgetRecommendationsPanel from "../components/SmartBudgetRecommenda
 import BudgetCarryoverPanel from "../components/BudgetCarryoverPanel";
 import { getSmartBudgetRecommendations } from "../services/budget-recommendations.service";
 import { calculateCategoryCarryovers } from "../services/budget-carryover.service";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import PaginationControls from "../components/PaginationControls";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
@@ -27,46 +29,47 @@ const BUDGET_MODE_COLORS: Record<string, string> = {
   yearly: "text-sky-400 bg-sky-400/10 border-sky-400/30",
 };
 
-function fmtPreview(n: number) {
-  if (n >= 1000) return "₹" + (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
-  return (
-    "₹" +
-    n.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  );
+function fmtPreview(n: number, currency: string) {
+  if (n >= 1000)
+    return formatMoney(n / 1000, currency)
+      .replace(/\.00$/, "")
+      .concat("k");
+  return formatMoney(n, currency);
 }
 
-function getBudgetPreviews(category: Category): string | null {
+function getBudgetPreviews(category: Category, currency: string): string | null {
   const { budgetAmount: amt, budgetMode: mode } = category;
   if (amt == null || !mode) return null;
   if (mode === "monthly") {
-    return `≈ ${fmtPreview(amt / (52 / 12))}/wk · ${fmtPreview(amt / 30)}/day`;
+    return `≈ ${fmtPreview(amt / (52 / 12), currency)}/wk · ${fmtPreview(amt / 30, currency)}/day`;
   }
   if (mode === "quarterly") {
-    return `≈ ${fmtPreview(amt / 3)}/mo · ${fmtPreview(amt / (52 / 4))}/wk · ${fmtPreview(amt / (365 / 4))}/day`;
+    return `≈ ${fmtPreview(amt / 3, currency)}/mo · ${fmtPreview(amt / (52 / 4), currency)}/wk · ${fmtPreview(amt / (365 / 4), currency)}/day`;
   }
   // yearly
-  return `≈ ${fmtPreview(amt / 12)}/mo · ${fmtPreview(amt / 52)}/wk · ${fmtPreview(amt / 365)}/day`;
+  return `≈ ${fmtPreview(amt / 12, currency)}/mo · ${fmtPreview(amt / 52, currency)}/wk · ${fmtPreview(amt / 365, currency)}/day`;
 }
 
 export default function ManageCategoriesPage() {
+  const displayCurrency = useDisplayCurrency();
   const categories = useBackendResource(() => fetchCategories(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);
   const [categoryForExpenses, setCategoryForExpenses] = useState<Category | null>(null);
   const [compactMode, setCompactMode] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
+  const visibleCategories = (categories ?? []).slice((page - 1) * pageSize, page * pageSize);
 
   const budgetForecasts = useMemo(() => {
     if (!categories || !expenses) return [];
-    return forecastAllCategoryBudgets(categories, expenses);
-  }, [categories, expenses]);
+    return forecastAllCategoryBudgets(categories, expenses, displayCurrency);
+  }, [categories, expenses, displayCurrency]);
   const recommendations = useMemo(() => {
     if (!categories || !expenses) return [];
-    return getSmartBudgetRecommendations(categories, expenses);
-  }, [categories, expenses]);
+    return getSmartBudgetRecommendations(categories, expenses, 6, displayCurrency);
+  }, [categories, expenses, displayCurrency]);
   const carryovers = useMemo(() => {
     if (!categories || !expenses) return [];
     const now = new Date();
@@ -74,19 +77,23 @@ export default function ManageCategoriesPage() {
     const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     const prevMonthStart = new Date(prevYear, prevMonth, 1);
     const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const prevMonthSpent = new Map<number, number>();
+    const prevMonthSpent = new Map<string, number>();
     expenses.forEach((exp) => {
       const expDate = new Date(exp.date);
       if (expDate >= prevMonthStart && expDate <= prevMonthEnd) {
-        const current = prevMonthSpent.get(exp.categoryId ?? 0) ?? 0;
-        prevMonthSpent.set(exp.categoryId ?? 0, current + exp.amount);
+        const current = prevMonthSpent.get(exp.categoryId ?? "") ?? 0;
+        prevMonthSpent.set(
+          exp.categoryId ?? "",
+          current + convertCurrency(exp.amount, exp.currency, displayCurrency),
+        );
       }
     });
     return calculateCategoryCarryovers(
       categories.map((c) => ({ ...c, enableCarryover: true })),
       prevMonthSpent,
+      displayCurrency,
     );
-  }, [categories, expenses]);
+  }, [categories, expenses, displayCurrency]);
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -94,11 +101,11 @@ export default function ManageCategoriesPage() {
 
   const { monthlySpentMap, quarterlySpentMap, yearlySpentMap, expenseCountMap, lastExpenseMap } =
     useMemo(() => {
-      const monthly = new Map<number, number>();
-      const quarterly = new Map<number, number>();
-      const yearly = new Map<number, number>();
-      const counts = new Map<number, number>();
-      const last = new Map<number, string>();
+      const monthly = new Map<string, number>();
+      const quarterly = new Map<string, number>();
+      const yearly = new Map<string, number>();
+      const counts = new Map<string, number>();
+      const last = new Map<string, string>();
       if (!expenses)
         return {
           monthlySpentMap: monthly,
@@ -123,18 +130,27 @@ export default function ManageCategoriesPage() {
             (budgetMode === "quarterly" && Math.floor((m - 1) / 3) === currentQuarterIndex));
 
         if (y === currentYear) {
-          yearly.set(cid, (yearly.get(cid) || 0) + e.amount);
+          yearly.set(
+            cid,
+            (yearly.get(cid) || 0) + convertCurrency(e.amount, e.currency, displayCurrency),
+          );
         }
         if (y === currentYear) {
           if (m === currentMonth) {
-            monthly.set(cid, (monthly.get(cid) || 0) + e.amount);
+            monthly.set(
+              cid,
+              (monthly.get(cid) || 0) + convertCurrency(e.amount, e.currency, displayCurrency),
+            );
           }
           // Quarter calculation: determine quarter start month for currentMonth
           const currentQuarterIndex = Math.floor((currentMonth - 1) / 3);
           const quarterStart = currentQuarterIndex * 3 + 1;
           const quarterMonths = [quarterStart, quarterStart + 1, quarterStart + 2];
           if (quarterMonths.includes(m)) {
-            quarterly.set(cid, (quarterly.get(cid) || 0) + e.amount);
+            quarterly.set(
+              cid,
+              (quarterly.get(cid) || 0) + convertCurrency(e.amount, e.currency, displayCurrency),
+            );
           }
         }
         if (isCurrentPeriod) counts.set(cid, (counts.get(cid) || 0) + 1);
@@ -148,7 +164,7 @@ export default function ManageCategoriesPage() {
         expenseCountMap: counts,
         lastExpenseMap: last,
       };
-    }, [categories, expenses, currentYear, currentMonth]);
+    }, [categories, expenses, currentYear, currentMonth, displayCurrency]);
 
   const openAddModal = () => {
     setCategoryToEdit(undefined);
@@ -177,8 +193,10 @@ export default function ManageCategoriesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-100">Manage Categories</h1>
-          <p className="text-slate-400 mt-1 text-sm">
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+            Manage Categories
+          </h1>
+          <p className="text-slate-600 mt-1 text-sm dark:text-slate-400">
             Organise your expenses into categories with optional budgets.
           </p>
         </div>
@@ -193,7 +211,7 @@ export default function ManageCategoriesPage() {
 
           <button
             onClick={() => setCompactMode((c) => !c)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border ${compactMode ? "bg-slate-800 text-slate-100 border-slate-700" : "bg-transparent text-slate-300 border-transparent hover:bg-slate-800"}`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border ${compactMode ? "bg-blue-100 dark:bg-slate-800 text-blue-900 dark:text-slate-100 border-blue-300 dark:border-slate-700" : "bg-transparent text-slate-700 dark:text-slate-300 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"}`}
             title="Toggle compact mode"
           >
             <span className="text-sm font-medium">{compactMode ? "Compact" : "Expanded"}</span>
@@ -201,10 +219,12 @@ export default function ManageCategoriesPage() {
         </div>
       </div>
       {categories && categories.length === 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center">
-          <Tags className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-300 mb-2">No categories yet</h3>
-          <p className="text-slate-500 mb-6 text-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Tags className="w-12 h-12 text-slate-500 mx-auto mb-4 dark:text-slate-600" />
+          <h3 className="text-lg font-medium text-slate-800 mb-2 dark:text-slate-300">
+            No categories yet
+          </h3>
+          <p className="text-slate-600 mb-6 text-sm dark:text-slate-500">
             Create categories to organise your expenses and track budgets.
           </p>
           <button
@@ -218,19 +238,21 @@ export default function ManageCategoriesPage() {
       )}
       {categories && categories.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((category) => {
-            const previews = getBudgetPreviews(category);
+          {visibleCategories.map((category) => {
+            const previews = getBudgetPreviews(category, displayCurrency);
             return (
               <div
                 key={category.id}
-                className={`bg-slate-900 border border-slate-800 rounded-2xl ${compactMode ? "p-3 gap-2 text-sm" : "p-5 gap-3"} hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
+                className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl ${compactMode ? "p-3 gap-2 text-sm" : "p-5 gap-3"} hover:border-slate-300 dark:hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
                       <Tags className="w-4 h-4 text-violet-400" />
                     </span>
-                    <h3 className="font-semibold text-slate-100 truncate">{category.title}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      {category.title}
+                    </h3>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button
@@ -252,10 +274,10 @@ export default function ManageCategoriesPage() {
 
                 <div className="min-h-[36px] mt-1">
                   {compactMode ? (
-                    <div className="text-xs text-slate-400 flex items-center gap-3">
+                    <div className="text-xs text-slate-700 dark:text-slate-400 flex items-center gap-3">
                       <button
                         onClick={() => openCategoryExpenses(category)}
-                        className="text-left hover:text-slate-200 transition-colors"
+                        className="text-left hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
                       >
                         {expenseCountMap.get(category.id!) ?? 0} expenses
                       </button>
@@ -271,15 +293,15 @@ export default function ManageCategoriesPage() {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-sm text-slate-400 leading-relaxed">
+                      <div className="text-sm text-slate-700 dark:text-slate-400 leading-relaxed">
                         {category.description ?? (
                           <span className="text-transparent">placeholder</span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400 mt-2 flex items-center gap-3">
+                      <div className="text-xs text-slate-700 dark:text-slate-400 mt-2 flex items-center gap-3">
                         <button
                           onClick={() => openCategoryExpenses(category)}
-                          className="text-left hover:text-slate-200 transition-colors"
+                          className="text-left hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
                         >
                           {expenseCountMap.get(category.id!) ?? 0} expenses
                         </button>
@@ -301,12 +323,8 @@ export default function ManageCategoriesPage() {
                   <div className="mt-auto space-y-1.5">
                     <div className="flex items-center gap-2">
                       <Wallet className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      <span className="text-sm font-semibold text-slate-200">
-                        ₹
-                        {category.budgetAmount.toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">
+                        {formatMoney(category.budgetAmount, displayCurrency)}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full border font-medium ${BUDGET_MODE_COLORS[category.budgetMode] ?? ""}`}
@@ -333,8 +351,10 @@ export default function ManageCategoriesPage() {
                         const nearLimit = budgetStatus.isNearLimit;
                         return (
                           <div>
-                            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                              <div className="font-medium text-slate-300">Budget usage</div>
+                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              <div className="font-medium text-slate-700 dark:text-slate-300">
+                                Budget usage
+                              </div>
                               <div
                                 className={`font-semibold ${over ? "text-red-400" : nearLimit ? "text-amber-400" : "text-emerald-400"}`}
                               >
@@ -343,7 +363,7 @@ export default function ManageCategoriesPage() {
                             </div>
 
                             <div
-                              className={`w-full bg-slate-800 rounded-full ${compactMode ? "h-2" : "h-3"} overflow-hidden border border-slate-700`}
+                              className={`w-full bg-slate-200 dark:bg-slate-800 rounded-full ${compactMode ? "h-2" : "h-3"} overflow-hidden border border-slate-300 dark:border-slate-700`}
                             >
                               <div
                                 style={{
@@ -354,19 +374,13 @@ export default function ManageCategoriesPage() {
                             </div>
 
                             <div className="flex items-center justify-between text-xs text-slate-500 mt-2 gap-2">
-                              <div>
-                                ₹
-                                {spent.toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </div>
+                              <div>{formatMoney(spent, displayCurrency)}</div>
                               <div
                                 className={`${over ? "text-red-400 font-medium" : nearLimit ? "text-amber-400 font-medium" : "text-slate-400"}`}
                               >
                                 {over
-                                  ? `Over by ₹${Math.abs(budgetStatus.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                  : `${Math.max(0, budgetStatus.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left`}
+                                  ? `Over by ${formatMoney(Math.abs(budgetStatus.remaining), displayCurrency)}`
+                                  : `${formatMoney(Math.max(0, budgetStatus.remaining), displayCurrency)} left`}
                               </div>
                             </div>
                             <div
@@ -389,6 +403,12 @@ export default function ManageCategoriesPage() {
           })}
         </div>
       )}
+      <PaginationControls
+        page={page}
+        totalItems={categories?.length ?? 0}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
       {categories && categories.length > 0 && budgetForecasts.length > 0 && (
         <BudgetForecastPanel forecasts={budgetForecasts} />
       )}

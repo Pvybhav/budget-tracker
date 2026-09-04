@@ -1,13 +1,14 @@
 import { type Expense, type Category } from "../db/db";
+import { convertCurrency } from "./currency.service";
 export interface MonthlySpendingData {
   month: string;
   monthIndex: number;
   year: number;
   totalSpending: number;
-  categoryBreakdown: Array<{ categoryId?: number; categoryTitle: string; amount: number }>;
+  categoryBreakdown: Array<{ categoryId?: string; categoryTitle: string; amount: number }>;
 }
 export interface CategoryMonthComparison {
-  categoryId?: number;
+  categoryId?: string;
   categoryTitle?: string;
   currentMonthSpending: number;
   previousMonthSpending: number;
@@ -30,6 +31,7 @@ export function getMonthlySpending(
   year: number,
   monthIndex: number, // 0-11
   categories: Category[],
+  currency: string = "INR",
 ): MonthlySpendingData {
   const monthStart = new Date(year, monthIndex, 1);
   const monthEnd = new Date(year, monthIndex + 1, 0);
@@ -37,12 +39,15 @@ export function getMonthlySpending(
     const expDate = new Date(exp.date);
     return expDate >= monthStart && expDate <= monthEnd;
   });
-  const totalSpending = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalSpending = monthExpenses.reduce(
+    (sum, exp) => sum + convertCurrency(exp.amount, exp.currency, currency),
+    0,
+  );
   const categoryBreakdown = categories
     .map((cat) => {
       const categoryTotal = monthExpenses
         .filter((exp) => exp.categoryId === cat.id)
-        .reduce((sum, exp) => sum + exp.amount, 0);
+        .reduce((sum, exp) => sum + convertCurrency(exp.amount, exp.currency, currency), 0);
       return { categoryId: cat.id, categoryTitle: cat.title, amount: categoryTotal };
     })
     .filter((cb) => cb.amount > 0);
@@ -57,22 +62,29 @@ export function compareMonthlyTrends(
   categories: Category[],
   baseYear: number = new Date().getFullYear(),
   baseMonth: number = new Date().getMonth(), // 0-11
+  currency: string = "INR",
 ): MonthlyTrendComparison {
-  const currentMonth = getMonthlySpending(expenses, baseYear, baseMonth, categories); // Previous month
+  const currentMonth = getMonthlySpending(expenses, baseYear, baseMonth, categories, currency); // Previous month
   let prevYear = baseYear;
   let prevMonth = baseMonth - 1;
   if (prevMonth < 0) {
     prevMonth = 11;
     prevYear -= 1;
   }
-  const previousMonth = getMonthlySpending(expenses, prevYear, prevMonth, categories); // Two months ago
+  const previousMonth = getMonthlySpending(expenses, prevYear, prevMonth, categories, currency); // Two months ago
   let twoMonthsYear = prevYear;
   let twoMonthsMonth = prevMonth - 1;
   if (twoMonthsMonth < 0) {
     twoMonthsMonth = 11;
     twoMonthsYear -= 1;
   }
-  const twoMonthsAgo = getMonthlySpending(expenses, twoMonthsYear, twoMonthsMonth, categories); // Calculate category comparisons
+  const twoMonthsAgo = getMonthlySpending(
+    expenses,
+    twoMonthsYear,
+    twoMonthsMonth,
+    categories,
+    currency,
+  ); // Calculate category comparisons
   const categoryComparisons = categories
     .map((cat) => {
       const currentSpending =

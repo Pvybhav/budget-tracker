@@ -5,7 +5,9 @@ import { useBackendResource } from "../services/backendHooks";
 import { fetchInvestmentTransactions, fetchInvestments } from "../services/backend.service";
 import { createInvestmentTransaction, deleteInvestmentTransaction } from "../services/backendSync";
 import showConfirm from "../components/Confirm";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 export default function InvestmentTransactionsSection() {
+  const displayCurrency = useDisplayCurrency();
   const investments = useBackendResource(() => fetchInvestments(), []);
   const transactions = useBackendResource(() => fetchInvestmentTransactions(), []);
   const [investmentId, setInvestmentId] = useState("");
@@ -19,7 +21,7 @@ export default function InvestmentTransactionsSection() {
     const numericAmount = Number(amount);
     if (!investmentId || !Number.isFinite(numericAmount) || numericAmount < 0) return;
     await createInvestmentTransaction({
-      investmentId: Number(investmentId),
+      investmentId,
       type,
       quantity: quantity ? Number(quantity) : undefined,
       amount: numericAmount,
@@ -38,15 +40,20 @@ export default function InvestmentTransactionsSection() {
     });
     if (ok) await deleteInvestmentTransaction(transaction.id);
   };
-  const name = (id: number) =>
+  const name = (id: string) =>
     investments?.find((investment) => investment.id === id)?.name ?? `Investment #${id}`;
+  const currencyFor = (investmentId: string) =>
+    investments?.find((investment) => investment.id === investmentId)?.currency;
   return (
-    <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section className="space-y-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
       {" "}
       <div>
         {" "}
-        <h2 className="text-xl font-semibold text-slate-100"> Investment transactions </h2>{" "}
-        <p className="mt-1 text-sm text-slate-400">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          {" "}
+          Investment transactions{" "}
+        </h2>{" "}
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           {" "}
           Record buys, sells, dividends, and fees alongside your portfolio snapshots.{" "}
         </p>{" "}
@@ -57,7 +64,7 @@ export default function InvestmentTransactionsSection() {
           required
           value={investmentId}
           onChange={(event) => setInvestmentId(event.target.value)}
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         >
           {" "}
           <option value="">Investment</option>{" "}
@@ -71,7 +78,7 @@ export default function InvestmentTransactionsSection() {
         <select
           value={type}
           onChange={(event) => setType(event.target.value as InvestmentTransactionType)}
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         >
           {" "}
           <option value="buy">Buy</option> <option value="sell">Sell</option>{" "}
@@ -85,7 +92,7 @@ export default function InvestmentTransactionsSection() {
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="Amount"
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         />{" "}
         <input
           min="0"
@@ -94,20 +101,20 @@ export default function InvestmentTransactionsSection() {
           value={quantity}
           onChange={(event) => setQuantity(event.target.value)}
           placeholder="Quantity (optional)"
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         />{" "}
         <input
           required
           type="date"
           value={date}
           onChange={(event) => setDate(event.target.value)}
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         />{" "}
         <input
           value={note}
           onChange={(event) => setNote(event.target.value)}
           placeholder="Note (optional)"
-          className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white"
+          className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         />{" "}
         <button
           type="submit"
@@ -119,9 +126,9 @@ export default function InvestmentTransactionsSection() {
       </form>{" "}
       <div className="overflow-x-auto">
         {" "}
-        <table className="w-full min-w-[620px] text-left text-sm text-slate-300">
+        <table className="w-full min-w-[620px] text-left text-sm text-slate-700 dark:text-slate-300">
           {" "}
-          <thead className="border-b border-slate-800 text-slate-500">
+          <thead className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-500\">
             {" "}
             <tr>
               {" "}
@@ -144,7 +151,14 @@ export default function InvestmentTransactionsSection() {
                 <td className="px-3 py-3">{transaction.quantity ?? "-"}</td>{" "}
                 <td className="px-3 py-3">
                   {" "}
-                  ₹ {transaction.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}{" "}
+                  {formatMoney(
+                    convertCurrency(
+                      transaction.amount,
+                      currencyFor(transaction.investmentId),
+                      displayCurrency,
+                    ),
+                    displayCurrency,
+                  )}{" "}
                 </td>{" "}
                 <td className="px-3 py-3 text-right">
                   {" "}

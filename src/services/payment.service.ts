@@ -5,6 +5,6 @@ export async function addPayment(data: Payment) {
   return backend.createPayment(data);
 }
 
-export async function deletePayment(id: number) {
+export async function deletePayment(id: string) {
   return backend.deletePayment(id);
 }

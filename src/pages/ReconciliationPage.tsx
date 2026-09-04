@@ -3,24 +3,32 @@ import { CheckCircle2, Circle } from "lucide-react";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchCards, fetchExpenses } from "../services/backend.service";
 import { updateExpense } from "../services/backendSync";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 export default function ReconciliationPage() {
+  const displayCurrency = useDisplayCurrency();
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const cards = useBackendResource(() => fetchCards(), []);
   const [accountId, setAccountId] = useState("all");
   const pending = useMemo(
     () =>
       [...(expenses ?? [])]
-        .filter((expense) => accountId === "all" || expense.cardId === Number(accountId))
+        .filter((expense) => accountId === "all" || expense.cardId === accountId)
         .sort((a, b) => b.date.localeCompare(a.date)),
     [accountId, expenses],
   );
   const reconciledTotal = pending
     .filter((expense) => expense.reconciled)
-    .reduce((sum, expense) => sum + expense.amount, 0);
+    .reduce(
+      (sum, expense) => sum + convertCurrency(expense.amount, expense.currency, displayCurrency),
+      0,
+    );
   const pendingTotal = pending
     .filter((expense) => !expense.reconciled)
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const accountName = (id: number) =>
+    .reduce(
+      (sum, expense) => sum + convertCurrency(expense.amount, expense.currency, displayCurrency),
+      0,
+    );
+  const accountName = (id: string) =>
     cards?.find((card) => card.id === id)?.title ?? `Account #${id}`;
   const markAllVerified = async () => {
     await Promise.all(
@@ -34,21 +42,24 @@ export default function ReconciliationPage() {
       {" "}
       <div>
         {" "}
-        <h1 className="text-3xl font-semibold text-slate-100"> Reconciliation </h1>{" "}
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+          {" "}
+          Reconciliation{" "}
+        </h1>{" "}
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           {" "}
           Mark transactions that you have verified against your statement.{" "}
         </p>{" "}
       </div>{" "}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between dark:border-slate-800 dark:bg-slate-900/60">
         {" "}
-        <label className="block text-sm text-slate-400">
+        <label className="block text-sm text-slate-600 dark:text-slate-400">
           {" "}
           Account{" "}
           <select
             value={accountId}
             onChange={(event) => setAccountId(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-white sm:w-64"
+            className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white sm:w-64"
           >
             {" "}
             <option value="all">All accounts</option>{" "}
@@ -72,17 +83,20 @@ export default function ReconciliationPage() {
       </div>{" "}
       <div className="grid gap-3 sm:grid-cols-3">
         {" "}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
           {" "}
-          <div className="text-sm text-slate-400">Transactions</div>{" "}
-          <div className="mt-1 text-2xl font-semibold text-slate-100"> {pending.length} </div>{" "}
+          <div className="text-sm text-slate-600 dark:text-slate-400">Transactions</div>{" "}
+          <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {" "}
+            {pending.length}{" "}
+          </div>{" "}
         </div>{" "}
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
           {" "}
           <div className="text-sm text-slate-400">Verified spending</div>{" "}
           <div className="mt-1 text-2xl font-semibold text-emerald-300">
             {" "}
-            ₹{reconciledTotal.toLocaleString("en-IN")}{" "}
+            {formatMoney(reconciledTotal, displayCurrency)}{" "}
           </div>{" "}
         </div>{" "}
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
@@ -90,27 +104,29 @@ export default function ReconciliationPage() {
           <div className="text-sm text-slate-400">To verify</div>{" "}
           <div className="mt-1 text-2xl font-semibold text-amber-300">
             {" "}
-            ₹{pendingTotal.toLocaleString("en-IN")}{" "}
+            {formatMoney(pendingTotal, displayCurrency)}{" "}
           </div>{" "}
         </div>{" "}
       </div>{" "}
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         {" "}
-        <table className="w-full min-w-[620px] text-left text-slate-300">
+        <table className="w-full min-w-[620px] text-left text-slate-700 dark:text-slate-300">
           {" "}
-          <thead className="bg-slate-800/50">
+          <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             {" "}
             <tr>
               {" "}
-              <th className="px-5 py-4">Status</th> <th className="px-5 py-4">Date</th>{" "}
-              <th className="px-5 py-4">Account</th> <th className="px-5 py-4">Description</th>{" "}
-              <th className="px-5 py-4">Amount</th>{" "}
+              <th className="px-5 py-4 text-slate-900 dark:text-slate-100">Status</th>{" "}
+              <th className="px-5 py-4 text-slate-900 dark:text-slate-100">Date</th>{" "}
+              <th className="px-5 py-4 text-slate-900 dark:text-slate-100">Account</th>{" "}
+              <th className="px-5 py-4 text-slate-900 dark:text-slate-100">Description</th>{" "}
+              <th className="px-5 py-4 text-slate-900 dark:text-slate-100">Amount</th>{" "}
             </tr>{" "}
           </thead>{" "}
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
             {" "}
             {pending.map((expense) => (
-              <tr key={expense.id} className="hover:bg-slate-800/20">
+              <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20">
                 {" "}
                 <td className="px-5 py-3">
                   {" "}
@@ -135,7 +151,10 @@ export default function ReconciliationPage() {
                 <td className="px-5 py-3"> {expense.details || "Uncategorized expense"} </td>{" "}
                 <td className="px-5 py-3 font-medium">
                   {" "}
-                  ₹ {expense.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}{" "}
+                  {formatMoney(
+                    convertCurrency(expense.amount, expense.currency, displayCurrency),
+                    displayCurrency,
+                  )}{" "}
                 </td>{" "}
               </tr>
             ))}{" "}

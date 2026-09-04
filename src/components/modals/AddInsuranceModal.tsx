@@ -3,6 +3,8 @@ import type { InsurancePolicy, InsuranceType, PremiumFrequency } from "../../db/
 import { createInsurancePolicy, updateInsurancePolicy } from "../../services/backendSync";
 import showConfirm from "../../components/Confirm";
 import { X } from "lucide-react";
+import CurrencySelect from "../CurrencySelect";
+import { getDisplayCurrency } from "../../services/currency.service";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +39,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
     startDate: today(),
     endDate: "",
     note: "",
+    currency: getDisplayCurrency(),
   });
   useEffect(() => {
     if (initialPolicy) {
@@ -51,6 +54,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
         startDate: initialPolicy.startDate,
         endDate: initialPolicy.endDate ?? "",
         note: initialPolicy.note ?? "",
+        currency: initialPolicy.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {
       setFormData({
@@ -64,6 +68,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
         startDate: today(),
         endDate: "",
         note: "",
+        currency: getDisplayCurrency(),
       });
     }
   }, [initialPolicy, isOpen]);
@@ -88,6 +93,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
       note: formData.note.trim() || undefined,
       createdAt: initialPolicy?.createdAt ?? new Date().toISOString(),
       premiumPayments: initialPolicy?.premiumPayments ?? [],
+      currency: formData.currency,
     };
     if (initialPolicy?.id) {
       const ok = await showConfirm(`Save changes to "${payload.policyName}"?`, {
@@ -104,16 +110,16 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {" "}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           {" "}
           <X className="w-5 h-5" />{" "}
         </button>{" "}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           {" "}
           <h2 className="text-xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
             {" "}
@@ -124,7 +130,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
           {" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               {" "}
               Policy Name{" "}
             </label>{" "}
@@ -135,19 +141,22 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
               placeholder="e.g. Family Health Cover"
               value={formData.policyName}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1"> Type </label>{" "}
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                {" "}
+                Type{" "}
+              </label>{" "}
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
                 {" "}
                 {TYPE_OPTIONS.map((t) => (
@@ -160,7 +169,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Provider{" "}
               </label>{" "}
@@ -170,13 +179,13 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
                 name="provider"
                 value={formData.provider}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               />{" "}
             </div>{" "}
           </div>{" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               {" "}
               Policy Number (optional){" "}
             </label>{" "}
@@ -185,14 +194,14 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
               name="policyNumber"
               value={formData.policyNumber}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Sum Assured{" "}
               </label>{" "}
@@ -203,12 +212,12 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
                 name="sumAssured"
                 value={formData.sumAssured}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               />{" "}
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Premium Amount{" "}
               </label>{" "}
@@ -219,15 +228,27 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
                 name="premiumAmount"
                 value={formData.premiumAmount}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               />{" "}
+            </div>{" "}
+            <div>
+              {" "}
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                {" "}
+                Currency{" "}
+              </label>{" "}
+              <CurrencySelect
+                value={formData.currency}
+                onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
+              />
             </div>{" "}
           </div>{" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Premium Frequency{" "}
               </label>{" "}
@@ -235,7 +256,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
                 name="premiumFrequency"
                 value={formData.premiumFrequency}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
                 {" "}
                 {FREQUENCY_OPTIONS.map((f) => (
@@ -248,7 +269,7 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Start Date{" "}
               </label>{" "}
@@ -258,13 +279,13 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               />{" "}
             </div>{" "}
           </div>{" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               {" "}
               End Date (optional){" "}
             </label>{" "}
@@ -273,18 +294,21 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
               name="endDate"
               value={formData.endDate}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1"> Notes </label>{" "}
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+              {" "}
+              Notes{" "}
+            </label>{" "}
             <textarea
               name="note"
               value={formData.note}
               onChange={handleChange}
               rows={2}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div className="pt-2">

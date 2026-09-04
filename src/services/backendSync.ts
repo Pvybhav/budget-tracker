@@ -1,5 +1,6 @@
 import type {
   AutoCategorizeRule,
+  Beneficiary,
   Bill,
   BudgetRule,
   Card,
@@ -12,6 +13,7 @@ import type {
   Payment,
   RewardPointsEntry,
   SavingsGoal,
+  SavingsContribution,
   Transfer,
   NetWorthSnapshot,
   InvestmentTransaction,
@@ -30,13 +32,13 @@ export async function createCard(data: Omit<Card, "id">) {
   toastSuccess("Card created successfully");
   return card;
 }
-export async function updateCard(id: number, data: Partial<Card>) {
+export async function updateCard(id: string, data: Partial<Card>) {
   const card = await backend.updateCard(id, data);
   dispatchBackendRefresh();
   toastSuccess("Card updated successfully");
   return card;
 }
-export async function deleteCard(id: number) {
+export async function deleteCard(id: string) {
   const result = await backend.deleteCard(id);
   dispatchBackendRefresh();
   toastSuccess("Card deleted successfully");
@@ -48,13 +50,13 @@ export async function createCategory(data: Omit<Category, "id">) {
   toastSuccess("Category created successfully");
   return category;
 }
-export async function updateCategory(id: number, data: Partial<Category>) {
+export async function updateCategory(id: string, data: Partial<Category>) {
   const category = await backend.updateCategory(id, data);
   dispatchBackendRefresh();
   toastSuccess("Category updated successfully");
   return category;
 }
-export async function deleteCategory(id: number) {
+export async function deleteCategory(id: string) {
   const result = await backend.deleteCategory(id);
   dispatchBackendRefresh();
   toastSuccess("Category deleted successfully");
@@ -66,13 +68,13 @@ export async function createExpense(data: Omit<Expense, "id">) {
   toastSuccess("Expense saved successfully");
   return expense;
 }
-export async function updateExpense(id: number, data: Partial<Expense>) {
+export async function updateExpense(id: string, data: Partial<Expense>) {
   const expense = await backend.updateExpense(id, data);
   dispatchBackendRefresh();
   toastSuccess("Expense updated successfully");
   return expense;
 }
-export async function deleteExpense(id: number) {
+export async function deleteExpense(id: string) {
   const result = await backend.deleteExpense(id);
   dispatchBackendRefresh();
   toastSuccess("Expense deleted successfully");
@@ -84,13 +86,13 @@ export async function createPayment(data: Omit<Payment, "id">) {
   toastSuccess("Payment recorded successfully");
   return payment;
 }
-export async function updatePayment(id: number, data: Partial<Payment>) {
+export async function updatePayment(id: string, data: Partial<Payment>) {
   const payment = await backend.updatePayment(id, data);
   dispatchBackendRefresh();
   toastSuccess("Payment updated successfully");
   return payment;
 }
-export async function deletePayment(id: number) {
+export async function deletePayment(id: string) {
   const result = await backend.deletePayment(id);
   dispatchBackendRefresh();
   toastSuccess("Payment deleted successfully");
@@ -102,7 +104,22 @@ export async function createTransfer(data: Omit<Transfer, "id">) {
   toastSuccess("Transfer recorded successfully");
   return transfer;
 }
-export async function deleteTransfer(id: number) {
+export async function createBeneficiary(data: Omit<Beneficiary, "id">) {
+  const beneficiary = await backend.createBeneficiary(data);
+  dispatchBackendRefresh();
+  return beneficiary;
+}
+export async function updateBeneficiary(id: string, data: Partial<Omit<Beneficiary, "id">>) {
+  const beneficiary = await backend.updateBeneficiary(id, data);
+  dispatchBackendRefresh();
+  return beneficiary;
+}
+export async function deleteBeneficiary(id: string) {
+  const result = await backend.deleteBeneficiary(id);
+  dispatchBackendRefresh();
+  return result;
+}
+export async function deleteTransfer(id: string) {
   const result = await backend.deleteTransfer(id);
   dispatchBackendRefresh();
   toastSuccess("Transfer deleted successfully");
@@ -120,13 +137,13 @@ export async function createBill(data: Omit<Bill, "id">) {
   toastSuccess("Bill added successfully");
   return bill;
 }
-export async function updateBill(id: number, data: Partial<Bill>) {
+export async function updateBill(id: string, data: Partial<Bill>) {
   const bill = await backend.updateBill(id, data);
   dispatchBackendRefresh();
   toastSuccess("Bill updated successfully");
   return bill;
 }
-export async function deleteBill(id: number) {
+export async function deleteBill(id: string) {
   const result = await backend.deleteBill(id);
   dispatchBackendRefresh();
   toastSuccess("Bill deleted successfully");
@@ -138,13 +155,13 @@ export async function createLoan(data: Omit<Loan, "id">) {
   toastSuccess("Loan created successfully");
   return loan;
 }
-export async function updateLoan(id: number, data: Partial<Loan>) {
+export async function updateLoan(id: string, data: Partial<Loan>) {
   const loan = await backend.updateLoan(id, data);
   dispatchBackendRefresh();
   toastSuccess("Loan updated successfully");
   return loan;
 }
-export async function deleteLoan(id: number) {
+export async function deleteLoan(id: string) {
   const result = await backend.deleteLoan(id);
   dispatchBackendRefresh();
   toastSuccess("Loan deleted successfully");
@@ -156,16 +173,29 @@ export async function createSavingsGoal(data: Omit<SavingsGoal, "id">) {
   toastSuccess("Savings goal created successfully");
   return goal;
 }
-export async function updateSavingsGoal(id: number, data: Partial<SavingsGoal>) {
+export async function updateSavingsGoal(id: string, data: Partial<SavingsGoal>) {
   const goal = await backend.updateSavingsGoal(id, data);
   dispatchBackendRefresh();
   toastSuccess("Savings goal updated successfully");
   return goal;
 }
-export async function deleteSavingsGoal(id: number) {
+export async function deleteSavingsGoal(id: string) {
   const result = await backend.deleteSavingsGoal(id);
   dispatchBackendRefresh();
   toastSuccess("Savings goal deleted successfully");
+  return result;
+}
+export async function createSavingsContribution(
+  goalId: string,
+  data: Omit<SavingsContribution, "id" | "goalId">,
+) {
+  const contribution = await backend.createSavingsContribution(goalId, data);
+  dispatchBackendRefresh();
+  return contribution;
+}
+export async function deleteSavingsContribution(goalId: string, id: string) {
+  const result = await backend.deleteSavingsContribution(goalId, id);
+  dispatchBackendRefresh();
   return result;
 }
 export async function createIncome(data: Omit<Income, "id">) {
@@ -174,13 +204,13 @@ export async function createIncome(data: Omit<Income, "id">) {
   toastSuccess("Income recorded successfully");
   return income;
 }
-export async function updateIncome(id: number, data: Partial<Income>) {
+export async function updateIncome(id: string, data: Partial<Income>) {
   const income = await backend.updateIncome(id, data);
   dispatchBackendRefresh();
   toastSuccess("Income updated successfully");
   return income;
 }
-export async function deleteIncome(id: number) {
+export async function deleteIncome(id: string) {
   const result = await backend.deleteIncome(id);
   dispatchBackendRefresh();
   toastSuccess("Income deleted successfully");
@@ -192,13 +222,13 @@ export async function createRewardPoints(data: Omit<RewardPointsEntry, "id">) {
   toastSuccess("Reward points entry saved successfully");
   return entry;
 }
-export async function updateRewardPoints(id: number, data: Partial<RewardPointsEntry>) {
+export async function updateRewardPoints(id: string, data: Partial<RewardPointsEntry>) {
   const entry = await backend.updateRewardPoints(id, data);
   dispatchBackendRefresh();
   toastSuccess("Reward points entry updated successfully");
   return entry;
 }
-export async function deleteRewardPoints(id: number) {
+export async function deleteRewardPoints(id: string) {
   const result = await backend.deleteRewardPoints(id);
   dispatchBackendRefresh();
   toastSuccess("Reward points entry deleted successfully");
@@ -210,13 +240,13 @@ export async function createInsurancePolicy(data: Omit<InsurancePolicy, "id">) {
   toastSuccess("Insurance policy created successfully");
   return policy;
 }
-export async function updateInsurancePolicy(id: number, data: Partial<InsurancePolicy>) {
+export async function updateInsurancePolicy(id: string, data: Partial<InsurancePolicy>) {
   const policy = await backend.updateInsurancePolicy(id, data);
   dispatchBackendRefresh();
   toastSuccess("Insurance policy updated successfully");
   return policy;
 }
-export async function deleteInsurancePolicy(id: number) {
+export async function deleteInsurancePolicy(id: string) {
   const result = await backend.deleteInsurancePolicy(id);
   dispatchBackendRefresh();
   toastSuccess("Insurance policy deleted successfully");
@@ -228,13 +258,13 @@ export async function createInvestment(data: Omit<Investment, "id">) {
   toastSuccess("Investment added successfully");
   return investment;
 }
-export async function updateInvestment(id: number, data: Partial<Investment>) {
+export async function updateInvestment(id: string, data: Partial<Investment>) {
   const investment = await backend.updateInvestment(id, data);
   dispatchBackendRefresh();
   toastSuccess("Investment updated successfully");
   return investment;
 }
-export async function deleteInvestment(id: number) {
+export async function deleteInvestment(id: string) {
   const result = await backend.deleteInvestment(id);
   dispatchBackendRefresh();
   toastSuccess("Investment deleted successfully");
@@ -246,7 +276,7 @@ export async function createInvestmentTransaction(data: Omit<InvestmentTransacti
   toastSuccess("Investment transaction saved successfully");
   return transaction;
 }
-export async function deleteInvestmentTransaction(id: number) {
+export async function deleteInvestmentTransaction(id: string) {
   const result = await backend.deleteInvestmentTransaction(id);
   dispatchBackendRefresh();
   toastSuccess("Investment transaction deleted successfully");
@@ -258,13 +288,13 @@ export async function createBudgetRule(data: Omit<BudgetRule, "id">) {
   toastSuccess("Budget rule created successfully");
   return rule;
 }
-export async function updateBudgetRule(id: number, data: Partial<BudgetRule>) {
+export async function updateBudgetRule(id: string, data: Partial<BudgetRule>) {
   const rule = await backend.updateBudgetRule(id, data);
   dispatchBackendRefresh();
   toastSuccess("Budget rule updated successfully");
   return rule;
 }
-export async function deleteBudgetRule(id: number) {
+export async function deleteBudgetRule(id: string) {
   const result = await backend.deleteBudgetRule(id);
   dispatchBackendRefresh();
   toastSuccess("Budget rule deleted successfully");
@@ -276,15 +306,37 @@ export async function createAutoCategorizeRule(data: Omit<AutoCategorizeRule, "i
   toastSuccess("Auto-categorize rule created successfully");
   return rule;
 }
-export async function updateAutoCategorizeRule(id: number, data: Partial<AutoCategorizeRule>) {
+export async function updateAutoCategorizeRule(id: string, data: Partial<AutoCategorizeRule>) {
   const rule = await backend.updateAutoCategorizeRule(id, data);
   dispatchBackendRefresh();
   toastSuccess("Auto-categorize rule updated successfully");
   return rule;
 }
-export async function deleteAutoCategorizeRule(id: number) {
+export async function deleteAutoCategorizeRule(id: string) {
   const result = await backend.deleteAutoCategorizeRule(id);
   dispatchBackendRefresh();
   toastSuccess("Auto-categorize rule deleted successfully");
+  return result;
+}
+export async function inviteHouseholdMember(email: string) {
+  const result = await backend.inviteHouseholdMember(email);
+  toastSuccess(`Invite created for ${email}`);
+  return result;
+}
+export async function acceptHouseholdInvite(token: string) {
+  const result = await backend.acceptHouseholdInvite(token);
+  dispatchBackendRefresh();
+  toastSuccess("You've joined the household");
+  return result;
+}
+export async function removeHouseholdMember(email: string) {
+  const result = await backend.removeHouseholdMember(email);
+  toastSuccess(`Removed ${email} from household`);
+  return result;
+}
+export async function leaveHousehold() {
+  const result = await backend.leaveHousehold();
+  dispatchBackendRefresh();
+  toastSuccess("You've left the household");
   return result;
 }

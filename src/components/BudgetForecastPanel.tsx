@@ -1,5 +1,6 @@
 import { TrendingUp, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 import { type BudgetForecast } from "../services/budget-forecast.service";
+import { formatMoney, useDisplayCurrency } from "../services/currency.service";
 interface BudgetForecastPanelProps {
   readonly forecasts: readonly BudgetForecast[];
   readonly title?: string;
@@ -8,16 +9,17 @@ export default function BudgetForecastPanel({
   forecasts,
   title = "Budget Forecast",
 }: BudgetForecastPanelProps) {
+  const displayCurrency = useDisplayCurrency();
   if (forecasts.length === 0) {
     return (
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
         {" "}
         <div className="flex items-center gap-2 mb-4">
           {" "}
-          <TrendingUp className="w-5 h-5 text-cyan-400" />{" "}
-          <h2 className="text-lg font-semibold text-slate-200">{title}</h2>{" "}
+          <TrendingUp className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />{" "}
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">{title}</h2>{" "}
         </div>{" "}
-        <p className="text-slate-400">
+        <p className="text-slate-600 dark:text-slate-400">
           {" "}
           No categories with budgets. Set a budget to see forecasts.{" "}
         </p>{" "}
@@ -26,14 +28,14 @@ export default function BudgetForecastPanel({
   }
   const dangerousForecastsCount = forecasts.filter((f) => f.riskLevel !== "safe").length;
   return (
-    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-4">
       {" "}
       <div className="flex items-center justify-between">
         {" "}
         <div className="flex items-center gap-2">
           {" "}
-          <TrendingUp className="w-5 h-5 text-cyan-400" />{" "}
-          <h2 className="text-lg font-semibold text-slate-200">{title}</h2>{" "}
+          <TrendingUp className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />{" "}
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">{title}</h2>{" "}
         </div>{" "}
         {dangerousForecastsCount > 0 && (
           <div className="flex items-center gap-1 px-3 py-1 bg-red-400/10 border border-red-400/30 rounded-lg">
@@ -67,60 +69,53 @@ export default function BudgetForecastPanel({
                 {forecast.riskLevel === "safe" && (
                   <CheckCircle className="w-4 h-4 text-emerald-400" />
                 )}{" "}
-                <h3 className="font-medium text-slate-200"> {forecast.categoryTitle} </h3>{" "}
+                <h3 className="font-medium text-slate-900 dark:text-slate-200">
+                  {" "}
+                  {forecast.categoryTitle}{" "}
+                </h3>{" "}
               </div>{" "}
               <span
-                className={`text-sm font-semibold px-2 py-1 rounded ${forecast.riskLevel === "danger" ? "bg-red-400/20 text-red-300" : forecast.riskLevel === "warning" ? "bg-amber-400/20 text-amber-300" : "bg-emerald-400/20 text-emerald-300"}`}
+                className={`text-sm font-semibold px-2 py-1 rounded ${forecast.riskLevel === "danger" ? "bg-red-400/20 text-red-700 dark:text-red-300" : forecast.riskLevel === "warning" ? "bg-amber-400/20 text-amber-700 dark:text-amber-300" : "bg-emerald-400/20 text-emerald-700 dark:text-emerald-300"}`}
               >
                 {" "}
                 {forecast.forecastPercentage.toFixed(0)}%{" "}
               </span>{" "}
             </div>{" "}
             <p
-              className={`text-sm mb-3 ${forecast.riskLevel === "danger" ? "text-red-300" : forecast.riskLevel === "warning" ? "text-amber-300" : "text-emerald-300"}`}
+              className={`text-sm mb-3 ${forecast.riskLevel === "danger" ? "text-red-700 dark:text-red-300" : forecast.riskLevel === "warning" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
             >
               {" "}
               {forecast.riskMessage}{" "}
             </p>{" "}
             <div className="grid grid-cols-2 gap-3 mb-3">
               {" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1">Current Spent</p>{" "}
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  Current Spent
+                </p>{" "}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {forecast.currentSpent.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {formatMoney(forecast.currentSpent, displayCurrency)}{" "}
                 </p>{" "}
               </div>{" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1">Budget Limit</p>{" "}
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Budget Limit</p>{" "}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {forecast.effectiveBudget.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {formatMoney(forecast.effectiveBudget, displayCurrency)}{" "}
                 </p>{" "}
               </div>{" "}
             </div>{" "}
             <div className="grid grid-cols-2 gap-3 mb-3">
               {" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1">Daily Pace</p>{" "}
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Daily Pace</p>{" "}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {forecast.dailyPace.averageDaily.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {formatMoney(forecast.dailyPace.averageDaily, displayCurrency)}{" "}
                 </p>{" "}
                 <p className="text-xs text-slate-500 mt-1">
                   {" "}
@@ -128,45 +123,39 @@ export default function BudgetForecastPanel({
                   {forecast.dailyPace.daysElapsed + forecast.dailyPace.daysRemaining} days){" "}
                 </p>{" "}
               </div>{" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1">Projected Spend</p>{" "}
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  Projected Spend
+                </p>{" "}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {forecast.projectedSpent.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {formatMoney(forecast.projectedSpent, displayCurrency)}{" "}
                 </p>{" "}
                 <p
-                  className={`text-xs mt-1 ${forecast.willExceed ? "text-red-400" : "text-emerald-400"}`}
+                  className={`text-xs mt-1 ${forecast.willExceed ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}
                 >
                   {" "}
                   {forecast.projectedRemaining >= 0
-                    ? `₹${forecast.projectedRemaining.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} remaining`
-                    : `₹${forecast.exceedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} over`}{" "}
+                    ? `${formatMoney(forecast.projectedRemaining, displayCurrency)} remaining`
+                    : `${formatMoney(forecast.exceedAmount, displayCurrency)} over`}{" "}
                 </p>{" "}
               </div>{" "}
             </div>{" "}
             {/* Progress bar */}{" "}
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
               {" "}
               <div
                 className={`h-full transition-all ${forecast.riskLevel === "danger" ? "bg-red-500" : forecast.riskLevel === "warning" ? "bg-amber-500" : "bg-emerald-500"}`}
                 style={{ width: `${Math.min(100, forecast.forecastPercentage)}%` }}
               />{" "}
             </div>{" "}
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
               {" "}
               At current pace, you'll spend{" "}
-              <span className="text-slate-200 font-semibold">
+              <span className="text-slate-900 dark:text-slate-200 font-semibold">
                 {" "}
-                ₹{" "}
-                {forecast.projectedSpent.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {formatMoney(forecast.projectedSpent, displayCurrency)}{" "}
               </span>{" "}
               by end of period.{" "}
               {forecast.dailyPace.daysRemaining > 0 && (
@@ -174,15 +163,12 @@ export default function BudgetForecastPanel({
                   {" "}
                   With {forecast.dailyPace.daysRemaining} days left, consider reducing daily
                   spending to{" "}
-                  <span className="text-slate-200 font-semibold">
+                  <span className="text-slate-900 dark:text-slate-200 font-semibold">
                     {" "}
-                    ₹{" "}
-                    {(
-                      forecast.projectedRemaining / forecast.dailyPace.daysRemaining
-                    ).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{" "}
+                    {formatMoney(
+                      forecast.projectedRemaining / forecast.dailyPace.daysRemaining,
+                      displayCurrency,
+                    )}{" "}
                   </span>{" "}
                   per day.{" "}
                 </>
@@ -192,12 +178,13 @@ export default function BudgetForecastPanel({
         ))}{" "}
       </div>{" "}
       {forecasts.length > 0 && (
-        <div className="pt-3 border-t border-slate-700">
+        <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
           {" "}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {" "}
-            💡 <span className="text-slate-300">Tip:</span> Forecasts are based on current spending
-            pace. Actual results may vary based on future spending patterns.{" "}
+            💡 <span className="text-slate-700 dark:text-slate-300">Tip:</span> Forecasts are based
+            on current spending pace. Actual results may vary based on future spending
+            patterns.{" "}
           </p>{" "}
         </div>
       )}{" "}

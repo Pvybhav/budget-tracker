@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Bill, BillType } from "../../db/db";
 import { createBill, updateBill } from "../../services/backendSync";
-import showConfirm from "../../components/Confirm";
+import showConfirm, { showAlert } from "../../components/Confirm";
 import { X } from "lucide-react";
+import CurrencySelect from "../CurrencySelect";
+import { getDisplayCurrency } from "../../services/currency.service";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +31,9 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
     note: "",
     isSubscription: false,
     subscriptionFrequency: "monthly" as NonNullable<Bill["subscriptionFrequency"]>,
+    currency: getDisplayCurrency(),
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     if (initialBill) {
       setFormData({
@@ -42,6 +46,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         note: initialBill.note ?? "",
         isSubscription: Boolean(initialBill.isSubscription),
         subscriptionFrequency: initialBill.subscriptionFrequency ?? "monthly",
+        currency: initialBill.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {
       setFormData({
@@ -54,21 +59,24 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         note: "",
         isSubscription: false,
         subscriptionFrequency: "monthly",
+        currency: getDisplayCurrency(),
       });
     }
   }, [initialBill, isOpen]);
   if (!isOpen) return null;
+  const submitLabel = isSubmitting ? "Saving..." : initialBill ? "Update Bill" : "Save Bill";
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const value =
-      e.target.name === "paid" && e.target instanceof HTMLInputElement
+      e.target instanceof HTMLInputElement && e.target.type === "checkbox"
         ? e.target.checked
         : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const payload: Omit<Bill, "id"> = {
       name: formData.name.trim(),
       type: formData.type,
@@ -79,36 +87,46 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
       note: formData.note.trim() || undefined,
       isSubscription: formData.isSubscription,
       subscriptionFrequency: formData.isSubscription ? formData.subscriptionFrequency : undefined,
+      currency: formData.currency,
     };
-    if (initialBill?.id) {
-      const ok = await showConfirm(`Save changes to "${payload.name}"?`, {
-        title: "Confirm update",
-        confirmText: "Save changes",
+    setIsSubmitting(true);
+    try {
+      if (initialBill?.id) {
+        const ok = await showConfirm(`Save changes to "${payload.name}"?`, {
+          title: "Confirm update",
+          confirmText: "Save changes",
+        });
+        if (!ok) return;
+        await updateBill(initialBill.id, payload);
+      } else {
+        await createBill(payload);
+      }
+      onClose();
+    } catch (error) {
+      await showAlert(error instanceof Error ? error.message : "Unable to save this bill.", {
+        title: "Could not save bill",
       });
-      if (!ok) return;
-      await updateBill(initialBill.id, payload);
-    } else {
-      await createBill(payload);
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       {" "}
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
         {" "}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-white"
+          className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           title="Close"
         >
           {" "}
           <X className="h-5 w-5" />{" "}
         </button>{" "}
-        <div className="border-b border-slate-800 p-6">
+        <div className="border-b border-slate-200 dark:border-slate-800 p-6">
           {" "}
-          <h2 className="text-xl font-bold text-slate-100">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             {" "}
             {initialBill ? "Edit Bill" : "Add Bill"}{" "}
           </h2>{" "}
@@ -117,7 +135,10 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
           {" "}
           <div>
             {" "}
-            <label htmlFor="bill-name" className="mb-1 block text-sm font-medium text-slate-400">
+            <label
+              htmlFor="bill-name"
+              className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
+            >
               {" "}
               Bill Name{" "}
             </label>{" "}
@@ -128,12 +149,12 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               value={formData.name}
               onChange={handleChange}
               placeholder="e.g. Home broadband"
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />{" "}
           </div>{" "}
-          <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+          <div className="space-y-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 dark:bg-slate-950/50">
             {" "}
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               {" "}
               <input
                 type="checkbox"
@@ -145,14 +166,14 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               This is a recurring subscription{" "}
             </label>{" "}
             {formData.isSubscription && (
-              <label className="block text-sm text-slate-400">
+              <label className="block text-sm text-slate-500 dark:text-slate-400">
                 {" "}
                 Renewal frequency{" "}
                 <select
                   name="subscriptionFrequency"
                   value={formData.subscriptionFrequency}
                   onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white"
+                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100"
                 >
                   {" "}
                   <option value="monthly">Monthly</option>{" "}
@@ -166,7 +187,10 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             {" "}
             <div>
               {" "}
-              <label htmlFor="bill-type" className="mb-1 block text-sm font-medium text-slate-400">
+              <label
+                htmlFor="bill-type"
+                className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
+              >
                 {" "}
                 Bill Type{" "}
               </label>{" "}
@@ -175,7 +199,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               >
                 {" "}
                 {TYPE_OPTIONS.map((option) => (
@@ -190,7 +214,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               {" "}
               <label
                 htmlFor="bill-provider"
-                className="mb-1 block text-sm font-medium text-slate-400"
+                className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
                 {" "}
                 Provider (optional){" "}
@@ -201,7 +225,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 value={formData.provider}
                 onChange={handleChange}
                 placeholder="e.g. Airtel"
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               />{" "}
             </div>{" "}
           </div>{" "}
@@ -211,7 +235,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               {" "}
               <label
                 htmlFor="bill-amount"
-                className="mb-1 block text-sm font-medium text-slate-400"
+                className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
                 {" "}
                 Amount{" "}
@@ -225,14 +249,26 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               />{" "}
+            </div>{" "}
+            <div>
+              {" "}
+              <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
+                {" "}
+                Currency{" "}
+              </label>{" "}
+              <CurrencySelect
+                value={formData.currency}
+                onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
+              />
             </div>{" "}
             <div>
               {" "}
               <label
                 htmlFor="bill-due-date"
-                className="mb-1 block text-sm font-medium text-slate-400"
+                className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
                 {" "}
                 Due Date{" "}
@@ -244,13 +280,13 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               />{" "}
             </div>{" "}
           </div>{" "}
           <div>
             {" "}
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               {" "}
               <input
                 type="checkbox"
@@ -264,7 +300,10 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
           </div>{" "}
           <div>
             {" "}
-            <label htmlFor="bill-note" className="mb-1 block text-sm font-medium text-slate-400">
+            <label
+              htmlFor="bill-note"
+              className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
+            >
               {" "}
               Note (optional){" "}
             </label>{" "}
@@ -274,15 +313,16 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               rows={2}
               value={formData.note}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
             />{" "}
           </div>{" "}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition-colors hover:bg-emerald-700"
           >
             {" "}
-            {initialBill ? "Update Bill" : "Save Bill"}{" "}
+            {submitLabel}{" "}
           </button>{" "}
         </form>{" "}
       </div>{" "}
