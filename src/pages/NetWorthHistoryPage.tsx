@@ -15,8 +15,9 @@ import {
 import { getCardMetrics } from "../services/card.service";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { createNetWorthSnapshot } from "../services/backendSync";
-const money = (value: number) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 export default function NetWorthHistoryPage() {
+  const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const payments = useBackendResource(() => fetchPayments(), []);
@@ -32,33 +33,63 @@ export default function NetWorthHistoryPage() {
       const metrics = getCardMetrics(card, expenses, payments, cards);
       const incoming = transfers
         .filter((item) => item.toAccountId === card.id)
-        .reduce((sum, item) => sum + item.amount, 0);
+        .reduce(
+          (sum, item) => sum + convertCurrency(item.amount, item.currency, displayCurrency),
+          0,
+        );
       const outgoing = transfers
         .filter((item) => item.fromAccountId === card.id)
-        .reduce((sum, item) => sum + item.amount, 0);
-      return total + (card.type === "credit" ? 0 : metrics.currentBalance + incoming - outgoing);
+        .reduce(
+          (sum, item) => sum + convertCurrency(item.amount, item.currency, displayCurrency),
+          0,
+        );
+      return (
+        total +
+        (card.type === "credit"
+          ? 0
+          : convertCurrency(metrics.currentBalance, card.currency, displayCurrency) +
+            incoming -
+            outgoing)
+      );
     }, 0);
     const creditDebt = cards.reduce(
       (total, card) =>
         card.type === "credit"
-          ? total + getCardMetrics(card, expenses, payments, cards).currentBalance
+          ? total +
+            convertCurrency(
+              getCardMetrics(card, expenses, payments, cards).amountOwed ?? 0,
+              card.currency,
+              displayCurrency,
+            )
           : total,
       0,
     );
     const assets =
       accountValue +
-      investments.reduce((sum, item) => sum + item.currentValue, 0) +
-      savings.reduce((sum, item) => sum + item.currentAmount, 0);
+      investments.reduce(
+        (sum, item) => sum + convertCurrency(item.currentValue, item.currency, displayCurrency),
+        0,
+      ) +
+      savings.reduce(
+        (sum, item) => sum + convertCurrency(item.currentAmount, item.currency, displayCurrency),
+        0,
+      );
     const liabilities =
-      creditDebt + loans.reduce((sum, loan) => sum + getLoanRemainingBalance(loan), 0);
+      creditDebt +
+      loans.reduce(
+        (sum, loan) =>
+          sum + convertCurrency(getLoanRemainingBalance(loan), loan.currency, displayCurrency),
+        0,
+      );
     return { assets, liabilities, netWorth: assets - liabilities };
-  }, [cards, expenses, investments, loans, payments, savings, transfers]);
+  }, [cards, expenses, investments, loans, payments, savings, transfers, displayCurrency]);
   const saveSnapshot = async () => {
     if (!current) return;
     await createNetWorthSnapshot({
       assets: current.assets,
       liabilities: current.liabilities,
       date: new Date().toISOString().slice(0, 10),
+      currency: displayCurrency,
     });
   };
   const chartData = (snapshots ?? []).map((item) => ({
@@ -75,8 +106,11 @@ export default function NetWorthHistoryPage() {
         {" "}
         <div>
           {" "}
-          <h1 className="text-3xl font-semibold text-slate-100"> Net Worth History </h1>{" "}
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+            {" "}
+            Net Worth History{" "}
+          </h1>{" "}
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {" "}
             Capture monthly snapshots of your assets and liabilities.{" "}
           </p>{" "}
@@ -93,42 +127,44 @@ export default function NetWorthHistoryPage() {
       {current && (
         <div className="grid gap-3 sm:grid-cols-3">
           {" "}
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/5">
             {" "}
-            <div className="text-sm text-slate-400">Assets</div>{" "}
-            <div className="mt-1 text-2xl font-semibold text-emerald-300">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Assets</div>{" "}
+            <div className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
               {" "}
-              {money(current.assets)}{" "}
+              {formatMoney(current.assets, displayCurrency)}{" "}
             </div>{" "}
           </div>{" "}
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm dark:border-rose-500/20 dark:bg-rose-500/5">
             {" "}
-            <div className="text-sm text-slate-400">Liabilities</div>{" "}
-            <div className="mt-1 text-2xl font-semibold text-rose-300">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Liabilities</div>{" "}
+            <div className="mt-1 text-2xl font-semibold text-rose-700 dark:text-rose-300">
               {" "}
-              {money(current.liabilities)}{" "}
+              {formatMoney(current.liabilities, displayCurrency)}{" "}
             </div>{" "}
           </div>{" "}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
             {" "}
-            <div className="text-sm text-slate-400">Net worth</div>{" "}
-            <div className="mt-1 text-2xl font-semibold text-slate-100">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Net worth</div>{" "}
+            <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
               {" "}
-              {money(current.netWorth)}{" "}
+              {formatMoney(current.netWorth, displayCurrency)}{" "}
             </div>{" "}
           </div>{" "}
         </div>
       )}{" "}
       {chartData.length > 1 && (
-        <div className="h-80 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div className="h-80 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {" "}
-          <h2 className="mb-4 font-semibold text-slate-100">Net worth trend</h2>{" "}
+          <h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">
+            Net worth trend
+          </h2>{" "}
           <ResponsiveContainer width="100%" height="90%">
             {" "}
             <LineChart data={chartData}>
               {" "}
               <XAxis dataKey="label" stroke="#94a3b8" /> <YAxis stroke="#94a3b8" />{" "}
-              <Tooltip formatter={(value) => money(Number(value))} />{" "}
+              <Tooltip formatter={(value) => formatMoney(Number(value), displayCurrency)} />{" "}
               <Line
                 type="monotone"
                 dataKey="netWorth"
@@ -141,7 +177,7 @@ export default function NetWorthHistoryPage() {
         </div>
       )}{" "}
       {chartData.length <= 1 && (
-        <div className="rounded-2xl border border-dashed border-slate-700 p-10 text-center text-slate-500">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100 p-10 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500">
           {" "}
           Save another snapshot next month to see the trend chart.{" "}
         </div>

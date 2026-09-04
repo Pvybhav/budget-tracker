@@ -3,6 +3,8 @@ import type { BudgetRule, BudgetRulePeriod, BudgetRuleType, Card, Category } fro
 import { createBudgetRule, updateBudgetRule } from "../../services/backendSync";
 import showConfirm from "../../components/Confirm";
 import { X } from "lucide-react";
+import CurrencySelect from "../CurrencySelect";
+import { getDisplayCurrency } from "../../services/currency.service";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +35,7 @@ export default function AddBudgetRuleModal({
     period: "monthly" as BudgetRulePeriod,
     enabled: true,
     note: "",
+    currency: getDisplayCurrency(),
   });
   useEffect(() => {
     if (initialRule) {
@@ -43,6 +46,7 @@ export default function AddBudgetRuleModal({
         period: initialRule.period,
         enabled: initialRule.enabled,
         note: initialRule.note ?? "",
+        currency: initialRule.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {
       setFormData({
@@ -52,6 +56,7 @@ export default function AddBudgetRuleModal({
         period: "monthly",
         enabled: true,
         note: "",
+        currency: getDisplayCurrency(),
       });
     }
   }, [initialRule, isOpen]);
@@ -73,12 +78,13 @@ export default function AddBudgetRuleModal({
     e.preventDefault();
     const payload: BudgetRule = {
       type: formData.type,
-      targetId: Number.parseInt(formData.targetId),
+      targetId: formData.targetId,
       thresholdAmount: Number.parseFloat(formData.thresholdAmount || "0"),
       period: formData.period,
       enabled: formData.enabled,
       note: formData.note.trim() || undefined,
       createdAt: initialRule?.createdAt ?? new Date().toISOString(),
+      currency: formData.currency,
     };
     if (initialRule?.id) {
       const ok = await showConfirm("Save changes to this budget rule?", {
@@ -95,16 +101,16 @@ export default function AddBudgetRuleModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {" "}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           {" "}
           <X className="w-5 h-5" />{" "}
         </button>{" "}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           {" "}
           <h2 className="text-xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
             {" "}
@@ -117,7 +123,7 @@ export default function AddBudgetRuleModal({
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 Applies To{" "}
               </label>{" "}
@@ -125,7 +131,7 @@ export default function AddBudgetRuleModal({
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
                 {" "}
                 {TYPE_OPTIONS.map((t) => (
@@ -138,7 +144,7 @@ export default function AddBudgetRuleModal({
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
                 {formData.type === "category" ? "Category" : "Card"}{" "}
               </label>{" "}
@@ -147,7 +153,7 @@ export default function AddBudgetRuleModal({
                 name="targetId"
                 value={formData.targetId}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
                 {" "}
                 <option value="">Select...</option>{" "}
@@ -164,28 +170,37 @@ export default function AddBudgetRuleModal({
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 {" "}
-                Threshold Amount (₹){" "}
+                Threshold Amount{" "}
               </label>{" "}
-              <input
-                required
-                type="number"
-                min="0"
-                name="thresholdAmount"
-                value={formData.thresholdAmount}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
-              />{" "}
+              <div className="flex gap-2">
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  name="thresholdAmount"
+                  value={formData.thresholdAmount}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
+                />{" "}
+                <CurrencySelect
+                  value={formData.currency}
+                  onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                />
+              </div>
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-1"> Period </label>{" "}
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                {" "}
+                Period{" "}
+              </label>{" "}
               <select
                 name="period"
                 value={formData.period}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
                 {" "}
                 {PERIOD_OPTIONS.map((p) => (
@@ -197,20 +212,20 @@ export default function AddBudgetRuleModal({
               </select>{" "}
             </div>{" "}
           </div>{" "}
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             {" "}
             <input
               type="checkbox"
               name="enabled"
               checked={formData.enabled}
               onChange={handleChange}
-              className="rounded border-slate-700 bg-slate-950"
+              className="rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />{" "}
             Rule enabled{" "}
           </label>{" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               {" "}
               Notes (optional){" "}
             </label>{" "}
@@ -219,7 +234,7 @@ export default function AddBudgetRuleModal({
               value={formData.note}
               onChange={handleChange}
               rows={2}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div className="pt-2">

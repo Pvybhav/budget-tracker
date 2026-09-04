@@ -1,11 +1,27 @@
-import type { Expense, Income } from "../db/db";
-import { fetchExpenses, createExpense, fetchIncomes, createIncome } from "./backend.service";
+import type { Expense, Income, SavingsContribution } from "../db/db";
+import {
+  createExpense,
+  createIncome,
+  createSavingsContribution,
+  fetchExpenses,
+  fetchIncomes,
+  fetchSavingsContributions,
+  fetchSavingsGoals,
+} from "./backend.service";
 
 type RecurringFrequency = NonNullable<Expense["recurringFrequency"]>;
+type ContributionFrequency = NonNullable<SavingsContribution["recurringFrequency"]>;
 
 function toDateTimeLocalValue(date: Date) {
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function toDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function parseLocalDate(value: string) {
@@ -26,6 +42,14 @@ function addInterval(date: Date, frequency: RecurringFrequency, interval: number
     default:
       return new Date(date.getFullYear(), date.getMonth() + amount, date.getDate());
   }
+}
+
+function addContributionInterval(
+  date: Date,
+  frequency: ContributionFrequency,
+  interval: number,
+) {
+  return addInterval(date, frequency, interval);
 }
 
 export async function syncRecurringExpenses(now = new Date()) {
@@ -149,6 +173,65 @@ export async function syncRecurringIncomes(now = new Date()) {
       }
       latestOccurrenceDate = nextOccurrenceDate;
       nextOccurrenceDate = addInterval(nextOccurrenceDate, frequency, interval);
+    }
+  }
+}
+
+export async function syncRecurringContributions(now = new Date()) {
+  const goals = await fetchSavingsGoals();
+  const contributionGroups = await Promise.all(
+    goals.filter((goal) => goal.id).map(async (goal) => ({
+      goal,
+      contributions: await fetchSavingsContributions(goal.id!),
+    })),
+  );
+
+  for (const { goal, contributions } of contributionGroups) {
+    const templates = contributions.filter(
+      (contribution) =>
+        Boolean(contribution.recurringFrequency) && !contribution.isRecurringInstance,
+    );
+    for (const template of templates) {
+      if (!template.id) continue;
+      const frequency = template.recurringFrequency ?? "monthly";
+      const interval = template.recurringInterval ?? 1;
+      const endDate = template.recurringEndDate ? parseLocalDate(template.recurringEndDate) : null;
+      const instances = contributions.filter(
+        (contribution) =>
+          contribution.recurringTemplateId === template.id && contribution.id !== template.id,
+      );
+      let latestOccurrenceDate = new Date(template.date);
+      for (const instance of instances) {
+        const instanceDate = new Date(instance.date);
+        if (instanceDate > latestOccurrenceDate) latestOccurrenceDate = instanceDate;
+      }
+      let nextOccurrenceDate = addContributionInterval(latestOccurrenceDate, frequency, interval);
+      let createdCount = 0;
+      while (createdCount < 6 && (!endDate || nextOccurrenceDate <= endDate)) {
+        if (nextOccurrenceDate > now) break;
+        const nextOccurrenceValue = toDateValue(nextOccurrenceDate);
+        const alreadyExists = instances.some(
+          (instance) => instance.date.slice(0, 10) === nextOccurrenceValue,
+        );
+        if (!alreadyExists) {
+          const payload: Omit<SavingsContribution, "id" | "goalId"> = {
+            amount: template.amount,
+            date: nextOccurrenceValue,
+            note: template.note,
+            recurringFrequency: template.recurringFrequency,
+            recurringInterval: template.recurringInterval,
+            recurringEndDate: template.recurringEndDate,
+            recurringTemplateId: template.id,
+            isRecurringInstance: true,
+            currency: template.currency,
+          };
+          await createSavingsContribution(goal.id!, payload);
+          instances.push({ ...payload, goalId: goal.id } as SavingsContribution);
+          createdCount += 1;
+        }
+        latestOccurrenceDate = nextOccurrenceDate;
+        nextOccurrenceDate = addContributionInterval(latestOccurrenceDate, frequency, interval);
+      }
     }
   }
 }

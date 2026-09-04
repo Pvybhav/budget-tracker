@@ -1,5 +1,6 @@
 import type { AutoCategorizeRule, BudgetRule, Card, Category, Expense } from "../db/db";
 import { getBudgetStatus } from "./budget.service";
+import { convertCurrency, formatMoney } from "./currency.service";
 export interface BudgetRuleAlert {
   severity: "warning" | "danger";
   message: string;
@@ -23,6 +24,7 @@ export function evaluateBudgetRule(
   rule: BudgetRule,
   expenses: Expense[],
   target: Category | Card | undefined,
+  currency: string = "INR",
 ): BudgetRuleAlert | null {
   if (!rule.enabled || !target) return null;
   const relevantExpenses = expenses.filter((expense) => {
@@ -30,21 +32,24 @@ export function evaluateBudgetRule(
     if (rule.type === "card" && expense.cardId !== rule.targetId) return false;
     return isInCurrentPeriod(expense.date, rule.period);
   });
-  const spent = relevantExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const spent = relevantExpenses.reduce(
+    (sum, expense) => sum + convertCurrency(expense.amount, expense.currency, currency),
+    0,
+  );
   const status = getBudgetStatus(spent, rule.thresholdAmount);
   const targetName = target.title;
   if (status.isOverBudget) {
     return {
       severity: "danger",
       message: `${targetName} exceeded its ${rule.period} threshold`,
-      detail: `₹${status.spent.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} spent against ₹${status.effectiveBudget.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} threshold.`,
+      detail: `${formatMoney(status.spent, currency)} spent against ${formatMoney(status.effectiveBudget, currency)} threshold.`,
     };
   }
   if (status.isNearLimit) {
     return {
       severity: "warning",
       message: `${targetName} is nearing its ${rule.period} threshold`,
-      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left before hitting the threshold.`,
+      detail: `Only ${formatMoney(Math.max(0, status.remaining), currency)} left before hitting the threshold.`,
     };
   }
   return null;
@@ -52,7 +57,7 @@ export function evaluateBudgetRule(
 export function findAutoCategorizeMatch(
   details: string,
   rules: AutoCategorizeRule[],
-): number | undefined {
+): string | undefined {
   if (!details.trim()) return undefined;
   const lowerDetails = details.toLowerCase();
   const match = rules.find(

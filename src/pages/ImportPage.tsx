@@ -6,6 +6,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { fetchCards, fetchCategories, fetchExpenses } from "../services/backend.service";
 import { createExpense, createIncome } from "../services/backendSync";
 import { showAlert } from "../components/Confirm";
+import { formatMoney, useDisplayCurrency } from "../services/currency.service";
 interface ImportRow {
   date: string;
   details: string;
@@ -69,6 +70,7 @@ function parseRows(file: File): Promise<ImportRow[]> {
   });
 }
 export default function ImportPage() {
+  const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
@@ -121,15 +123,15 @@ export default function ImportPage() {
           const payload: Omit<Income, "id"> = {
             source: row.details || "Imported income",
             category: "other",
-            accountId: Number(cardId),
+            accountId: cardId,
             amount: row.amount,
             date: `${row.date}T12:00:00`,
           };
           await createIncome(payload);
         } else {
           const payload: Expense = {
-            cardId: Number(cardId),
-            categoryId: categoryId ? Number(categoryId) : undefined,
+            cardId,
+            categoryId: categoryId || undefined,
             details: row.details || undefined,
             amount: row.amount,
             date: `${row.date}T12:00:00`,
@@ -151,17 +153,21 @@ export default function ImportPage() {
       {" "}
       <div>
         {" "}
-        <h1 className="text-3xl font-semibold text-slate-100"> Import Transactions </h1>{" "}
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+          {" "}
+          Import Transactions{" "}
+        </h1>{" "}
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           {" "}
           Review a CSV or Excel statement before adding it to your expense ledger.{" "}
         </p>{" "}
       </div>{" "}
-      <div className="grid gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 md:grid-cols-2">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2 dark:border-slate-800 dark:bg-slate-900">
         {" "}
-        <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center text-slate-400 hover:border-emerald-500">
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-600 hover:border-emerald-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-400">
           {" "}
-          <FileUp className="h-8 w-8 text-emerald-400" /> <span>Select CSV or Excel file</span>{" "}
+          <FileUp className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />{" "}
+          <span>Select CSV or Excel file</span>{" "}
           <input
             type="file"
             accept=".csv,.xlsx,.xls"
@@ -171,13 +177,13 @@ export default function ImportPage() {
         </label>{" "}
         <div className="space-y-4">
           {" "}
-          <label className="block text-sm text-slate-400">
+          <label className="block text-sm text-slate-600 dark:text-slate-400">
             {" "}
             Account{" "}
             <select
               value={cardId}
               onChange={(event) => setCardId(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white"
+              className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-white"
             >
               {" "}
               <option value="">Select account</option>{" "}
@@ -189,13 +195,13 @@ export default function ImportPage() {
               ))}{" "}
             </select>{" "}
           </label>{" "}
-          <label className="block text-sm text-slate-400">
+          <label className="block text-sm text-slate-600 dark:text-slate-400">
             {" "}
             Category (optional){" "}
             <select
               value={categoryId}
               onChange={(event) => setCategoryId(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-white"
+              className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-white"
             >
               {" "}
               <option value="">Uncategorized</option>{" "}
@@ -216,14 +222,14 @@ export default function ImportPage() {
         </p>
       )}{" "}
       {rows.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           {" "}
-          <div className="flex items-center justify-between border-b border-slate-800 p-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 p-4">
             {" "}
             <div>
               {" "}
-              <h2 className="font-semibold text-slate-100">Preview</h2>{" "}
-              <p className="text-sm text-slate-500">
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">Preview</h2>{" "}
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {" "}
                 {rows.length} rows, {rows.filter((row) => row.kind === "income").length} credits,{" "}
                 {duplicateIndexes.size} duplicates will be skipped.{" "}
@@ -240,18 +246,20 @@ export default function ImportPage() {
           </div>{" "}
           <div className="max-h-[28rem] overflow-auto">
             {" "}
-            <table className="w-full text-left text-sm text-slate-300">
+            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
               {" "}
-              <thead className="sticky top-0 bg-slate-800">
+              <thead className="sticky top-0 bg-slate-200 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-800">
                 {" "}
                 <tr>
                   {" "}
-                  <th className="px-4 py-3">Date</th> <th className="px-4 py-3">Description</th>{" "}
-                  <th className="px-4 py-3">Type</th> <th className="px-4 py-3">Amount</th>{" "}
-                  <th className="px-4 py-3">Status</th>{" "}
+                  <th className="px-4 py-3 text-slate-900 dark:text-slate-100">Date</th>{" "}
+                  <th className="px-4 py-3 text-slate-900 dark:text-slate-100">Description</th>{" "}
+                  <th className="px-4 py-3 text-slate-900 dark:text-slate-100">Type</th>{" "}
+                  <th className="px-4 py-3 text-slate-900 dark:text-slate-100">Amount</th>{" "}
+                  <th className="px-4 py-3 text-slate-900 dark:text-slate-100">Status</th>{" "}
                 </tr>{" "}
               </thead>{" "}
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                 {" "}
                 {rows.map((row, index) => (
                   <tr
@@ -262,10 +270,7 @@ export default function ImportPage() {
                     <td className="px-4 py-3">{row.date}</td>{" "}
                     <td className="px-4 py-3">{row.details || "-"}</td>{" "}
                     <td className="px-4 py-3 capitalize">{row.kind}</td>{" "}
-                    <td className="px-4 py-3">
-                      {" "}
-                      ₹ {row.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}{" "}
-                    </td>{" "}
+                    <td className="px-4 py-3"> {formatMoney(row.amount, displayCurrency)} </td>{" "}
                     <td className="px-4 py-3">
                       {" "}
                       {duplicateIndexes.has(index) ? "Duplicate" : "Ready"}{" "}

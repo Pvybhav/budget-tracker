@@ -4,6 +4,8 @@ import { X, Info } from "lucide-react";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { showAlert, showConfirm } from "../../components/Confirm";
 import { type Loan } from "../../db/db";
+import CurrencySelect from "../CurrencySelect";
+import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
 
 interface Props {
   isOpen: boolean;
@@ -22,13 +24,6 @@ const INTEREST_PRESETS = [
   { label: "Custom", value: -1 },
 ];
 
-function fmt(value: number) {
-  return value.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
   const [formData, setFormData] = useState(() => {
     if (initialLoan) {
@@ -43,6 +38,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
         termMonths: initialLoan.termMonths,
         startDate: initialLoan.startDate,
         note: initialLoan.note ?? "",
+        currency: initialLoan.currency ?? getDisplayCurrency(),
       };
     }
 
@@ -54,6 +50,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
       termMonths: 12,
       startDate: new Date().toISOString().slice(0, 10),
       note: "",
+      currency: getDisplayCurrency(),
     };
   });
 
@@ -111,6 +108,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
       startDate: formData.startDate,
       note: formData.note.trim() || undefined,
       createdAt: initialLoan?.createdAt ?? new Date().toISOString(),
+      currency: formData.currency,
     };
 
     if (initialLoan?.id) {
@@ -132,25 +130,26 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
       termMonths: 12,
       startDate: new Date().toISOString().slice(0, 10),
       note: "",
+      currency: getDisplayCurrency(),
     });
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl relative">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
             {initialLoan ? "Edit Personal Loan" : "Add Personal Loan"}
           </h2>
-          <p className="mt-2 text-slate-400 text-sm">
+          <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">
             Track a loan with EMI calculations and repayments in one place.
           </p>
         </div>
@@ -158,7 +157,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Lender / Source <span className="text-red-400">*</span>
               </label>
               <input
@@ -166,40 +165,48 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                 name="lender"
                 value={formData.lender}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
                 placeholder="e.g. Bank, Friend, Family"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Start Date
+              </label>
               <input
                 type="date"
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Principal Amount <span className="text-red-400">*</span>
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                name="principal"
-                value={formData.principal}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
-                placeholder="₹0.00"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="principal"
+                  value={formData.principal}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
+                  placeholder="₹0.00"
+                />
+                <CurrencySelect
+                  value={formData.currency}
+                  onChange={(currency) => setFormData({ ...formData, currency })}
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Loan Term (months) <span className="text-red-400">*</span>
               </label>
               <input
@@ -209,19 +216,21 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                 name="termMonths"
                 value={formData.termMonths}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Interest Rate</label>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Interest Rate
+              </label>
               <select
                 name="interestPreset"
                 value={formData.interestPreset}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
               >
                 {INTEREST_PRESETS.map((preset) => (
                   <option key={preset.value} value={preset.value}>
@@ -239,43 +248,53 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                   value={formData.customInterest}
                   onChange={handleChange}
                   placeholder="e.g. 11.5"
-                  className="mt-2 w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  className="mt-2 w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Notes</label>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Notes
+              </label>
               <input
                 type="text"
                 name="note"
                 value={formData.note}
                 onChange={handleChange}
                 placeholder="Optional description"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-700 bg-slate-900/80 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 p-4 space-y-3 dark:bg-slate-900/80">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-500 font-semibold">
               <Info className="w-4 h-4 text-cyan-400" /> Loan summary
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Monthly EMI</span>
-                <span className="text-slate-100 font-semibold">₹{fmt(monthlyEmi)}</span>
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                  {formatMoney(monthlyEmi, formData.currency)}
+                </span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Total Cost</span>
-                <span className="text-slate-100 font-semibold">₹{fmt(totalCost)}</span>
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                  {formatMoney(totalCost, formData.currency)}
+                </span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Total Interest</span>
-                <span className="text-slate-100 font-semibold">₹{fmt(totalInterest)}</span>
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                  {formatMoney(totalInterest, formData.currency)}
+                </span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Repayment months</span>
-                <span className="text-slate-100 font-semibold">{termMonths}</span>
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                  {termMonths}
+                </span>
               </div>
             </div>
           </div>

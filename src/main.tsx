@@ -3,8 +3,16 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import NetworkToastProvider from "./components/NetworkToastProvider";
-import { syncRecurringExpenses, syncRecurringIncomes } from "./services/recurring.service";
-void Promise.all([syncRecurringExpenses(), syncRecurringIncomes()]).finally(() => {
+import {
+  syncRecurringContributions,
+  syncRecurringExpenses,
+  syncRecurringIncomes,
+} from "./services/recurring.service";
+void Promise.all([
+  syncRecurringExpenses(),
+  syncRecurringIncomes(),
+  syncRecurringContributions(),
+]).finally(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       {" "}

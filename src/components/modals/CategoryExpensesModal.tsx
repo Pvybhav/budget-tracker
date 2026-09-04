@@ -2,6 +2,7 @@ import { useBackendResource } from "../../services/backendHooks";
 import { X, Tags, TrendingUp } from "lucide-react";
 import { type Category } from "../../db/db";
 import { fetchExpenses, fetchCards } from "../../services/backend.service";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../../services/currency.service";
 
 interface Props {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function CategoryExpensesModal({
   selectedMonth,
   budgetMode,
 }: Props) {
+  const displayCurrency = useDisplayCurrency();
   const now = new Date();
   const currentYear = selectedYear ?? now.getFullYear();
   const currentMonth = selectedMonth ?? now.getMonth() + 1;
@@ -48,7 +50,11 @@ export default function CategoryExpensesModal({
 
   if (!isOpen) return null;
 
-  const total = monthExpenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
+  const total =
+    monthExpenses?.reduce(
+      (sum, e) => sum + convertCurrency(e.amount, e.currency, displayCurrency),
+      0,
+    ) ?? 0;
 
   const periodName = isYearly
     ? `the year ${currentYear}`
@@ -72,33 +78,36 @@ export default function CategoryExpensesModal({
     return groups;
   }, []);
 
-  const getCardTitle = (cardId: number) =>
+  const getCardTitle = (cardId: string) =>
     cards?.find((c) => c.id === cardId)?.title ?? `Card #${cardId}`;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[80vh]">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative flex flex-col max-h-[80vh]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white z-10"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 border-b border-slate-800 flex-shrink-0">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3 mb-1">
             <span className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
               <Tags className="w-4 h-4 text-violet-400" />
             </span>
-            <h2 className="text-xl font-bold text-slate-100">{category.title}</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              {category.title}
+            </h2>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Expenses in <span className="text-slate-300 font-medium">{periodName}</span>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Expenses in{" "}
+            <span className="text-slate-700 dark:text-slate-300 font-medium">{periodName}</span>
           </p>
         </div>
 
-        <div className="p-4 border-b border-slate-800 flex-shrink-0">
-          <div className="flex items-center gap-3 bg-slate-800/60 rounded-xl p-4">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-4">
             <TrendingUp className="w-5 h-5 text-emerald-400 flex-shrink-0" />
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">
@@ -109,11 +118,7 @@ export default function CategoryExpensesModal({
                     : "Total Spent This Month"}
               </p>
               <p className="text-2xl font-bold text-emerald-400">
-                ₹
-                {total.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatMoney(total, displayCurrency)}
               </p>
             </div>
           </div>
@@ -130,30 +135,32 @@ export default function CategoryExpensesModal({
                 (group) => (
                   <div key={group.month} className="space-y-2">
                     {isYearly && (
-                      <h3 className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-lg border border-slate-700 border-l-4 border-l-emerald-400 bg-slate-800/95 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-lg shadow-slate-950/30 backdrop-blur">
+                      <h3 className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 border-l-4 border-l-emerald-400 bg-slate-100 dark:bg-slate-800/95 px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 shadow-lg shadow-slate-950/30 backdrop-blur">
                         <span className="truncate">
                           {new Date(currentYear, group.month, 1).toLocaleString("default", {
                             month: "long",
                           })}
                         </span>
                         <span className="shrink-0 rounded-md bg-emerald-400/10 px-2 py-1 text-xs font-bold text-emerald-300">
-                          ₹
-                          {group.expenses
-                            .reduce((sum, expense) => sum + expense.amount, 0)
-                            .toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                          {formatMoney(
+                            group.expenses.reduce(
+                              (sum, expense) =>
+                                sum +
+                                convertCurrency(expense.amount, expense.currency, displayCurrency),
+                              0,
+                            ),
+                            displayCurrency,
+                          )}
                         </span>
                       </h3>
                     )}
                     {group.expenses.map((expense) => (
                       <div
                         key={expense.id}
-                        className="flex items-center justify-between gap-3 bg-slate-800/40 rounded-xl px-4 py-3 border border-slate-800 hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-100 dark:bg-slate-800/40 rounded-xl px-4 py-3 border border-slate-200 dark:border-slate-800 hover:border-slate-200 dark:border-slate-700 transition-colors"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-200 truncate">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                             {expense.details || (
                               <span className="italic text-slate-500">No description</span>
                             )}
@@ -168,12 +175,11 @@ export default function CategoryExpensesModal({
                             {getCardTitle(expense.cardId)}
                           </p>
                         </div>
-                        <p className="text-sm font-semibold text-slate-200 flex-shrink-0">
-                          ₹
-                          {expense.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-shrink-0">
+                          {formatMoney(
+                            convertCurrency(expense.amount, expense.currency, displayCurrency),
+                            displayCurrency,
+                          )}
                         </p>
                       </div>
                     ))}

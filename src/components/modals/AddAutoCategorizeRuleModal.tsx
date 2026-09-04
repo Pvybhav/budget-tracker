@@ -40,7 +40,7 @@ export default function AddAutoCategorizeRuleModal({
     e.preventDefault();
     const payload: AutoCategorizeRule = {
       keyword: formData.keyword.trim(),
-      categoryId: Number.parseInt(formData.categoryId),
+      categoryId: formData.categoryId,
       enabled: formData.enabled,
       createdAt: initialRule?.createdAt ?? new Date().toISOString(),
     };
@@ -59,16 +59,16 @@ export default function AddAutoCategorizeRuleModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {" "}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           {" "}
           <X className="w-5 h-5" />{" "}
         </button>{" "}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           {" "}
           <h2 className="text-xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
             {" "}
@@ -79,7 +79,7 @@ export default function AddAutoCategorizeRuleModal({
           {" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               {" "}
               Keyword (matched in expense description){" "}
             </label>{" "}
@@ -90,18 +90,21 @@ export default function AddAutoCategorizeRuleModal({
               placeholder="e.g. Zomato, Swiggy, Uber"
               value={formData.keyword}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             />{" "}
           </div>{" "}
           <div>
             {" "}
-            <label className="block text-sm font-medium text-slate-400 mb-1"> Category </label>{" "}
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+              {" "}
+              Category{" "}
+            </label>{" "}
             <select
               required
               name="categoryId"
               value={formData.categoryId}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
             >
               {" "}
               <option value="">Select a category...</option>{" "}
@@ -113,14 +116,14 @@ export default function AddAutoCategorizeRuleModal({
               ))}{" "}
             </select>{" "}
           </div>{" "}
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             {" "}
             <input
               type="checkbox"
               name="enabled"
               checked={formData.enabled}
               onChange={handleChange}
-              className="rounded border-slate-700 bg-slate-950"
+              className="rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
             />{" "}
             Rule enabled{" "}
           </label>{" "}

@@ -1,4 +1,5 @@
 import { type Category } from "../db/db";
+import { formatMoney } from "./currency.service";
 export interface CategoryWithCarryover extends Category {
   readonly carryoverAmount?: number;
   readonly carryoverFromMonth?: string;
@@ -6,7 +7,7 @@ export interface CategoryWithCarryover extends Category {
   readonly enableCarryover?: boolean;
 }
 export interface CarryoverCalculation {
-  categoryId?: number;
+  categoryId?: string;
   categoryTitle?: string;
   previousMonthBudget: number;
   previousMonthSpent: number;
@@ -19,6 +20,7 @@ export interface CarryoverCalculation {
 export function calculateMonthlyCarryover(
   category: CategoryWithCarryover,
   previousMonthSpent: number,
+  currency: string = "INR",
 ): CarryoverCalculation {
   if (!category.budgetAmount || !category.budgetMode || !category.enableCarryover) {
     return {
@@ -46,17 +48,18 @@ export function calculateMonthlyCarryover(
     carryoverLimit: maxLimit,
     actualCarryover,
     currentMonthEffectiveBudget,
-    note: `Carrying over ₹${actualCarryover.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from last month. Effective budget: ₹${currentMonthEffectiveBudget.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    note: `Carrying over ${formatMoney(actualCarryover, currency)} from last month. Effective budget: ${formatMoney(currentMonthEffectiveBudget, currency)}`,
   };
 }
 export function calculateCategoryCarryovers(
   categoriesWithCarryover: CategoryWithCarryover[],
-  previousMonthSpentByCategory: Map<number, number>,
+  previousMonthSpentByCategory: Map<string, number>,
+  currency: string = "INR",
 ): CarryoverCalculation[] {
   return categoriesWithCarryover
     .map((cat) => {
       const spent = previousMonthSpentByCategory.get(cat.id!) ?? 0;
-      return calculateMonthlyCarryover(cat, spent);
+      return calculateMonthlyCarryover(cat, spent, currency);
     })
     .filter((calc) => calc.actualCarryover > 0 || calc.categoryTitle);
 }

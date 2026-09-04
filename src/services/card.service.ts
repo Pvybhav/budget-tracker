@@ -1,4 +1,5 @@
 import type { Card, Expense, Payment } from "../db/db";
+import { formatMoney } from "./currency.service";
 
 /**
  * Months between two dates (year*12 + month arithmetic — ignores day).
@@ -107,9 +108,14 @@ export interface AccountAlertStatus {
   detail: string;
 }
 
-function getLinkedCardIds(card: Card, allCards: Card[] = []): number[] {
+export function getCreditUtilization(limit: number, currentBalance: number) {
+  if (limit <= 0) return null;
+  return Math.max(0, ((limit - currentBalance) / limit) * 100);
+}
+
+function getLinkedCardIds(card: Card, allCards: Card[] = []): string[] {
   const linkedIds = card.linkedCardIds ?? [];
-  const normalized = linkedIds.filter((id) => typeof id === "number" && id > 0);
+  const normalized = linkedIds.filter((id) => typeof id === "string" && id.length > 0);
   const cardId = card.id;
 
   if (cardId == null) {
@@ -121,7 +127,7 @@ function getLinkedCardIds(card: Card, allCards: Card[] = []): number[] {
       (candidate) => candidate.id !== cardId && (candidate.linkedCardIds ?? []).includes(cardId),
     )
     .map((candidate) => candidate.id)
-    .filter((id): id is number => typeof id === "number" && id > 0);
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
 
   return Array.from(new Set([...normalized, ...fromOtherCards]));
 }
@@ -262,6 +268,7 @@ export function getCardMetrics(
 
   const availableLimit = Math.max(0, sharedLimit - totalSpent + totalPaid);
   const currentBalance = sharedLimit - totalSpent + totalPaid;
+  const amountOwed = Math.max(0, totalSpent - totalPaid);
 
   // AMC Waiver logic
   let amcMessageText = null;
@@ -271,7 +278,7 @@ export function getCardMetrics(
   if ((card.amc ?? 0) > 0 && sharedWaiveOffLimit > 0) {
     remainingToWaive = Math.max(0, sharedWaiveOffLimit - totalSpent);
     if (remainingToWaive > 0) {
-      amcMessageText = `Spend ₹${remainingToWaive.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} more to waive AMC`;
+      amcMessageText = `Spend ${formatMoney(remainingToWaive, card.currency)} more to waive AMC`;
     } else {
       amcMessageText = "AMC Waived! 🎉";
       isAmcWaived = true;
@@ -288,6 +295,7 @@ export function getCardMetrics(
     amountToPayNext,
     availableLimit,
     currentBalance,
+    amountOwed,
     limit: sharedLimit,
     amcMessageText,
     remainingToWaive,
@@ -309,7 +317,7 @@ export function getAccountAlertStatus(
     return {
       severity: "danger",
       message: `${card.title} is over its limit`,
-      detail: `Available limit is ₹${metrics.availableLimit.toLocaleString("en-IN")} after current spend.`,
+      detail: `Available limit is ${formatMoney(metrics.availableLimit, card.currency)} after current spend.`,
     };
   }
 
@@ -317,7 +325,7 @@ export function getAccountAlertStatus(
     return {
       severity: "warning",
       message: `${card.title} balance is running low`,
-      detail: `Current balance is ₹${metrics.currentBalance.toLocaleString("en-IN")}.`,
+      detail: `Current balance is ${formatMoney(metrics.currentBalance, card.currency)}.`,
     };
   }
 
@@ -329,7 +337,7 @@ export function getAccountAlertStatus(
     return {
       severity: "warning",
       message: `${card.title} is nearing its credit limit`,
-      detail: `Only ₹${metrics.availableLimit.toLocaleString("en-IN")} of limit remains.`,
+      detail: `Only ${formatMoney(metrics.availableLimit, card.currency)} of limit remains.`,
     };
   }
 

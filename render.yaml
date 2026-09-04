@@ -8,4 +8,18 @@ services:
     startCommand: npm start
     autoDeploy: true
     disk: 1024
-    # Set MONGODB_URI as a secret environment variable in Render dashboard.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Set these as secrets in the Render dashboard - do not commit real values.
+      - key: MONGODB_URI
+        sync: false
+      # Optional: defaults to "budget_tracker" in production, keeping it separate from local dev's "budget_tracker_dev".
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: BUDGET_TRACKER_USERNAME
+        sync: false
+      - key: BUDGET_TRACKER_PASSWORD
+        sync: false

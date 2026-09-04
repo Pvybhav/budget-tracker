@@ -1,5 +1,6 @@
 import { TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Minus, Zap } from "lucide-react";
 import { type BudgetRecommendation } from "../services/budget-recommendations.service";
+import { formatMoney, useDisplayCurrency } from "../services/currency.service";
 interface SmartBudgetRecommendationsPanelProps {
   readonly recommendations: readonly BudgetRecommendation[];
   readonly title?: string;
@@ -8,16 +9,17 @@ export default function SmartBudgetRecommendationsPanel({
   recommendations,
   title = "Smart Budget Recommendations",
 }: SmartBudgetRecommendationsPanelProps) {
+  const displayCurrency = useDisplayCurrency();
   if (recommendations.length === 0) {
     return (
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
         {" "}
         <div className="flex items-center gap-2 mb-4">
           {" "}
-          <Zap className="w-5 h-5 text-amber-400" />{" "}
-          <h2 className="text-lg font-semibold text-slate-200">{title}</h2>{" "}
+          <Zap className="w-5 h-5 text-amber-500 dark:text-amber-400" />{" "}
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">{title}</h2>{" "}
         </div>{" "}
-        <p className="text-slate-400">
+        <p className="text-slate-600 dark:text-slate-400">
           {" "}
           No categories with spending data. Add expenses to get recommendations.{" "}
         </p>{" "}
@@ -27,14 +29,14 @@ export default function SmartBudgetRecommendationsPanel({
   const totalSavings = recommendations.reduce((sum, rec) => sum + rec.savingsOpportunity, 0);
   const highRiskCount = recommendations.filter((r) => r.riskLevel === "high").length;
   return (
-    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-4">
       {" "}
       <div className="flex items-center justify-between">
         {" "}
         <div className="flex items-center gap-2">
           {" "}
-          <Zap className="w-5 h-5 text-amber-400" />{" "}
-          <h2 className="text-lg font-semibold text-slate-200">{title}</h2>{" "}
+          <Zap className="w-5 h-5 text-amber-500 dark:text-amber-400" />{" "}
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">{title}</h2>{" "}
         </div>{" "}
         {totalSavings > 0 && (
           <div className="flex items-center gap-1 px-3 py-1 bg-emerald-400/10 border border-emerald-400/30 rounded-lg">
@@ -42,8 +44,7 @@ export default function SmartBudgetRecommendationsPanel({
             <TrendingDown className="w-4 h-4 text-emerald-400" />{" "}
             <span className="text-sm font-medium text-emerald-400">
               {" "}
-              Save ₹ {totalSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}{" "}
-              /month{" "}
+              Save {formatMoney(totalSavings, displayCurrency)} /month{" "}
             </span>{" "}
           </div>
         )}{" "}
@@ -65,38 +66,39 @@ export default function SmartBudgetRecommendationsPanel({
                 )}{" "}
                 {rec.riskLevel === "medium" && <AlertTriangle className="w-4 h-4 text-amber-400" />}{" "}
                 {rec.riskLevel === "low" && <CheckCircle className="w-4 h-4 text-emerald-400" />}{" "}
-                <h3 className="font-medium text-slate-200"> {rec.categoryTitle} </h3>{" "}
+                <h3 className="font-medium text-slate-900 dark:text-slate-200">
+                  {" "}
+                  {rec.categoryTitle}{" "}
+                </h3>{" "}
               </div>{" "}
             </div>{" "}
-            <p className="text-sm text-slate-300 mb-3">{rec.reasoning}</p>{" "}
+            <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{rec.reasoning}</p>{" "}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               {" "}
-              <div className="bg-slate-800/50 p-2.5 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-2.5 rounded-lg">
                 {" "}
-                <p className="text-[11px] text-slate-400 mb-1">Avg / month</p>{" "}
-                <p className="text-xs font-semibold text-slate-200">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                  Avg / month
+                </p>{" "}
+                <p className="text-xs font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {rec.averageMonthlySpending.toLocaleString("en-IN", {
-                    maximumFractionDigits: 0,
-                  })}{" "}
+                  {formatMoney(rec.averageMonthlySpending, displayCurrency)}{" "}
                 </p>{" "}
               </div>{" "}
-              <div className="bg-slate-800/50 p-2.5 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-2.5 rounded-lg">
                 {" "}
-                <p className="text-[11px] text-slate-400 mb-1">Peak month</p>{" "}
-                <p className="text-xs font-semibold text-slate-200">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                  Peak month
+                </p>{" "}
+                <p className="text-xs font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
-                  ₹{" "}
-                  {rec.maxMonthlySpending.toLocaleString("en-IN", {
-                    maximumFractionDigits: 0,
-                  })}{" "}
+                  {formatMoney(rec.maxMonthlySpending, displayCurrency)}{" "}
                 </p>{" "}
               </div>{" "}
-              <div className="bg-slate-800/50 p-2.5 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-2.5 rounded-lg">
                 {" "}
-                <p className="text-[11px] text-slate-400 mb-1">Trend</p>{" "}
-                <p className="flex items-center gap-1 text-xs font-semibold text-slate-200 capitalize">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-1">Trend</p>{" "}
+                <p className="flex items-center gap-1 text-xs font-semibold text-slate-900 dark:text-slate-200 capitalize">
                   {" "}
                   {rec.trend === "increasing" && (
                     <TrendingUp className="w-3.5 h-3.5 text-red-400" />
@@ -109,12 +111,14 @@ export default function SmartBudgetRecommendationsPanel({
                 </p>{" "}
               </div>{" "}
               <div
-                className={`p-2.5 rounded-lg ${rec.frequentlyExceeded ? "bg-red-400/10" : "bg-slate-800/50"}`}
+                className={`p-2.5 rounded-lg ${rec.frequentlyExceeded ? "bg-red-400/10" : "bg-slate-100 dark:bg-slate-800/50"}`}
               >
                 {" "}
-                <p className="text-[11px] text-slate-400 mb-1">Over budget</p>{" "}
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                  Over budget
+                </p>{" "}
                 <p
-                  className={`text-xs font-semibold ${rec.frequentlyExceeded ? "text-red-400" : "text-slate-200"}`}
+                  className={`text-xs font-semibold ${rec.frequentlyExceeded ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-200"}`}
                 >
                   {" "}
                   {rec.frequentlyExceeded
@@ -125,45 +129,42 @@ export default function SmartBudgetRecommendationsPanel({
             </div>{" "}
             <div className="grid grid-cols-2 gap-3 mb-3">
               {" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1">Current Budget</p>{" "}
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  Current Budget
+                </p>{" "}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                   {" "}
                   {rec.currentBudget ? (
-                    <>
-                      {" "}
-                      ₹{" "}
-                      {rec.currentBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}{" "}
-                    </>
+                    <>{formatMoney(rec.currentBudget, displayCurrency)}</>
                   ) : (
                     <span className="text-slate-500">Not set</span>
                   )}{" "}
                 </p>{" "}
               </div>{" "}
-              <div className="bg-slate-800/50 p-3 rounded-lg">
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs text-slate-400 mb-1"> Recommended Budget </p>{" "}
-                <p className="text-sm font-semibold text-emerald-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
                   {" "}
-                  ₹{" "}
-                  {rec.recommendedBudget.toLocaleString("en-IN", { maximumFractionDigits: 0 })}{" "}
+                  Recommended Budget{" "}
+                </p>{" "}
+                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                  {" "}
+                  {formatMoney(rec.recommendedBudget, displayCurrency)}{" "}
                 </p>{" "}
               </div>{" "}
             </div>{" "}
             {rec.savingsOpportunity > 0 && (
               <div className="bg-emerald-400/10 border border-emerald-400/30 p-3 rounded-lg">
                 {" "}
-                <p className="text-xs font-medium text-emerald-400 mb-1">
+                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">
                   {" "}
                   Potential Monthly Savings{" "}
                 </p>{" "}
-                <p className="text-sm font-semibold text-emerald-300">
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                   {" "}
-                  ₹{" "}
-                  {rec.savingsOpportunity.toLocaleString("en-IN", {
-                    maximumFractionDigits: 0,
-                  })}{" "}
+                  {formatMoney(rec.savingsOpportunity, displayCurrency)}{" "}
                 </p>{" "}
               </div>
             )}{" "}
@@ -171,12 +172,12 @@ export default function SmartBudgetRecommendationsPanel({
         ))}{" "}
       </div>{" "}
       {highRiskCount > 0 && (
-        <div className="pt-3 border-t border-slate-700">
+        <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
           {" "}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {" "}
             ⚠️{" "}
-            <span className="text-slate-300">
+            <span className="text-slate-700 dark:text-slate-300">
               {" "}
               {highRiskCount} categor{highRiskCount === 1 ? "y" : "ies"} need budget
               adjustment.{" "}
@@ -184,13 +185,13 @@ export default function SmartBudgetRecommendationsPanel({
           </p>{" "}
         </div>
       )}{" "}
-      <div className="pt-3 border-t border-slate-700">
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
         {" "}
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           {" "}
-          💡 <span className="text-slate-300">Tip:</span> Recommendations use the last{" "}
-          {recommendations[0]?.monthsAnalyzed ?? 6} months of spending. Review and adjust based on
-          your financial goals.{" "}
+          💡 <span className="text-slate-700 dark:text-slate-300">Tip:</span> Recommendations use
+          the last {recommendations[0]?.monthsAnalyzed ?? 6} months of spending. Review and adjust
+          based on your financial goals.{" "}
         </p>{" "}
       </div>{" "}
     </div>

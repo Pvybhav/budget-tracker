@@ -30,19 +30,26 @@ export default function CustomBudgetPeriodModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-t-3xl w-full max-w-md p-6 space-y-4">
+      <div className="bg-white border border-slate-200 rounded-t-3xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-md p-6 space-y-4 max-h-[80vh] overflow-y-auto">
         {" "}
         <div className="flex items-center justify-between">
           {" "}
-          <h2 className="text-xl font-bold text-slate-100"> Budget Period Settings </h2>{" "}
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-300">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            {" "}
+            Budget Period Settings{" "}
+          </h2>{" "}
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+          >
             {" "}
             <X className="w-6 h-6" />{" "}
           </button>{" "}
         </div>{" "}
         <div className="space-y-3">
           {" "}
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
             {" "}
             Choose Budget Period{" "}
           </label>{" "}
@@ -57,18 +64,21 @@ export default function CustomBudgetPeriodModal({
                   setSelectedStartDate(period.startDate);
                   setCustomDate(period.startDate.toString());
                 }}
-                className={`p-3 rounded-lg border transition-colors text-left ${selectedStartDate === period.startDate ? "bg-blue-500/20 border-blue-500 text-slate-100" : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"}`}
+                className={`p-3 rounded-lg border transition-colors text-left ${selectedStartDate === period.startDate ? "bg-blue-500/20 border-blue-500 text-slate-900 dark:text-slate-100" : "bg-slate-100 dark:bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800"}`}
               >
                 {" "}
                 <p className="font-medium text-sm">{period.periodName}</p>{" "}
-                <p className="text-xs text-slate-400 mt-1"> {period.description} </p>{" "}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {" "}
+                  {period.description}{" "}
+                </p>{" "}
               </button>
             ))}{" "}
           </div>{" "}
           {/* Custom date input */}{" "}
-          <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
             {" "}
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
               {" "}
               Custom Start Date{" "}
             </label>{" "}
@@ -76,7 +86,7 @@ export default function CustomBudgetPeriodModal({
               {" "}
               <div className="flex-1 relative">
                 {" "}
-                <Calendar className="absolute left-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />{" "}
+                <Calendar className="absolute left-3 top-3 w-4 h-4 text-slate-500 dark:text-slate-400 pointer-events-none" />{" "}
                 <input
                   type="number"
                   min="1"
@@ -91,12 +101,12 @@ export default function CustomBudgetPeriodModal({
                     }
                   }}
                   placeholder="Enter day (1-31)"
-                  className="w-full pl-10 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />{" "}
               </div>{" "}
-              <span className="text-slate-400 font-medium py-2">th</span>{" "}
+              <span className="text-slate-500 dark:text-slate-400 font-medium py-2">th</span>{" "}
             </div>{" "}
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               {" "}
               Your budget will run from the {customDate}th of each month to the{" "}
               {Math.max(0, parseInt(customDate, 10) - 1)}th of the next month.{" "}
@@ -132,12 +142,12 @@ export default function CustomBudgetPeriodModal({
             </div>{" "}
           </div>{" "}
         </div>{" "}
-        <div className="flex gap-2 pt-4 border-t border-slate-700">
+        <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
           {" "}
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-lg transition-colors"
+            className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg transition-colors"
           >
             {" "}
             Cancel{" "}

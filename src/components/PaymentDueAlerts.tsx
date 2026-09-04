@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { type Card } from "../db/db";
 import { getCardMetrics } from "../services/card.service";
-import { createPayment } from "../services/backendSync";
 import { fetchCards, fetchExpenses, fetchPayments } from "../services/backend.service";
-import showConfirm, { showAlert } from "./Confirm";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import AddPaymentModal from "./modals/AddPaymentModal";
 
 function daysBetween(a: Date, b: Date) {
   const diff = a.getTime() - b.getTime();
@@ -18,9 +18,11 @@ interface DueItem {
 }
 
 export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
+  const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const payments = useBackendResource(() => fetchPayments(), []);
+  const [cardToPay, setCardToPay] = useState<DueItem | null>(null);
 
   const dueItems = useMemo(() => {
     if (!cards || !expenses || !payments) return [] as DueItem[];
@@ -45,19 +47,23 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
   if (!cards) return null;
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/60 p-4">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
             Payment Alerts
           </div>
-          <div className="text-sm font-bold text-slate-100">Upcoming payments due</div>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Upcoming payments due
+          </div>
         </div>
       </div>
 
       <div className="mt-3 space-y-3">
         {dueItems.length === 0 && (
-          <div className="text-sm text-slate-400">No payments due in the next {days} days.</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            No payments due in the next {days} days.
+          </div>
         )}
 
         {dueItems.map(({ card, metrics, daysUntil }) => (
@@ -68,40 +74,36 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
             <div>
               <div className="text-sm font-semibold text-slate-100">{card.title}</div>
               <div className="text-xs text-slate-400">
-                Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} • ₹
-                {metrics.amountToPayNext.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} •{" "}
+                {formatMoney(
+                  convertCurrency(metrics.amountToPayNext, card.currency, displayCurrency),
+                  displayCurrency,
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={async () => {
-                  const ok = await showConfirm(
-                    `Mark ₹${metrics.amountToPayNext.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })} as paid for ${card.title}?`,
-                    { title: "Mark Paid", confirmText: "Mark Paid" },
-                  );
-                  if (!ok) return;
-                  await createPayment({
-                    cardId: card.id!,
-                    date: new Date().toISOString(),
-                    amount: metrics.amountToPayNext,
-                  });
-                  await showAlert("Payment recorded.");
-                }}
+                onClick={() => setCardToPay({ card, metrics, daysUntil })}
                 className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
               >
-                Mark Paid
+                Record payment
               </button>
             </div>
           </div>
         ))}
       </div>
+      {cardToPay && (
+        <AddPaymentModal
+          isOpen={true}
+          onClose={() => setCardToPay(null)}
+          defaultPayment={{
+            cardId: cardToPay.card.id!,
+            amount: cardToPay.metrics.amountToPayNext,
+            currency: cardToPay.card.currency,
+          }}
+        />
+      )}
     </div>
   );
 }

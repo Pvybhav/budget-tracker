@@ -7,13 +7,15 @@ import showConfirm from "./Confirm";
 import { getRewardPointsSummary } from "../services/rewardPoints.service";
 import type { Card, RewardPointsEntry } from "../db/db";
 import AddRewardPointsModal from "./modals/AddRewardPointsModal";
+import { formatConverted, useDisplayCurrency } from "../services/currency.service";
 export default function RewardPointsSection() {
+  const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
   const entries = useBackendResource(() => fetchRewardPoints(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeCard, setActiveCard] = useState<Card | undefined>();
   const [entryToEdit, setEntryToEdit] = useState<RewardPointsEntry | undefined>();
-  const [expandedCardId, setExpandedCardId] = useState<number | undefined>();
+  const [expandedCardId, setExpandedCardId] = useState<string | undefined>();
   const cardsWithPoints = useMemo(() => {
     return (cards ?? []).map((card) => {
       const cardEntries = (entries ?? []).filter((e) => e.cardId === card.id);
@@ -31,24 +33,24 @@ export default function RewardPointsSection() {
     setIsModalOpen(true);
   };
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
       {" "}
       <div className="flex items-start justify-between gap-3 mb-5">
         {" "}
         <div>
           {" "}
-          <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
             {" "}
             Reward Points{" "}
           </div>{" "}
-          <div className="text-lg font-bold text-slate-100">
+          <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {" "}
-            Track points earned, redeemed, and their ₹ value{" "}
+            Track points earned, redeemed, and their value{" "}
           </div>{" "}
         </div>{" "}
       </div>{" "}
       {cardsWithPoints.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/40 p-6 text-center text-sm text-slate-400">
+        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
           {" "}
           Add a card first to start tracking reward points.{" "}
         </div>
@@ -56,24 +58,26 @@ export default function RewardPointsSection() {
         <div className="space-y-3">
           {" "}
           {cardsWithPoints.map(({ card, entries: cardEntries, summary }) => (
-            <div key={card.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+            <div
+              key={card.id}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-4"
+            >
               {" "}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 {" "}
                 <div className="flex items-center gap-2">
                   {" "}
-                  <Gift className="h-4 w-4 text-amber-400" />{" "}
+                  <Gift className="h-4 w-4 text-amber-500 dark:text-amber-400" />{" "}
                   <div>
                     {" "}
-                    <div className="font-semibold text-slate-100"> {card.title} </div>{" "}
-                    <div className="text-sm text-slate-400">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">
                       {" "}
-                      {summary.balance.toLocaleString("en-IN")} pts · ₹{" "}
-                      {summary.totalValue.toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      value{" "}
+                      {card.title}{" "}
+                    </div>{" "}
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                      {" "}
+                      {summary.balance.toLocaleString("en-IN")} pts ·{" "}
+                      {formatConverted(summary.totalValue, card.currency, displayCurrency)} value{" "}
                       {summary.nextExpiry
                         ? ` · next expiry ${new Date(summary.nextExpiry).toLocaleDateString()}`
                         : ""}{" "}
@@ -87,7 +91,7 @@ export default function RewardPointsSection() {
                     onClick={() =>
                       setExpandedCardId(expandedCardId === card.id ? undefined : card.id)
                     }
-                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:text-white"
+                    className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   >
                     {" "}
                     {expandedCardId === card.id ? "Hide" : "History"}{" "}
@@ -103,15 +107,18 @@ export default function RewardPointsSection() {
                 </div>{" "}
               </div>{" "}
               {expandedCardId === card.id && (
-                <div className="mt-3 space-y-2 border-t border-slate-800 pt-3">
+                <div className="mt-3 space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3\">
                   {" "}
                   {cardEntries.length === 0 ? (
-                    <div className="text-sm text-slate-500"> No entries yet. </div>
+                    <div className="text-sm text-slate-600 dark:text-slate-500">
+                      {" "}
+                      No entries yet.{" "}
+                    </div>
                   ) : (
                     cardEntries.map((entry) => (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between text-sm text-slate-300"
+                        className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300"
                       >
                         {" "}
                         <div>

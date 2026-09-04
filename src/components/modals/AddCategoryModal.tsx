@@ -96,15 +96,15 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
             {initialCategory ? "Edit Category" : "Add Category"}
           </h2>
@@ -112,7 +112,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -122,12 +122,12 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
               value={formData.title}
               onChange={handleChange}
               placeholder="e.g. Food & Dining"
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500 placeholder-slate-500"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-500 placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               Description <span className="text-slate-600 text-xs">(optional)</span>
             </label>
             <textarea
@@ -136,7 +136,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
               onChange={handleChange}
               rows={2}
               placeholder="Short description..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500 placeholder-slate-500 resize-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-500 placeholder-slate-400 dark:placeholder-slate-500 resize-none"
             />
           </div>
 
@@ -150,18 +150,18 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
             />
             <label
               htmlFor="hasBudget"
-              className="text-sm font-medium text-slate-300 cursor-pointer select-none"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none"
             >
               Set a budget for this category
             </label>
           </div>
 
           {formData.hasBudget && (
-            <div className="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+            <div className="space-y-3 p-4 bg-slate-100 dark:bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
               {/* Amount + Mode row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                  <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                     Budget Amount <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -173,18 +173,18 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
                     value={formData.budgetAmount}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500 placeholder-slate-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-500 placeholder-slate-400 dark:placeholder-slate-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                  <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                     Budget Mode
                   </label>
                   <select
                     name="budgetMode"
                     value={formData.budgetMode}
                     onChange={handleChange}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-violet-500"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly</option>
@@ -195,7 +195,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
 
               {/* Derived previews */}
               {previews && (
-                <div className="bg-slate-900/60 rounded-lg border border-slate-700 px-3 py-2.5">
+                <div className="bg-slate-50 rounded-lg border border-slate-200 dark:bg-slate-900/60 dark:border-slate-700 px-3 py-2.5">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <Eye className="w-3 h-3" /> Breakdown Preview
                     <span className="normal-case font-normal text-slate-600 ml-1">
@@ -204,25 +204,25 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
                     {"monthly" in previews && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-500 dark:text-slate-400">
                         Monthly:{" "}
-                        <span className="text-slate-200 font-semibold">
+                        <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.monthly!)}
                         </span>
                       </span>
                     )}
                     {"weekly" in previews && previews.weekly != null && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-500 dark:text-slate-400">
                         Weekly:{" "}
-                        <span className="text-slate-200 font-semibold">
+                        <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.weekly)}
                         </span>
                       </span>
                     )}
                     {"daily" in previews && previews.daily != null && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-500 dark:text-slate-400">
                         Daily:{" "}
-                        <span className="text-slate-200 font-semibold">
+                        <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.daily)}
                         </span>
                       </span>

@@ -1,6 +1,7 @@
 export type BudgetMode = "monthly" | "quarterly" | "yearly";
 
 import { type Category, type Expense } from "../db/db";
+import { convertCurrency, formatMoney } from "./currency.service";
 
 export interface BudgetStatus {
   effectiveBudget: number;
@@ -55,6 +56,7 @@ export function getBudgetStatus(spent: number, budgetAmount: number): BudgetStat
 export function getCategoryBudgetAlert(
   category: Category,
   expenses: Expense[],
+  currency: string = "INR",
 ): CategoryBudgetAlert | null {
   if (!category.budgetAmount || !category.budgetMode) return null;
   const now = new Date();
@@ -72,14 +74,14 @@ export function getCategoryBudgetAlert(
           Math.floor(date.getMonth() / 3) === currentQuarter) ||
         (category.budgetMode === "monthly" && date.getMonth() + 1 === currentMonth));
     if (!isCurrentPeriod) continue;
-    spent += expense.amount;
+    spent += convertCurrency(expense.amount, expense.currency, currency);
   }
   const status = getBudgetStatus(spent, category.budgetAmount);
   if (status.isOverBudget) {
     return {
       severity: "danger",
       message: `Budget exceeded for ${category.title}`,
-      detail: `₹${status.spent.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} spent against ₹${status.effectiveBudget.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} budget.`,
+      detail: `${formatMoney(status.spent, currency)} spent against ${formatMoney(status.effectiveBudget, currency)} budget.`,
     };
   }
 
@@ -93,7 +95,7 @@ export function getCategoryBudgetAlert(
     return {
       severity: "warning",
       message: `${category.title} is nearing its limit`,
-      detail: `Only ₹${Math.max(0, status.remaining).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left this ${periodLabel}.`,
+      detail: `Only ${formatMoney(Math.max(0, status.remaining), currency)} left this ${periodLabel}.`,
     };
   }
 

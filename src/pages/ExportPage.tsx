@@ -118,14 +118,15 @@ export default function ExportPage() {
               cat?.title || "Uncategorized",
               exp.details || "",
               exp.amount,
+              exp.currency || "INR",
             ];
           });
           const total = cardExpenses.reduce((sum, e) => sum + e.amount, 0);
           const finalData = [
-            ["Date", "Category", "Details", "Amount (₹)"],
+            ["Date", "Category", "Details", "Amount", "Currency"],
             ...sheetData,
             [],
-            ["Total", "", "", total],
+            ["Total", "", "", total, ""],
           ];
           const ws = XLSX.utils.aoa_to_sheet(finalData);
           XLSX.utils.book_append_sheet(wb, ws, `Exp - ${card.title.slice(0, 20)}`);
@@ -144,9 +145,15 @@ export default function ExportPage() {
           const sheetData = cardPayments.map((p) => [
             new Date(p.date).toLocaleDateString(),
             p.amount,
+            p.currency || "INR",
           ]);
           const total = cardPayments.reduce((sum, p) => sum + p.amount, 0);
-          const finalData = [["Date", "Amount (₹)"], ...sheetData, [], ["Total", total]];
+          const finalData = [
+            ["Date", "Amount", "Currency"],
+            ...sheetData,
+            [],
+            ["Total", total, ""],
+          ];
           const ws = XLSX.utils.aoa_to_sheet(finalData);
           XLSX.utils.book_append_sheet(wb, ws, `Pay - ${card.title.slice(0, 20)}`);
         }
@@ -163,10 +170,11 @@ export default function ExportPage() {
           loan.annualInterestRate,
           loan.termMonths,
           loan.note || "",
+          loan.currency || "INR",
         ]);
       if (loanRows.length > 0) {
         const finalData = [
-          ["Start Date", "Lender", "Principal (₹)", "Interest %", "Term (months)", "Note"],
+          ["Start Date", "Lender", "Principal", "Interest %", "Term (months)", "Note", "Currency"],
           ...loanRows,
         ];
         const ws = XLSX.utils.aoa_to_sheet(finalData);
@@ -280,8 +288,11 @@ export default function ExportPage() {
         </div>{" "}
         <div>
           {" "}
-          <h1 className="text-3xl font-bold text-white"> Import, Export & Backups </h1>{" "}
-          <p className="text-slate-400">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            {" "}
+            Import, Export & Backups{" "}
+          </h1>{" "}
+          <p className="text-slate-600 dark:text-slate-400">
             {" "}
             Download reports, create backup snapshots, and restore local data{" "}
           </p>{" "}
@@ -289,13 +300,13 @@ export default function ExportPage() {
       </div>{" "}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         {" "}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {" "}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2 dark:text-slate-400">
                 {" "}
                 Select Month{" "}
               </label>{" "}
@@ -305,7 +316,7 @@ export default function ExportPage() {
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
                 >
                   {" "}
                   {months.map((m, i) => (
@@ -319,7 +330,7 @@ export default function ExportPage() {
             </div>{" "}
             <div>
               {" "}
-              <label className="block text-sm font-medium text-slate-400 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2 dark:text-slate-400">
                 {" "}
                 Select Year{" "}
               </label>{" "}
@@ -329,7 +340,7 @@ export default function ExportPage() {
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
                 >
                   {" "}
                   {years.map((y) => (
@@ -362,7 +373,7 @@ export default function ExportPage() {
             <button
               onClick={handleExportCsv}
               disabled={isProcessing}
-              className="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {" "}
               <Download className="w-4 h-4" /> Export CSV{" "}
@@ -370,21 +381,24 @@ export default function ExportPage() {
             <button
               onClick={handleExportJson}
               disabled={isProcessing}
-              className="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {" "}
               <Database className="w-4 h-4" /> Export JSON Backup{" "}
             </button>{" "}
           </div>{" "}
         </div>{" "}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {" "}
           <div className="space-y-4">
             {" "}
             <div>
               {" "}
-              <h2 className="text-lg font-semibold text-white"> Server export only </h2>{" "}
-              <p className="text-sm text-slate-400 mt-1">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {" "}
+                Server export only{" "}
+              </h2>{" "}
+              <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                 {" "}
                 Data is stored on the server, and this page produces exports for analysis or
                 archive. Local browser restore is no longer supported.{" "}
@@ -393,10 +407,13 @@ export default function ExportPage() {
           </div>{" "}
         </div>{" "}
       </div>{" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-3xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-3xl shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {" "}
-        <h3 className="text-slate-200 font-medium mb-4"> What you can do here: </h3>{" "}
-        <ul className="space-y-3 text-sm text-slate-400">
+        <h3 className="text-slate-900 font-medium mb-4 dark:text-slate-200">
+          {" "}
+          What you can do here:{" "}
+        </h3>{" "}
+        <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
           {" "}
           <li className="flex items-center gap-2">
             {" "}

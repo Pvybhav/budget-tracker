@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { type SavingsGoal } from "../../db/db";
 import { createSavingsGoal, updateSavingsGoal } from "../../services/backendSync";
 import showConfirm from "../../components/Confirm";
+import CurrencySelect from "../CurrencySelect";
+import { getDisplayCurrency } from "../../services/currency.service";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -15,6 +17,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
     targetDate: "",
     currentAmount: "0",
     note: "",
+    currency: getDisplayCurrency(),
   });
   useEffect(() => {
     if (initialGoal) {
@@ -24,9 +27,17 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
         targetDate: initialGoal.targetDate,
         currentAmount: initialGoal.currentAmount.toString(),
         note: initialGoal.note ?? "",
+        currency: initialGoal.currency ?? getDisplayCurrency(),
       });
     } else {
-      setFormData({ title: "", targetAmount: "", targetDate: "", currentAmount: "0", note: "" });
+      setFormData({
+        title: "",
+        targetAmount: "",
+        targetDate: "",
+        currentAmount: "0",
+        note: "",
+        currency: getDisplayCurrency(),
+      });
     }
   }, [initialGoal, isOpen]);
   if (!isOpen) return null;
@@ -42,6 +53,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
       currentAmount: Number.parseFloat(formData.currentAmount || "0"),
       note: formData.note.trim(),
       createdAt: initialGoal?.createdAt ?? new Date().toISOString(),
+      currency: formData.currency,
     };
     if (initialGoal?.id) {
       const ok = await showConfirm(`Save changes to "${payload.title}"?`, {
@@ -58,17 +70,17 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {" "}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           {" "}
           <X className="w-5 h-5" />{" "}
         </button>{" "}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           {" "}
           <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
             {" "}
@@ -79,7 +91,10 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
           {" "}
           <div>
             {" "}
-            <label htmlFor="goal-name" className="block text-sm font-medium text-slate-400 mb-1">
+            <label
+              htmlFor="goal-name"
+              className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+            >
               {" "}
               Goal Name{" "}
             </label>{" "}
@@ -90,7 +105,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             />{" "}
           </div>{" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -99,27 +114,34 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               {" "}
               <label
                 htmlFor="target-amount"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Target Amount{" "}
               </label>{" "}
-              <input
-                id="target-amount"
-                required
-                type="number"
-                min="0"
-                name="targetAmount"
-                value={formData.targetAmount}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
-              />{" "}
+              <div className="flex gap-2">
+                <input
+                  id="target-amount"
+                  required
+                  type="number"
+                  min="0"
+                  name="targetAmount"
+                  value={formData.targetAmount}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />{" "}
+                <CurrencySelect
+                  value={formData.currency}
+                  onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                  className="bg-white border border-slate-300 rounded-lg px-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 text-sm"
+                />
+              </div>{" "}
             </div>{" "}
             <div>
               {" "}
               <label
                 htmlFor="target-date"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Target Date{" "}
@@ -131,7 +153,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
                 name="targetDate"
                 value={formData.targetDate}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />{" "}
             </div>{" "}
           </div>{" "}
@@ -139,7 +161,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
             {" "}
             <label
               htmlFor="current-amount"
-              className="block text-sm font-medium text-slate-400 mb-1"
+              className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
             >
               {" "}
               Current Progress{" "}
@@ -151,12 +173,15 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               name="currentAmount"
               value={formData.currentAmount}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             />{" "}
           </div>{" "}
           <div>
             {" "}
-            <label htmlFor="notes" className="block text-sm font-medium text-slate-400 mb-1">
+            <label
+              htmlFor="notes"
+              className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+            >
               {" "}
               Notes{" "}
             </label>{" "}
@@ -166,7 +191,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               value={formData.note}
               onChange={handleChange}
               rows={3}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             />{" "}
           </div>{" "}
           <div className="pt-2">

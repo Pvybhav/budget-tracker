@@ -3,7 +3,9 @@ import { type Card } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchExpenses, fetchPayments } from "../services/backend.service";
 import { CreditCard, CalendarDays, AlertCircle, Zap } from "lucide-react";
-import { getCardMetrics } from "../services/card.service";
+import { getCardMetrics, getCreditUtilization } from "../services/card.service";
+import { formatConverted, useDisplayCurrency } from "../services/currency.service";
+import { ACCOUNT_TYPE_ICONS, CARD_ICONS } from "../utils/typeIcons";
 import sbiLogo from "../assets/banks/sbi.svg";
 import iciciLogo from "../assets/banks/icici.png";
 import hdfcLogo from "../assets/banks/hdfc.png";
@@ -18,6 +20,7 @@ function getBankLogo(title: string) {
   return null;
 }
 export default function CardThumbnail({ card }: { card: Card }) {
+  const displayCurrency = useDisplayCurrency();
   const [isFlipped, setIsFlipped] = useState(false);
   const expenses = useBackendResource(
     () => fetchExpenses().then((items) => items.filter((item) => item.cardId === card.id!)),
@@ -29,7 +32,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
   );
   if (!expenses || !payments)
     return (
-      <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl animate-pulse aspect-[1.586/1]"></div>
+      <div className="p-6 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl animate-pulse aspect-[1.586/1]"></div>
     );
   const metrics = getCardMetrics(card, expenses, payments, []);
   const {
@@ -40,6 +43,8 @@ export default function CardThumbnail({ card }: { card: Card }) {
     amcMessageText,
     isAmcWaived,
   } = metrics;
+  const utilization =
+    card.type === "credit" ? getCreditUtilization(card.totalLimit, metrics.currentBalance) : null;
   let amcColorClass = "";
   let AmcIcon = null;
   if (amcMessageText) {
@@ -113,7 +118,13 @@ export default function CardThumbnail({ card }: { card: Card }) {
                   className="w-10 object-contain drop-shadow-lg"
                 />
               ) : (
-                <CreditCard className="w-7 h-7 text-slate-300 opacity-80" />
+                (() => {
+                  const Icon =
+                    (card.icon ? CARD_ICONS[card.icon] : undefined) ??
+                    ACCOUNT_TYPE_ICONS[card.type ?? "other"] ??
+                    CreditCard;
+                  return <Icon className="w-7 h-7 text-slate-300 opacity-80" aria-hidden="true" />;
+                })()
               )}{" "}
             </div>{" "}
           </div>{" "}
@@ -127,11 +138,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
               </p>{" "}
               <p className="text-lg font-medium text-emerald-400 tracking-wide drop-shadow-sm truncate">
                 {" "}
-                ₹{" "}
-                {availableLimit.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {formatConverted(availableLimit, card.currency, displayCurrency)}{" "}
               </p>{" "}
             </div>{" "}
             <div className="bg-black/20 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
@@ -142,14 +149,26 @@ export default function CardThumbnail({ card }: { card: Card }) {
               </p>{" "}
               <p className="text-lg font-medium text-slate-300 tracking-wide drop-shadow-sm truncate">
                 {" "}
-                ₹{" "}
-                {amountToPayNext.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {formatConverted(amountToPayNext, card.currency, displayCurrency)}{" "}
               </p>{" "}
             </div>{" "}
           </div>{" "}
+          {utilization !== null && (
+            <div className="relative z-10 mb-2">
+              <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400">
+                <span>Credit utilization</span>
+                <span className={utilization > 80 ? "text-rose-300" : "text-slate-200"}>
+                  {utilization.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full rounded-full ${utilization > 80 ? "bg-rose-400" : utilization > 50 ? "bg-amber-400" : "bg-emerald-400"}`}
+                  style={{ width: `${Math.min(100, utilization)}%` }}
+                />
+              </div>
+            </div>
+          )}{" "}
           <p className="flex justify-between items-center text-[10px] uppercase tracking-wide text-slate-400/80 mt-1">
             {" "}
             <span className="flex items-center gap-1.5">
@@ -187,11 +206,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
               <span className="text-slate-400 text-sm">Total Limit</span>{" "}
               <span className="text-slate-200 font-medium tracking-wide">
                 {" "}
-                ₹{" "}
-                {card.totalLimit.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {formatConverted(card.totalLimit, card.currency, displayCurrency)}{" "}
               </span>{" "}
             </div>{" "}
             {card.type === "credit" && (
@@ -224,11 +239,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
                   <span className="text-slate-400 text-sm">AMC</span>{" "}
                   <span className="text-slate-200 font-medium tracking-wide">
                     {" "}
-                    ₹{" "}
-                    {card.amc?.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }) ?? "0.00"}{" "}
+                    {formatConverted(card.amc ?? 0, card.currency, displayCurrency)}{" "}
                   </span>{" "}
                 </div>{" "}
                 <div className="flex justify-between items-center">
@@ -236,11 +247,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
                   <span className="text-slate-400 text-sm"> Waive Off Limit </span>{" "}
                   <span className="text-slate-200 font-medium tracking-wide">
                     {" "}
-                    ₹{" "}
-                    {card.waiveOffLimit?.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }) ?? "0.00"}{" "}
+                    {formatConverted(card.waiveOffLimit ?? 0, card.currency, displayCurrency)}{" "}
                   </span>{" "}
                 </div>{" "}
               </>

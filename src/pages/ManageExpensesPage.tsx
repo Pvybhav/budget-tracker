@@ -9,12 +9,14 @@ import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
 import { fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
 import { deleteExpense } from "../services/backendSync";
+import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
 export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearly" | "emi" }) {
+  const displayCurrency = useDisplayCurrency();
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
 
@@ -29,6 +31,8 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   );
   const [showEmiOnly, setShowEmiOnly] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const [categoryModal, setCategoryModal] = useState<{
     open: boolean;
@@ -115,8 +119,14 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
     return result;
   }, [categories, periodFilteredExpenses, searchQuery, selectedCategoryId, showEmiOnly, sortBy]);
+  const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / pageSize));
+  const visibleExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
 
-  const totalAmount = filteredExpenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+  const totalAmount =
+    filteredExpenses?.reduce(
+      (sum, expense) => sum + convertCurrency(expense.amount, expense.currency, displayCurrency),
+      0,
+    ) || 0;
 
   const expenseCount = filteredExpenses?.length || 0;
   const emiCount = filteredExpenses?.filter((expense) => expense.isEmi).length || 0;
@@ -134,12 +144,16 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           );
           return {
             name: new Date(0, i).toLocaleString("default", { month: "short" }),
-            amount: monthExpenses?.reduce((sum, e) => sum + e.amount, 0) || 0,
+            amount:
+              monthExpenses?.reduce(
+                (sum, e) => sum + convertCurrency(e.amount, e.currency, displayCurrency),
+                0,
+              ) || 0,
           };
         })
       : [];
 
-  const getCategoryById = (id?: number): Category | undefined => {
+  const getCategoryById = (id?: string): Category | undefined => {
     if (!id) return undefined;
     return categories?.find((c) => c.id === id);
   };
@@ -175,7 +189,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-semibold text-slate-100">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
           {mode === "monthly"
             ? "Monthly Manage Expenses"
             : mode === "yearly"
@@ -193,17 +207,21 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-sm text-slate-700 dark:text-slate-300">
           <div className="font-semibold mb-1">Completed</div>
-          <div className="text-slate-400">EMI repayment cycle finished for this expense.</div>
+          <div className="text-slate-600 dark:text-slate-400">
+            EMI repayment cycle finished for this expense.
+          </div>
         </div>
         <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
           <div className="font-semibold mb-1">Ongoing</div>
-          <div className="text-slate-300">EMI is active and current this month.</div>
+          <div className="text-slate-700 dark:text-slate-300">
+            EMI is active and current this month.
+          </div>
         </div>
         <div className="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-4 text-sm text-sky-200">
           <div className="font-semibold mb-1">Upcoming</div>
-          <div className="text-slate-300">EMI starts in a future month.</div>
+          <div className="text-slate-700 dark:text-slate-300">EMI starts in a future month.</div>
         </div>
       </div>
 
@@ -212,7 +230,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500"
           >
             {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
               <option key={y} value={y}>
@@ -225,7 +243,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500"
           >
             {[...Array(12)].map((_, i) => (
               <option key={i + 1} value={i + 1}>
@@ -237,22 +255,25 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr_1fr_1fr] gap-4">
-        <label className="flex flex-col gap-2 text-sm text-slate-400">
+        <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Search expenses</span>
           <input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search by description, category, amount..."
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
           />
         </label>
 
-        <label className="flex flex-col gap-2 text-sm text-slate-400">
+        <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Category</span>
           <select
             value={selectedCategoryId}
             onChange={(e) => setSelectedCategoryId(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
           >
             <option value="all">All categories</option>
             {categories?.map((category) => (
@@ -263,12 +284,12 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </select>
         </label>
 
-        <label className="flex flex-col gap-2 text-sm text-slate-400">
+        <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Sort by</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500"
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
           >
             <option value="date-desc">Newest first</option>
             <option value="date-asc">Oldest first</option>
@@ -277,7 +298,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </select>
         </label>
 
-        <div className="flex flex-col gap-2 text-sm text-slate-400">
+        <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Quick filters</span>
           <div className="flex gap-2">
             <button
@@ -286,7 +307,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 "flex-1 rounded-lg border px-3 py-2 font-medium transition-colors",
                 showEmiOnly
                   ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-                  : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600",
+                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600",
               )}
             >
               {showEmiOnly ? "EMI only" : "All expenses"}
@@ -298,7 +319,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 setSortBy("date-desc");
                 setShowEmiOnly(false);
               }}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-300 transition-colors hover:border-slate-600"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-700 dark:text-slate-300 transition-colors hover:border-slate-400 dark:hover:border-slate-600"
             >
               Reset
             </button>
@@ -307,49 +328,48 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
             {mode === "monthly"
               ? "Month Total"
               : mode === "yearly"
                 ? "Year Total"
                 : "Visible Total"}
           </p>
-          <p className="text-3xl font-bold text-emerald-400">
-            ₹
-            {totalAmount.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+            {formatMoney(totalAmount, displayCurrency)}
           </p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
             Transactions
           </p>
-          <p className="text-3xl font-bold text-slate-100">{expenseCount}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
             EMI Count
           </p>
-          <p className="text-3xl font-bold text-amber-400">{emiCount}</p>
+          <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
             Largest Spend
           </p>
-          <p className="text-3xl font-bold text-sky-400">
-            ₹
-            {(biggestExpense?.amount ?? 0).toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+          <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">
+            {formatMoney(
+              convertCurrency(
+                biggestExpense?.amount ?? 0,
+                biggestExpense?.currency,
+                displayCurrency,
+              ),
+              displayCurrency,
+            )}
           </p>
-          <p className="mt-2 text-sm text-slate-500 truncate">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-500 truncate">
             {biggestExpense?.details || "No expense yet"}
           </p>
         </div>
@@ -357,22 +377,18 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
       {mode && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+          <div className="md:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               {mode === "monthly" ? "Month Total" : "Year Total"}
             </p>
             <p className="text-3xl font-bold text-emerald-400">
-              ₹
-              {totalAmount.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatMoney(totalAmount, displayCurrency)}
             </p>
           </div>
 
           {mode === "yearly" && (
-            <div className="md:col-span-3 bg-slate-900 border border-slate-800 p-6 rounded-2xl overflow-x-auto">
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">
+            <div className="md:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl overflow-x-auto">
+              <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">
                 Monthly Breakdown
               </p>
               <div className="flex gap-6 min-w-max pb-2">
@@ -382,16 +398,12 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     <div
                       className={cn(
                         "text-sm font-semibold",
-                        mb.amount > 0 ? "text-slate-200" : "text-slate-700",
+                        mb.amount > 0
+                          ? "text-slate-900 dark:text-slate-200"
+                          : "text-slate-600 dark:text-slate-400",
                       )}
                     >
-                      ₹
-                      {mb.amount > 0
-                        ? mb.amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
-                        : "0.00"}
+                      {mb.amount > 0 ? formatMoney(mb.amount, displayCurrency) : "0.00"}
                     </div>
                   </div>
                 ))}
@@ -401,21 +413,25 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-left text-slate-300 whitespace-nowrap min-w-max">
-          <thead className="bg-slate-800/50">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
+        <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
+          <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-6 py-4 font-medium">Date</th>
-              <th className="px-6 py-4 font-medium">Description</th>
-              <th className="px-6 py-4 font-medium">Category</th>
-              <th className="px-6 py-4 font-medium">Card ID</th>
-              <th className="px-6 py-4 font-medium">Amount</th>
-              <th className="px-6 py-4 font-medium">Status</th>
-              <th className="px-6 py-4 font-medium text-right">Actions</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                Description
+              </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card ID</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
+              <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/50">
-            {filteredExpenses.map((expense) => {
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
+            {visibleExpenses.map((expense) => {
               const category = getCategoryById(expense.categoryId);
               const isEmi = !!expense.isEmi;
               const emiMonths = expense.emiMonths ?? 1;
@@ -455,11 +471,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                             </span>
                           )}
                           <span className="text-xs text-emerald-400 font-medium">
-                            ₹
-                            {monthlyEmi.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            {formatMoney(
+                              convertCurrency(monthlyEmi, expense.currency, displayCurrency),
+                              displayCurrency,
+                            )}
                             /mo
                           </span>
                         </div>
@@ -483,11 +498,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span>
-                        ₹
-                        {expense.amount.toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {formatMoney(
+                          convertCurrency(expense.amount, expense.currency, displayCurrency),
+                          displayCurrency,
+                        )}
                       </span>
                       {isEmi && <span className="text-xs text-slate-500">principal</span>}
                     </div>
@@ -498,12 +512,12 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
                           const status = getEmiExpenseStatus(expense);
                           if (status === "completed") {
-                            return "bg-slate-700 text-slate-300";
+                            return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
                           }
                           if (status === "current") {
-                            return "bg-emerald-500/15 text-emerald-300";
+                            return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
                           }
-                          return "bg-sky-500/15 text-sky-300";
+                          return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
                         })()}`}
                       >
                         {getEmiExpenseStatus(expense) === "completed"
@@ -543,6 +557,36 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </tbody>
         </table>
       </div>
+
+      {filteredExpenses.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
+          <span>
+            Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredExpenses.length)}{" "}
+            of {filteredExpenses.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() => setPage((current) => current - 1)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40 dark:border-slate-700"
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={page === totalPages}
+              onClick={() => setPage((current) => current + 1)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40 dark:border-slate-700"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <AddExpenseModal
         isOpen={isModalOpen}

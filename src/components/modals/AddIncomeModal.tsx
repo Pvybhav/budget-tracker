@@ -6,6 +6,8 @@ import { createIncome, updateIncome } from "../../services/backendSync";
 import { syncRecurringIncomes } from "../../services/recurring.service";
 import { X } from "lucide-react";
 import showConfirm, { showAlert } from "../../components/Confirm";
+import CurrencySelect from "../CurrencySelect";
+import { getDisplayCurrency } from "../../services/currency.service";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -37,6 +39,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
     recurringFrequency: "monthly" as NonNullable<Income["recurringFrequency"]>,
     recurringInterval: 1,
     recurringEndDate: "",
+    currency: getDisplayCurrency(),
   });
   useEffect(() => {
     if (initialIncome) {
@@ -55,6 +58,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
         recurringFrequency: initialIncome.recurringFrequency ?? "monthly",
         recurringInterval: initialIncome.recurringInterval ?? 1,
         recurringEndDate: initialIncome.recurringEndDate ?? "",
+        currency: initialIncome.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {
       setFormData({
@@ -68,6 +72,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
         recurringFrequency: "monthly",
         recurringInterval: 1,
         recurringEndDate: "",
+        currency: getDisplayCurrency(),
       });
     }
   }, [initialIncome, isOpen]);
@@ -90,13 +95,14 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
     const payload: Income = {
       source: formData.source.trim(),
       category: formData.category,
-      accountId: formData.accountId ? Number.parseInt(formData.accountId) : undefined,
+      accountId: formData.accountId || undefined,
       amount: Number.parseFloat(formData.amount || "0"),
       date: formData.date,
       note: formData.note.trim() || undefined,
       recurringFrequency: formData.isRecurring ? formData.recurringFrequency : undefined,
       recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
       recurringEndDate: formData.isRecurring ? formData.recurringEndDate || undefined : undefined,
+      currency: formData.currency,
     };
     if (initialIncome?.id) {
       const ok = await showConfirm(`Save changes to "${payload.source}"?`, {
@@ -116,17 +122,17 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       {" "}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
         {" "}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
           {" "}
           <X className="w-5 h-5" />{" "}
         </button>{" "}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           {" "}
           <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
             {" "}
@@ -139,7 +145,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
             {" "}
             <label
               htmlFor="income-source"
-              className="block text-sm font-medium text-slate-400 mb-1"
+              className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
             >
               {" "}
               Source{" "}
@@ -152,7 +158,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
               placeholder="e.g. Honeywell Salary, Freelance project"
               value={formData.source}
               onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             />{" "}
           </div>{" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -161,7 +167,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
               {" "}
               <label
                 htmlFor="income-category"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Category{" "}
@@ -171,7 +177,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               >
                 {" "}
                 {INCOME_CATEGORIES.map((c) => (
@@ -186,7 +192,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
               {" "}
               <label
                 htmlFor="credited-to"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Credited To (optional){" "}
@@ -196,7 +202,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                 name="accountId"
                 value={formData.accountId}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               >
                 {" "}
                 <option value="">Unassigned</option>{" "}
@@ -215,28 +221,35 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
               {" "}
               <label
                 htmlFor="income-amount"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Amount{" "}
               </label>{" "}
-              <input
-                id="income-amount"
-                required
-                type="number"
-                min="0"
-                step="0.01"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
-              />{" "}
+              <div className="flex gap-2">
+                <input
+                  id="income-amount"
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />{" "}
+                <CurrencySelect
+                  value={formData.currency}
+                  onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                  className="bg-white border border-slate-300 rounded-lg px-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 text-sm"
+                />
+              </div>{" "}
             </div>{" "}
             <div>
               {" "}
               <label
                 htmlFor="income-date"
-                className="block text-sm font-medium text-slate-400 mb-1"
+                className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
                 {" "}
                 Date{" "}
@@ -248,13 +261,16 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />{" "}
             </div>{" "}
           </div>{" "}
           <div>
             {" "}
-            <label htmlFor="income-notes" className="block text-sm font-medium text-slate-400 mb-1">
+            <label
+              htmlFor="income-notes"
+              className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+            >
               {" "}
               Notes{" "}
             </label>{" "}
@@ -264,19 +280,19 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
               value={formData.note}
               onChange={handleChange}
               rows={2}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
             />{" "}
           </div>{" "}
-          <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-3">
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/80 p-3 dark:bg-slate-950/50 space-y-3">
             {" "}
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               {" "}
               <input
                 type="checkbox"
                 name="isRecurring"
                 checked={formData.isRecurring}
                 onChange={handleChange}
-                className="rounded border-slate-700 bg-slate-900"
+                className="rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
               />{" "}
               Recurring income (e.g. monthly salary){" "}
             </label>{" "}
@@ -287,7 +303,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                   {" "}
                   <label
                     htmlFor="recurring-frequency"
-                    className="block text-xs font-medium text-slate-400 mb-1"
+                    className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
                   >
                     {" "}
                     Frequency{" "}
@@ -297,7 +313,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                     name="recurringFrequency"
                     value={formData.recurringFrequency}
                     onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                   >
                     {" "}
                     <option value="monthly">Monthly</option> <option value="weekly">Weekly</option>{" "}
@@ -308,7 +324,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                   {" "}
                   <label
                     htmlFor="recurring-interval"
-                    className="block text-xs font-medium text-slate-400 mb-1"
+                    className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
                   >
                     {" "}
                     Every{" "}
@@ -320,14 +336,14 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                     name="recurringInterval"
                     value={formData.recurringInterval}
                     onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                   />{" "}
                 </div>{" "}
                 <div>
                   {" "}
                   <label
                     htmlFor="recurring-end-date"
-                    className="block text-xs font-medium text-slate-400 mb-1"
+                    className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
                   >
                     {" "}
                     End date (optional){" "}
@@ -338,7 +354,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
                     name="recurringEndDate"
                     value={formData.recurringEndDate}
                     onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                   />{" "}
                 </div>{" "}
               </div>
