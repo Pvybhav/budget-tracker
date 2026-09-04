@@ -5,6 +5,7 @@ import showConfirm, { showAlert } from "../../components/Confirm";
 import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { dateOnly, todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -19,7 +20,7 @@ const TYPE_OPTIONS: { value: BillType; label: string }[] = [
   { value: "gas", label: "Gas" },
   { value: "other", label: "Other" },
 ];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayDateInput;
 export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<Props>) {
   const [formData, setFormData] = useState({
     name: "",
@@ -41,7 +42,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         type: initialBill.type,
         provider: initialBill.provider ?? "",
         amount: initialBill.amount.toString(),
-        dueDate: initialBill.dueDate,
+        dueDate: dateOnly(initialBill.dueDate),
         paid: initialBill.paid,
         note: initialBill.note ?? "",
         isSubscription: Boolean(initialBill.isSubscription),

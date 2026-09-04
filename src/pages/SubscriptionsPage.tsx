@@ -4,6 +4,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { fetchBills } from "../services/backend.service";
 import { updateBill } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly, parseDateOnly } from "../utils/date";
 export default function SubscriptionsPage() {
   const displayCurrency = useDisplayCurrency();
   const bills = useBackendResource(() => fetchBills(), []);
@@ -20,7 +21,8 @@ export default function SubscriptionsPage() {
     0,
   );
   const advance = async (id: string, currentDate: string, frequency: string) => {
-    const date = new Date(`${currentDate}T00:00:00`);
+    const date = parseDateOnly(currentDate);
+    if (!date) return;
     date.setMonth(
       date.getMonth() + (frequency === "yearly" ? 12 : frequency === "quarterly" ? 3 : 1),
     );
@@ -96,7 +98,7 @@ export default function SubscriptionsPage() {
               {" "}
               <span className="text-slate-600 dark:text-slate-400">
                 {" "}
-                Next: {new Date(`${bill.dueDate}T00:00:00`).toLocaleDateString()}{" "}
+                Next: {formatDateOnly(bill.dueDate)}{" "}
               </span>{" "}
               {bill.id != null && (
                 <button

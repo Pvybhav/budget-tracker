@@ -3,6 +3,7 @@ import { X, Tags, TrendingUp } from "lucide-react";
 import { type Category } from "../../db/db";
 import { fetchExpenses, fetchCards } from "../../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../../services/currency.service";
+import { formatDateOnly } from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -166,11 +167,7 @@ export default function CategoryExpensesModal({
                             )}
                           </p>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {new Date(expense.date).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {formatDateOnly(expense.date)}
                             {" · "}
                             {getCardTitle(expense.cardId)}
                           </p>

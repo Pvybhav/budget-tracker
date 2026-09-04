@@ -12,6 +12,7 @@ import {
 } from "../services/backend.service";
 import { getEmiSchedule } from "../services/card.service";
 import { formatConverted, useDisplayCurrency } from "../services/currency.service";
+import { dateOnly, formatDateOnly, formatMonthYear } from "../utils/date";
 
 interface CalendarEvent {
   date: string;
@@ -44,12 +45,12 @@ export default function FinancialCalendarPage() {
   const loans = useBackendResource(() => fetchLoans(), []);
   const policies = useBackendResource(() => fetchInsurancePolicies(), []);
   const events = useMemo<CalendarEvent[]>(() => {
-    const inMonth = (date: string) => date.slice(0, 7) === month;
+    const inMonth = (date: string) => dateOnly(date).slice(0, 7) === month;
     return [
       ...(bills ?? [])
         .filter((item) => inMonth(item.dueDate))
         .map((item) => ({
-          date: item.dueDate,
+          date: dateOnly(item.dueDate),
           title: item.name,
           kind: "bill" as const,
           amount: item.amount,
@@ -157,10 +158,7 @@ export default function FinancialCalendarPage() {
         <div className="border-b border-slate-200 p-5 dark:border-slate-800">
           <div className="flex items-center gap-2 text-slate-900 dark:text-slate-200">
             <CalendarDays className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
-            {new Date(`${month}-01T00:00:00`).toLocaleDateString(undefined, {
-              month: "long",
-              year: "numeric",
-            })}
+            {formatMonthYear(month)}
           </div>
         </div>
         {events.length === 0 ? (
@@ -174,12 +172,7 @@ export default function FinancialCalendarPage() {
                 key={`${event.date}-${event.title}-${index}`}
                 className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center"
               >
-                <time className="w-28 text-sm text-slate-500">
-                  {new Date(`${event.date}T00:00:00`).toLocaleDateString(undefined, {
-                    day: "numeric",
-                    weekday: "short",
-                  })}
-                </time>
+                <time className="w-28 text-sm text-slate-500">{formatDateOnly(event.date)}</time>
                 <span className="flex-1 text-slate-800 dark:text-slate-200">
                   {event.title}
                   <span className={`ml-2 text-xs capitalize ${KIND_STYLE[event.kind]}`}>

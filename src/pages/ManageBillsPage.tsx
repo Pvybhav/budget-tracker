@@ -9,6 +9,7 @@ import showConfirm from "../components/Confirm";
 import { CalendarClock, Check, Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
+import { formatDateOnly } from "../utils/date";
 const TYPE_LABELS: Record<string, string> = {
   mobile: "Mobile",
   internet: "Internet",
@@ -229,7 +230,7 @@ export default function ManageBillsPage() {
                         <div className="flex items-center gap-2 text-sm">
                           {" "}
                           <CalendarClock className="h-4 w-4 text-slate-500" />{" "}
-                          {new Date(`${bill.dueDate}T00:00:00`).toLocaleDateString()}{" "}
+                          {formatDateOnly(bill.dueDate)}{" "}
                         </div>{" "}
                       </td>{" "}
                       <td className="px-5 py-4 font-medium text-slate-900 dark:text-slate-100">

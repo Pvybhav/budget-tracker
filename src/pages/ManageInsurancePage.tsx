@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { INSURANCE_TYPE_ICONS } from "../utils/typeIcons";
 import PaginationControls from "../components/PaginationControls";
+import { formatDateOnly } from "../utils/date";
 const TYPE_LABELS: Record<string, string> = {
   health: "Health",
   life: "Life",
@@ -227,7 +228,7 @@ export default function ManageInsurancePage() {
                       <div className="text-sm text-slate-600 dark:text-slate-400">Next Due</div>
                       <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
                         {" "}
-                        {new Date(summary.nextDueDate).toLocaleDateString()}{" "}
+                        {formatDateOnly(summary.nextDueDate)}{" "}
                       </div>{" "}
                     </div>{" "}
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3">

@@ -4,6 +4,7 @@ import { fetchCards } from "../services/backend.service";
 import { updateBill } from "../services/backendSync";
 import { useBackendResource } from "../services/backendHooks";
 import { X } from "lucide-react";
+import { todayDateInput } from "../utils/date";
 
 interface Props {
   bill: Bill;
@@ -24,9 +25,7 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
     bill.paymentType ?? "card",
   );
   const [paymentAccountId, setPaymentAccountId] = useState(bill.paymentAccountId ?? "");
-  const [paidDate, setPaidDate] = useState(
-    bill.paidDate?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
-  );
+  const [paidDate, setPaidDate] = useState(bill.paidDate?.slice(0, 10) ?? todayDateInput());
   const [paymentReference, setPaymentReference] = useState(bill.paymentReference ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

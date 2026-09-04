@@ -4,6 +4,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { fetchCards, fetchExpenses } from "../services/backend.service";
 import { updateExpense } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly } from "../utils/date";
 export default function ReconciliationPage() {
   const displayCurrency = useDisplayCurrency();
   const expenses = useBackendResource(() => fetchExpenses(), []);
@@ -146,7 +147,7 @@ export default function ReconciliationPage() {
                     )}{" "}
                   </button>{" "}
                 </td>{" "}
-                <td className="px-5 py-3"> {new Date(expense.date).toLocaleDateString()} </td>{" "}
+                <td className="px-5 py-3"> {formatDateOnly(expense.date)} </td>{" "}
                 <td className="px-5 py-3">{accountName(expense.cardId)}</td>{" "}
                 <td className="px-5 py-3"> {expense.details || "Uncategorized expense"} </td>{" "}
                 <td className="px-5 py-3 font-medium">

@@ -6,13 +6,14 @@ import { createSavingsContribution, deleteSavingsContribution } from "../service
 import { fetchSavingsContributions } from "../services/backend.service";
 import showConfirm from "./Confirm";
 import { convertCurrency, formatMoney, getDisplayCurrency } from "../services/currency.service";
+import { todayDateInput } from "../utils/date";
 
 interface Props {
   goal: SavingsGoal;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return todayDateInput();
 }
 
 export default function SavingsContributionPanel({ goal }: Props) {

@@ -14,6 +14,7 @@ import { evaluateBudgetRule } from "../services/budget-rules.service";
 import { getAccountAlertStatus, getCardMetrics } from "../services/card.service";
 import { getInsurancePolicySummary } from "../services/insurance.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly } from "../utils/date";
 interface AlertItem {
   id: string;
   severity: "warning" | "danger";
@@ -74,7 +75,7 @@ export default function AlertsPanel() {
           summary.status === "due"
             ? `Premium of ${formatMoney(convertCurrency(policy.premiumAmount, policy.currency, displayCurrency), displayCurrency)} is due`
             : `Premium of ${formatMoney(convertCurrency(policy.premiumAmount, policy.currency, displayCurrency), displayCurrency)} due soon`,
-        detail: `Next due ${new Date(summary.nextDueDate).toLocaleDateString()}`,
+        detail: `Next due ${formatDateOnly(summary.nextDueDate)}`,
       });
     }
     for (const rule of budgetRules ?? []) {

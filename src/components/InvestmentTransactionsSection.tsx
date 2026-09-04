@@ -6,6 +6,7 @@ import { fetchInvestmentTransactions, fetchInvestments } from "../services/backe
 import { createInvestmentTransaction, deleteInvestmentTransaction } from "../services/backendSync";
 import showConfirm from "../components/Confirm";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly, todayDateInput } from "../utils/date";
 export default function InvestmentTransactionsSection() {
   const displayCurrency = useDisplayCurrency();
   const investments = useBackendResource(() => fetchInvestments(), []);
@@ -14,7 +15,7 @@ export default function InvestmentTransactionsSection() {
   const [type, setType] = useState<InvestmentTransactionType>("buy");
   const [quantity, setQuantity] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayDateInput());
   const [note, setNote] = useState("");
   const submit = async (event: React.SubmitEvent) => {
     event.preventDefault();
@@ -142,10 +143,7 @@ export default function InvestmentTransactionsSection() {
             {transactions?.map((transaction) => (
               <tr key={transaction.id}>
                 {" "}
-                <td className="px-3 py-3">
-                  {" "}
-                  {new Date(`${transaction.date}T00:00:00`).toLocaleDateString()}{" "}
-                </td>{" "}
+                <td className="px-3 py-3"> {formatDateOnly(transaction.date)} </td>{" "}
                 <td className="px-3 py-3">{name(transaction.investmentId)}</td>{" "}
                 <td className="px-3 py-3 capitalize">{transaction.type}</td>{" "}
                 <td className="px-3 py-3">{transaction.quantity ?? "-"}</td>{" "}

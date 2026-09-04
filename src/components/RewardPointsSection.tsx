@@ -8,6 +8,7 @@ import { getRewardPointsSummary } from "../services/rewardPoints.service";
 import type { Card, RewardPointsEntry } from "../db/db";
 import AddRewardPointsModal from "./modals/AddRewardPointsModal";
 import { formatConverted, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly } from "../utils/date";
 export default function RewardPointsSection() {
   const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
@@ -79,7 +80,7 @@ export default function RewardPointsSection() {
                       {summary.balance.toLocaleString("en-IN")} pts ·{" "}
                       {formatConverted(summary.totalValue, card.currency, displayCurrency)} value{" "}
                       {summary.nextExpiry
-                        ? ` · next expiry ${new Date(summary.nextExpiry).toLocaleDateString()}`
+                        ? ` · next expiry ${formatDateOnly(summary.nextExpiry)}`
                         : ""}{" "}
                     </div>{" "}
                   </div>{" "}
@@ -124,11 +125,8 @@ export default function RewardPointsSection() {
                         <div>
                           {" "}
                           <span className="capitalize">{entry.type}</span>{" "}
-                          {entry.points.toLocaleString("en-IN")} pts on{" "}
-                          {new Date(entry.date).toLocaleDateString()}{" "}
-                          {entry.expiryDate
-                            ? ` (expires ${new Date(entry.expiryDate).toLocaleDateString()})`
-                            : ""}{" "}
+                          {entry.points.toLocaleString("en-IN")} pts on {formatDateOnly(entry.date)}{" "}
+                          {entry.expiryDate ? ` (expires ${formatDateOnly(entry.expiryDate)})` : ""}{" "}
                           {entry.note ? ` — ${entry.note}` : ""}{" "}
                         </div>{" "}
                         <button

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -12,7 +13,7 @@ interface Props {
   initialEntry?: RewardPointsEntry;
 }
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return todayDateInput();
 }
 export default function AddRewardPointsModal({
   isOpen,

@@ -10,13 +10,14 @@ import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
 import { inferFundClassification } from "../../utils/fundClassification";
+import { todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialInvestment?: Investment;
 }
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return todayDateInput();
 }
 const investmentPlatforms = [
   "Zerodha",

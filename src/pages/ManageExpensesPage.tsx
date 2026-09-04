@@ -10,6 +10,7 @@ import { fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
 import { deleteExpense } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { formatDateOnly } from "../utils/date";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -90,7 +91,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         category?.title ?? "",
         expense.cardId?.toString() ?? "",
         expense.amount?.toString() ?? "",
-        new Date(expense.date).toLocaleDateString(),
+        formatDateOnly(expense.date),
       ]
         .join(" ")
         .toLowerCase();
@@ -442,7 +443,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 : 0;
               return (
                 <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
-                  <td className="px-6 py-4">{new Date(expense.date).toLocaleDateString()}</td>
+                  <td className="px-6 py-4">{formatDateOnly(expense.date)}</td>
                   <td className="px-6 py-4 max-w-xs">
                     <div className="flex flex-col gap-1">
                       {expense.details ? (

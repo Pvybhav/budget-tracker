@@ -7,6 +7,7 @@ import { fetchBeneficiaries } from "../../services/backend.service";
 import { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { todayDateInput } from "../../utils/date";
 
 interface Props {
   readonly isOpen: boolean;
@@ -15,7 +16,7 @@ interface Props {
 }
 
 function todayLocal() {
-  return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  return todayDateInput();
 }
 
 export default function AddTransferModal({ isOpen, onClose, cards }: Props) {

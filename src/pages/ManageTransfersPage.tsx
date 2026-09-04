@@ -9,6 +9,7 @@ import AddTransferModal from "../components/modals/AddTransferModal";
 import showConfirm from "../components/Confirm";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
+import { formatDateOnly } from "../utils/date";
 export default function ManageTransfersPage() {
   const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
@@ -113,7 +114,7 @@ export default function ManageTransfersPage() {
             {visibleTransfers.map((transfer) => (
               <tr key={transfer.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20">
                 {" "}
-                <td className="px-6 py-4"> {new Date(transfer.date).toLocaleDateString()} </td>{" "}
+                <td className="px-6 py-4"> {formatDateOnly(transfer.date)} </td>{" "}
                 <td className="px-6 py-4"> {accountName(transfer.fromAccountId)} </td>{" "}
                 <td className="px-6 py-4 text-emerald-400">
                   {" "}

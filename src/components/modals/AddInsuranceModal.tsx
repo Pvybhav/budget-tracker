@@ -5,6 +5,7 @@ import showConfirm from "../../components/Confirm";
 import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +26,7 @@ const FREQUENCY_OPTIONS: { value: PremiumFrequency; label: string }[] = [
   { value: "yearly", label: "Yearly" },
 ];
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return todayDateInput();
 }
 export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Props) {
   const [formData, setFormData] = useState({

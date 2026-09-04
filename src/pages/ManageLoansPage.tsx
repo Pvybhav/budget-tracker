@@ -11,6 +11,7 @@ import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { CheckCircle2, Circle, Clock3 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
+import { formatDateOnly } from "../utils/date";
 
 function getLoanStatus(loan: Loan): EmiScheduleStatus {
   const start = new Date(loan.startDate);
@@ -327,7 +328,7 @@ export default function ManageLoansPage() {
                     className="cursor-pointer hover:bg-slate-800/20 transition-colors"
                   >
                     <td className="px-6 py-4">{loan.lender}</td>
-                    <td className="px-6 py-4">{new Date(loan.startDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">{formatDateOnly(loan.startDate)}</td>
                     <td className="px-6 py-4">
                       {formatMoney(
                         convertCurrency(loan.principal, loan.currency, displayCurrency),

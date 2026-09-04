@@ -14,6 +14,7 @@ import {
 } from "../services/backend.service";
 import { getCardMetrics } from "../services/card.service";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
+import { formatDateOnly } from "../utils/date";
 import { createNetWorthSnapshot } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 export default function NetWorthHistoryPage() {
@@ -94,10 +95,7 @@ export default function NetWorthHistoryPage() {
   };
   const chartData = (snapshots ?? []).map((item) => ({
     ...item,
-    label: new Date(`${item.date}T00:00:00`).toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
-    }),
+    label: formatDateOnly(item.date),
   }));
   return (
     <div className="space-y-6">

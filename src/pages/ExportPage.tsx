@@ -17,6 +17,7 @@ import {
   fetchBudgetRules,
   fetchAutoCategorizeRules,
 } from "../services/backend.service";
+import { formatDateOnly } from "../utils/date";
 export default function ExportPage() {
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
@@ -114,7 +115,7 @@ export default function ExportPage() {
           const sheetData = cardExpenses.map((exp) => {
             const cat = categories.find((c) => c.id === exp.categoryId);
             return [
-              new Date(exp.date).toLocaleDateString(),
+              formatDateOnly(exp.date),
               cat?.title || "Uncategorized",
               exp.details || "",
               exp.amount,
@@ -143,7 +144,7 @@ export default function ExportPage() {
         });
         if (cardPayments.length > 0) {
           const sheetData = cardPayments.map((p) => [
-            new Date(p.date).toLocaleDateString(),
+            formatDateOnly(p.date),
             p.amount,
             p.currency || "INR",
           ]);
@@ -164,7 +165,7 @@ export default function ExportPage() {
           return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
         })
         .map((loan) => [
-          new Date(loan.startDate).toLocaleDateString(),
+          formatDateOnly(loan.startDate),
           loan.lender,
           loan.principal,
           loan.annualInterestRate,
@@ -201,7 +202,7 @@ export default function ExportPage() {
       expenses.forEach((expense) => {
         const card = cards.find((item) => item.id === expense.cardId);
         const category = categories.find((item) => item.id === expense.categoryId);
-        const date = new Date(expense.date).toLocaleDateString();
+        const date = formatDateOnly(expense.date);
         rows.push([
           "expense",
           date,
@@ -215,7 +216,7 @@ export default function ExportPage() {
         const card = cards.find((item) => item.id === payment.cardId);
         rows.push([
           "payment",
-          new Date(payment.date).toLocaleDateString(),
+          formatDateOnly(payment.date),
           card?.title || "Unknown",
           "",
           "",
@@ -225,7 +226,7 @@ export default function ExportPage() {
       loans.forEach((loan) => {
         rows.push([
           "loan",
-          new Date(loan.startDate).toLocaleDateString(),
+          formatDateOnly(loan.startDate),
           loan.lender,
           loan.note || "",
           loan.principal.toString(),
@@ -237,7 +238,7 @@ export default function ExportPage() {
         const card = cards.find((item) => item.id === income.accountId);
         rows.push([
           "income",
-          new Date(income.date).toLocaleDateString(),
+          formatDateOnly(income.date),
           card?.title || "Unassigned",
           income.category || "other",
           income.source,

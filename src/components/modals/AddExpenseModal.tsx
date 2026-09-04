@@ -11,6 +11,7 @@ import { syncRecurringExpenses } from "../../services/recurring.service";
 import { createExpense, updateExpense } from "../../services/backendSync";
 import CurrencySelect from "../CurrencySelect";
 import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
+import { currentDateTimeInput } from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -47,9 +48,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     categoryId: "",
     details: "",
     amount: "",
-    date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16),
+    date: currentDateTimeInput(),
     // EMI
     isEmi: false,
     emiMonths: 3,
@@ -156,9 +155,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         categoryId: "",
         details: "",
         amount: "",
-        date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16),
+        date: currentDateTimeInput(),
         isEmi: false,
         emiMonths: 3,
         emiInterestPreset: 0,

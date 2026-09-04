@@ -8,6 +8,7 @@ import { X } from "lucide-react";
 import showConfirm, { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { currentDateTimeInput } from "../../utils/date";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -24,7 +25,7 @@ const INCOME_CATEGORIES: { value: NonNullable<Income["category"]>; label: string
   { value: "other", label: "Other" },
 ];
 function nowLocal() {
-  return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  return currentDateTimeInput();
 }
 export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Readonly<Props>) {
   const cards = useBackendResource(() => fetchCards(), []);

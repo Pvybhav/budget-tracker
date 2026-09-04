@@ -8,6 +8,7 @@ import showConfirm from "../components/Confirm";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
+import { formatDateOnly } from "../utils/date";
 const CATEGORY_LABELS: Record<string, string> = {
   salary: "Salary",
   freelance: "Freelance",
@@ -140,7 +141,7 @@ export default function ManageIncomePage() {
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors"
               >
                 {" "}
-                <td className="px-6 py-4"> {new Date(item.date).toLocaleDateString()} </td>{" "}
+                <td className="px-6 py-4"> {formatDateOnly(item.date)} </td>{" "}
                 <td className="px-6 py-4">{item.source}</td>{" "}
                 <td className="px-6 py-4"> {CATEGORY_LABELS[item.category ?? "other"]} </td>{" "}
                 <td className="px-6 py-4">{cardTitleFor(item.accountId)}</td>{" "}

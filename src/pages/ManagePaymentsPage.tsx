@@ -7,6 +7,7 @@ import AddPaymentModal from "../components/modals/AddPaymentModal";
 import { fetchCards, fetchPayments } from "../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
+import { formatDateOnly } from "../utils/date";
 
 export default function ManagePaymentsPage() {
   const displayCurrency = useDisplayCurrency();
@@ -85,7 +86,7 @@ export default function ManagePaymentsPage() {
                 key={payment.id}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors"
               >
-                <td className="px-6 py-4">{new Date(payment.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4">{formatDateOnly(payment.date)}</td>
                 <td className="px-6 py-4">{payment.cardId}</td>
                 <td className="px-6 py-4">
                   {formatMoney(
