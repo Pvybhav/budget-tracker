@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
-import { todayDateInput } from "../../utils/date";
+import { dateOnly, todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -37,8 +37,8 @@ export default function AddRewardPointsModal({
         type: initialEntry?.type ?? "earned",
         points: initialEntry?.points.toString() ?? "",
         valuePerPoint: initialEntry?.valuePerPoint?.toString() ?? "0.25",
-        date: initialEntry?.date ?? today(),
-        expiryDate: initialEntry?.expiryDate ?? "",
+        date: initialEntry?.date ? dateOnly(initialEntry.date) : today(),
+        expiryDate: initialEntry?.expiryDate ? dateOnly(initialEntry.expiryDate) : "",
         note: initialEntry?.note ?? "",
         currency: initialEntry?.currency ?? getDisplayCurrency(),
       });
