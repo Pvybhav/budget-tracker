@@ -127,7 +127,7 @@ export default function ManageBillsPage() {
           <div className="text-sm text-slate-600 dark:text-slate-400">Paid</div>{" "}
           <div className="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-300">
             {" "}
-            {bills?.filter((bill) => bill.paid).length ?? 0}{" "}
+            {bills?.filter((bill) => bill.paid).length ?? 0}/{bills?.length ?? 0}{" "}
           </div>{" "}
         </div>{" "}
       </div>{" "}
