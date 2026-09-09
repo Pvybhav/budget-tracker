@@ -5,6 +5,7 @@ import { createSavingsGoal, updateSavingsGoal } from "../../services/backendSync
 import showConfirm from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
+import { dateOnly } from "../../utils/date";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -24,7 +25,7 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
       setFormData({
         title: initialGoal.title,
         targetAmount: initialGoal.targetAmount.toString(),
-        targetDate: initialGoal.targetDate,
+        targetDate: dateOnly(initialGoal.targetDate),
         currentAmount: initialGoal.currentAmount.toString(),
         note: initialGoal.note ?? "",
         currency: initialGoal.currency ?? getDisplayCurrency(),

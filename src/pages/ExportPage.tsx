@@ -17,7 +17,7 @@ import {
   fetchBudgetRules,
   fetchAutoCategorizeRules,
 } from "../services/backend.service";
-import { formatDateOnly } from "../utils/date";
+import { formatDateOnly, todayDateInput } from "../utils/date";
 export default function ExportPage() {
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
@@ -264,7 +264,7 @@ export default function ExportPage() {
     setIsProcessing(true);
     try {
       const snapshot = await buildSnapshot();
-      const fileName = `Budget_Tracker_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      const fileName = `Budget_Tracker_Backup_${todayDateInput()}.json`;
       downloadTextFile(
         JSON.stringify(snapshot, null, 2),
         fileName,

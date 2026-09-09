@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
 import { inferFundClassification } from "../../utils/fundClassification";
-import { todayDateInput } from "../../utils/date";
+import { dateOnly, todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -77,7 +77,9 @@ export default function AddInvestmentModal({
       quantity: initialInvestment?.quantity.toString() ?? "",
       investedAmount: initialInvestment?.investedAmount.toString() ?? "",
       currentValue: initialInvestment?.currentValue.toString() ?? "",
-      purchaseDate: initialInvestment?.purchaseDate ?? today(),
+      purchaseDate: initialInvestment?.purchaseDate
+        ? dateOnly(initialInvestment.purchaseDate)
+        : today(),
       note: initialInvestment?.note ?? "",
       currency: initialInvestment?.currency ?? getDisplayCurrency(),
     });

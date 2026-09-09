@@ -5,6 +5,8 @@ export const DATE_TIME_INPUT_FORMAT = "YYYY-MM-DDTHH:mm";
 export const DISPLAY_DATE_FORMAT = "DD/MM/YYYY";
 
 export function dateOnly(value: string) {
+  const datePart = value.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (datePart) return datePart;
   const parsed = moment(value, [DATE_INPUT_FORMAT, moment.ISO_8601], true);
   return parsed.isValid() ? parsed.format(DATE_INPUT_FORMAT) : value.slice(0, 10);
 }
@@ -18,13 +20,17 @@ export function todayDateInput() {
   return moment().format(DATE_INPUT_FORMAT);
 }
 
+export function formatDateInput(value: Date) {
+  return moment(value).format(DATE_INPUT_FORMAT);
+}
+
 export function currentDateTimeInput() {
   return moment().format(DATE_TIME_INPUT_FORMAT);
 }
 
 export function dateTimeInput(value: string) {
   const parsed = moment(value, [DATE_TIME_INPUT_FORMAT, DATE_INPUT_FORMAT, moment.ISO_8601], true);
-  return parsed.isValid() ? parsed.format(DATE_TIME_INPUT_FORMAT) : value.slice(0, 16);
+  return parsed.isValid() ? parsed.local().format(DATE_TIME_INPUT_FORMAT) : value.slice(0, 16);
 }
 
 export function dateTimeInputToUTC(value: string) {

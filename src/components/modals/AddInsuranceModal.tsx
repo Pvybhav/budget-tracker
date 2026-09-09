@@ -5,7 +5,7 @@ import showConfirm from "../../components/Confirm";
 import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
-import { todayDateInput } from "../../utils/date";
+import { dateOnly, todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -52,8 +52,8 @@ export default function AddInsuranceModal({ isOpen, onClose, initialPolicy }: Pr
         sumAssured: initialPolicy.sumAssured.toString(),
         premiumAmount: initialPolicy.premiumAmount.toString(),
         premiumFrequency: initialPolicy.premiumFrequency,
-        startDate: initialPolicy.startDate,
-        endDate: initialPolicy.endDate ?? "",
+        startDate: dateOnly(initialPolicy.startDate),
+        endDate: initialPolicy.endDate ? dateOnly(initialPolicy.endDate) : "",
         note: initialPolicy.note ?? "",
         currency: initialPolicy.currency ?? getDisplayCurrency(),
       });

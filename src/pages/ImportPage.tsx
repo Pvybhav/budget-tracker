@@ -7,6 +7,7 @@ import { fetchCards, fetchCategories, fetchExpenses } from "../services/backend.
 import { createExpense, createIncome } from "../services/backendSync";
 import { showAlert } from "../components/Confirm";
 import { formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { dateOnly, formatDateInput } from "../utils/date";
 interface ImportRow {
   date: string;
   details: string;
@@ -14,7 +15,7 @@ interface ImportRow {
   kind: "expense" | "income";
 }
 function parseDate(value: unknown) {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (value instanceof Date) return formatDateInput(value);
   if (typeof value === "number") {
     const date = XLSX.SSF.parse_date_code(value);
     return date
@@ -23,8 +24,10 @@ function parseDate(value: unknown) {
   }
   const text = String(value ?? "").trim();
   if (!text) return "";
+  const datePart = dateOnly(text);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return datePart;
   const parsed = new Date(text);
-  return Number.isNaN(parsed.getTime()) ? text : parsed.toISOString().slice(0, 10);
+  return Number.isNaN(parsed.getTime()) ? text : formatDateInput(parsed);
 }
 function parseAmount(value: unknown) {
   const amount = Number.parseFloat(String(value ?? "").replace(/[^0-9.-]/g, ""));

@@ -8,7 +8,7 @@ import showConfirm, { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import CurrencySelect from "../CurrencySelect";
 import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
-import { currentDateTimeInput, dateTimeInputToUTC } from "../../utils/date";
+import { currentDateTimeInput, dateTimeInput, dateTimeInputToUTC } from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -34,14 +34,10 @@ export default function AddPaymentModal({
 
   useEffect(() => {
     if (initialPayment) {
-      const date = new Date(initialPayment.date);
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
       setFormData({
         cardId: initialPayment.cardId.toString(),
         amount: initialPayment.amount.toString(),
-        date: localDate,
+        date: dateTimeInput(initialPayment.date),
         currency: initialPayment.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {

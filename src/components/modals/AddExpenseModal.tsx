@@ -11,7 +11,12 @@ import { syncRecurringExpenses } from "../../services/recurring.service";
 import { createExpense, updateExpense } from "../../services/backendSync";
 import CurrencySelect from "../CurrencySelect";
 import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
-import { currentDateTimeInput, dateTimeInput, dateTimeInputToUTC } from "../../utils/date";
+import {
+  currentDateTimeInput,
+  dateOnly,
+  dateTimeInput,
+  dateTimeInputToUTC,
+} from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -146,7 +151,9 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         isRecurring: Boolean(initialExpense.recurringFrequency),
         recurringFrequency: initialExpense.recurringFrequency ?? "monthly",
         recurringInterval: initialExpense.recurringInterval ?? 1,
-        recurringEndDate: initialExpense.recurringEndDate ?? "",
+        recurringEndDate: initialExpense.recurringEndDate
+          ? dateOnly(initialExpense.recurringEndDate)
+          : "",
         currency: initialExpense.currency ?? getDisplayCurrency(),
       });
     } else {

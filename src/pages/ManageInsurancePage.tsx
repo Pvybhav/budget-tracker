@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { INSURANCE_TYPE_ICONS } from "../utils/typeIcons";
 import PaginationControls from "../components/PaginationControls";
+import { todayDateInput } from "../utils/date";
 import { formatDateOnly } from "../utils/date";
 const TYPE_LABELS: Record<string, string> = {
   health: "Health",
@@ -82,7 +83,7 @@ export default function ManageInsurancePage() {
     const payments = [
       ...(policyToPay.premiumPayments ?? []),
       {
-        date: new Date().toISOString().slice(0, 10),
+        date: todayDateInput(),
         amount: policyToPay.premiumAmount,
         paymentType,
         ...(paymentType === "card" || paymentType === "upi" ? { paymentSource } : {}),

@@ -4,7 +4,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { fetchBills } from "../services/backend.service";
 import { updateBill } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { formatDateOnly, parseDateOnly } from "../utils/date";
+import { formatDateOnly, formatDateInput, parseDateOnly } from "../utils/date";
 export default function SubscriptionsPage() {
   const displayCurrency = useDisplayCurrency();
   const bills = useBackendResource(() => fetchBills(), []);
@@ -26,7 +26,7 @@ export default function SubscriptionsPage() {
     date.setMonth(
       date.getMonth() + (frequency === "yearly" ? 12 : frequency === "quarterly" ? 3 : 1),
     );
-    await updateBill(id, { dueDate: date.toISOString().slice(0, 10), paid: false });
+    await updateBill(id, { dueDate: formatDateInput(date), paid: false });
   };
   return (
     <div className="space-y-6">

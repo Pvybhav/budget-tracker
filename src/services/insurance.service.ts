@@ -1,4 +1,5 @@
 import type { InsurancePolicy, PremiumFrequency } from "../db/db";
+import { formatDateInput } from "../utils/date";
 export type InsuranceStatus = "due" | "upcoming" | "ok" | "expired";
 export interface InsurancePolicySummary {
   nextDueDate: string;
@@ -47,5 +48,5 @@ export function getInsurancePolicySummary(policy: InsurancePolicy): InsurancePol
   } else if (daysUntilDue <= 15) {
     status = "upcoming";
   }
-  return { nextDueDate: nextDue.toISOString().slice(0, 10), daysUntilDue, status, totalPaid };
+  return { nextDueDate: formatDateInput(nextDue), daysUntilDue, status, totalPaid };
 }

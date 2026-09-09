@@ -9,7 +9,7 @@ import showConfirm from "../components/Confirm";
 import { CalendarClock, Check, Pencil, Plus, Receipt, Trash2 } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
-import { formatDateOnly } from "../utils/date";
+import { formatDateOnly, todayDateInput } from "../utils/date";
 const TYPE_LABELS: Record<string, string> = {
   mobile: "Mobile",
   internet: "Internet",
@@ -22,7 +22,7 @@ const TYPE_LABELS: Record<string, string> = {
 function getStatus(bill: Bill) {
   if (bill.paid)
     return { label: "Paid", style: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" };
-  if (bill.dueDate < new Date().toISOString().slice(0, 10))
+  if (bill.dueDate < todayDateInput())
     return { label: "Overdue", style: "border-rose-500/30 bg-rose-500/10 text-rose-300" };
   return { label: "Due", style: "border-amber-500/30 bg-amber-500/10 text-amber-300" };
 }

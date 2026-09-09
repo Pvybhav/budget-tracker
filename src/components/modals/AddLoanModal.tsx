@@ -6,7 +6,7 @@ import { showAlert, showConfirm } from "../../components/Confirm";
 import { type Loan } from "../../db/db";
 import CurrencySelect from "../CurrencySelect";
 import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
-import { todayDateInput } from "../../utils/date";
+import { dateOnly, todayDateInput } from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
         interestPreset: preset?.value ?? -1,
         customInterest: preset ? "" : initialLoan.annualInterestRate.toString(),
         termMonths: initialLoan.termMonths,
-        startDate: initialLoan.startDate,
+        startDate: dateOnly(initialLoan.startDate),
         note: initialLoan.note ?? "",
         currency: initialLoan.currency ?? getDisplayCurrency(),
       };

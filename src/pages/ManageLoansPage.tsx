@@ -11,7 +11,7 @@ import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { CheckCircle2, Circle, Clock3 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
-import { formatDateOnly } from "../utils/date";
+import { formatDateOnly, todayDateInput } from "../utils/date";
 
 function getLoanStatus(loan: Loan): EmiScheduleStatus {
   const start = new Date(loan.startDate);
@@ -31,7 +31,7 @@ export default function ManageLoansPage() {
   const displayCurrency = useDisplayCurrency();
   const loans = useBackendResource(() => fetchLoans(), []);
   const cards = useBackendResource(() => fetchCards(), []);
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayDateInput();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);

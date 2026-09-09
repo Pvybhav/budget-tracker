@@ -1,5 +1,6 @@
 import type { Card, Expense, Payment } from "../db/db";
 import { formatMoney } from "./currency.service";
+import { formatDateInput } from "../utils/date";
 
 /**
  * Months between two dates (year*12 + month arithmetic — ignores day).
@@ -92,7 +93,7 @@ export function getEmiSchedule(
 
     return {
       paymentNumber: index + 1,
-      dueDate: dueDate.toISOString().slice(0, 10),
+      dueDate: formatDateInput(dueDate),
       paymentAmount,
       principalAmount,
       interestAmount,

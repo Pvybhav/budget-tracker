@@ -8,7 +8,12 @@ import { X } from "lucide-react";
 import showConfirm, { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
-import { currentDateTimeInput, dateTimeInputToUTC } from "../../utils/date";
+import {
+  currentDateTimeInput,
+  dateOnly,
+  dateTimeInput,
+  dateTimeInputToUTC,
+} from "../../utils/date";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -44,21 +49,19 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
   });
   useEffect(() => {
     if (initialIncome) {
-      const date = new Date(initialIncome.date);
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
       setFormData({
         source: initialIncome.source,
         category: initialIncome.category ?? "other",
         accountId: initialIncome.accountId?.toString() ?? "",
         amount: initialIncome.amount.toString(),
-        date: localDate,
+        date: dateTimeInput(initialIncome.date),
         note: initialIncome.note ?? "",
         isRecurring: Boolean(initialIncome.recurringFrequency),
         recurringFrequency: initialIncome.recurringFrequency ?? "monthly",
         recurringInterval: initialIncome.recurringInterval ?? 1,
-        recurringEndDate: initialIncome.recurringEndDate ?? "",
+        recurringEndDate: initialIncome.recurringEndDate
+          ? dateOnly(initialIncome.recurringEndDate)
+          : "",
         currency: initialIncome.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {

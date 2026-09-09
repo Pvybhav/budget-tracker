@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Save } from "lucide-react";
+import { todayDateInput } from "../utils/date";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useBackendResource } from "../services/backendHooks";
 import {
@@ -89,7 +90,7 @@ export default function NetWorthHistoryPage() {
     await createNetWorthSnapshot({
       assets: current.assets,
       liabilities: current.liabilities,
-      date: new Date().toISOString().slice(0, 10),
+      date: todayDateInput(),
       currency: displayCurrency,
     });
   };
