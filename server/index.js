@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import apiRouter from "./routes.js";
+import { migrateLegacyDateTimes } from "./migrate-legacy-datetime.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -91,7 +92,9 @@ if (!mongoUri) {
     .connect(mongoUri, { dbName: mongoDbName })
     .then(() => {
       console.log(`Connected to MongoDB Atlas (db: ${mongoDbName})`);
+      return migrateLegacyDateTimes(mongoose.connection);
     })
+    .then(() => console.log("Legacy datetime migration checked"))
     .catch((error) => {
       console.error("MongoDB connection failed:", error);
     });

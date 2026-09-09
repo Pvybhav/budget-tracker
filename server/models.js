@@ -19,6 +19,10 @@ function withIdTransform(schema) {
       delete ret._id;
       delete ret.__v;
       for (const key of Object.keys(ret)) {
+        if (key === "dateTimezoneVersion") {
+          delete ret[key];
+          continue;
+        }
         const value = ret[key];
         if (Array.isArray(value)) {
           ret[key] = value.map((item) => {
@@ -125,6 +129,7 @@ const expenseSchema = new Schema(
     tags: { type: [String], default: [] },
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
+    dateTimezoneVersion: { type: Number, default: 2, select: false },
     reconciled: { type: Boolean, default: false },
     isEmi: Boolean,
     emiMonths: Number,
@@ -146,6 +151,7 @@ const paymentSchema = new Schema(
     cardId: { type: ObjectId, ref: "Card", required: true },
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
+    dateTimezoneVersion: { type: Number, default: 2, select: false },
     currency: currencyField,
   },
   { timestamps: true },
@@ -243,6 +249,7 @@ const incomeSchema = new Schema(
     accountId: { type: ObjectId, ref: "Card" },
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
+    dateTimezoneVersion: { type: Number, default: 2, select: false },
     note: String,
     recurringFrequency: { type: String, enum: ["monthly", "weekly", "yearly"] },
     recurringInterval: Number,
