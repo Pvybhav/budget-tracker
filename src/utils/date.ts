@@ -27,6 +27,11 @@ export function dateTimeInput(value: string) {
   return parsed.isValid() ? parsed.format(DATE_TIME_INPUT_FORMAT) : value.slice(0, 16);
 }
 
+export function dateTimeInputToUTC(value: string) {
+  const parsed = moment(value, DATE_TIME_INPUT_FORMAT, true);
+  return parsed.isValid() ? parsed.toISOString() : value;
+}
+
 export function formatMonthYear(value: string) {
   const date = moment(value, ["YYYY-MM", DATE_INPUT_FORMAT, moment.ISO_8601], true);
   return date.isValid() ? date.format("MMMM YYYY") : "Date unavailable";

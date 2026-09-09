@@ -8,7 +8,7 @@ import showConfirm, { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import CurrencySelect from "../CurrencySelect";
 import { formatMoney, getDisplayCurrency } from "../../services/currency.service";
-import { currentDateTimeInput } from "../../utils/date";
+import { currentDateTimeInput, dateTimeInputToUTC } from "../../utils/date";
 
 interface Props {
   isOpen: boolean;
@@ -103,7 +103,7 @@ export default function AddPaymentModal({
     const payload = {
       cardId: formData.cardId,
       amount: parseFloat(formData.amount),
-      date: formData.date,
+      date: dateTimeInputToUTC(formData.date),
       currency: formData.currency,
     };
 

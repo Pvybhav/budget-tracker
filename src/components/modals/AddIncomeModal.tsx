@@ -8,7 +8,7 @@ import { X } from "lucide-react";
 import showConfirm, { showAlert } from "../../components/Confirm";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
-import { currentDateTimeInput } from "../../utils/date";
+import { currentDateTimeInput, dateTimeInputToUTC } from "../../utils/date";
 interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
@@ -98,7 +98,7 @@ export default function AddIncomeModal({ isOpen, onClose, initialIncome }: Reado
       category: formData.category,
       accountId: formData.accountId || undefined,
       amount: Number.parseFloat(formData.amount || "0"),
-      date: formData.date,
+      date: dateTimeInputToUTC(formData.date),
       note: formData.note.trim() || undefined,
       recurringFrequency: formData.isRecurring ? formData.recurringFrequency : undefined,
       recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,

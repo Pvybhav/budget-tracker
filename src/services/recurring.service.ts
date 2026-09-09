@@ -8,6 +8,7 @@ import {
   fetchSavingsContributions,
   fetchSavingsGoals,
 } from "./backend.service";
+import { dateTimeInputToUTC } from "../utils/date";
 
 type RecurringFrequency = NonNullable<Expense["recurringFrequency"]>;
 type ContributionFrequency = NonNullable<SavingsContribution["recurringFrequency"]>;
@@ -89,7 +90,7 @@ export async function syncRecurringExpenses(now = new Date()) {
         break;
       }
 
-      const nextOccurrenceValue = toDateTimeLocalValue(nextOccurrenceDate);
+      const nextOccurrenceValue = dateTimeInputToUTC(toDateTimeLocalValue(nextOccurrenceDate));
       const alreadyExists = instances.some((item) => item.date === nextOccurrenceValue);
 
       if (!alreadyExists) {
@@ -151,7 +152,7 @@ export async function syncRecurringIncomes(now = new Date()) {
       if (nextOccurrenceDate > now) {
         break;
       }
-      const nextOccurrenceValue = toDateTimeLocalValue(nextOccurrenceDate);
+      const nextOccurrenceValue = dateTimeInputToUTC(toDateTimeLocalValue(nextOccurrenceDate));
       const alreadyExists = instances.some((item) => item.date === nextOccurrenceValue);
       if (!alreadyExists) {
         const payload: Omit<Income, "id"> = {
