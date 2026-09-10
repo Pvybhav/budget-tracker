@@ -222,7 +222,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         {mode !== "emi" && (
           <select
             value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            onChange={(e) => {
+              setSelectedYear(parseInt(e.target.value));
+              setPage(1);
+            }}
             className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500"
           >
             {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
@@ -235,7 +238,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         {mode === "monthly" && (
           <select
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            onChange={(e) => {
+              setSelectedMonth(parseInt(e.target.value));
+              setPage(1);
+            }}
             className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500"
           >
             {[...Array(12)].map((_, i) => (
