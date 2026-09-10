@@ -82,14 +82,12 @@ export default function NetworkToastProvider({ children }: { children: ReactNode
         document.body,
       )}
       {createPortal(
-        <div className="pointer-events-none fixed inset-0 z-[90] flex items-start justify-center px-4 pt-6">
-          {loadingCount > 0 && (
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-950/95 px-4 py-3 shadow-2xl backdrop-blur-sm">
-              <Loader2 className="h-5 w-5 animate-spin text-sky-400" />
-              <span className="text-sm text-slate-100">Network activity in progress...</span>
-            </div>
-          )}
-        </div>,
+        loadingCount > 0 ? (
+          <div className="pointer-events-auto fixed left-1/2 top-6 z-[90] flex -translate-x-1/2 items-center gap-3 rounded-full border border-slate-700/80 bg-slate-950/95 px-4 py-3 shadow-2xl backdrop-blur-sm">
+            <Loader2 className="h-5 w-5 animate-spin text-sky-400" />
+            <span className="text-sm text-slate-100">Network activity in progress...</span>
+          </div>
+        ) : null,
         document.body,
       )}
     </>
