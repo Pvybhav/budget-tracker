@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -36,6 +36,19 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [selectedCardId, setSelectedCardId] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    mode,
+    selectedYear,
+    selectedMonth,
+    searchQuery,
+    sortBy,
+    showEmiOnly,
+    selectedCategoryId,
+    selectedCardId,
+  ]);
 
   const [categoryModal, setCategoryModal] = useState<{
     open: boolean;
@@ -337,6 +350,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 setSelectedCardId("all");
                 setSortBy("date-desc");
                 setShowEmiOnly(false);
+                setPage(1);
               }}
               className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-700 dark:text-slate-300 transition-colors hover:border-slate-400 dark:hover:border-slate-600"
             >
