@@ -123,6 +123,7 @@ const categorySchema = new Schema(
 const expenseSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
+    expenseKey: { type: String, unique: true, sparse: true, select: false },
     cardId: { type: ObjectId, ref: "Card", required: true },
     categoryId: { type: ObjectId, ref: "Category" },
     details: String,

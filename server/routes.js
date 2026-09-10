@@ -268,6 +268,42 @@ async function createWithId(model, data, userId) {
   }
   return model.create(clean);
 }
+const expenseDuplicateFields = (data) => ({
+  cardId: String(data.cardId),
+  categoryId: data.categoryId ? String(data.categoryId) : null,
+  details: String(data.details ?? "").trim(),
+  amount: Number(data.amount).toFixed(2),
+  date: new Date(data.date).toISOString(),
+  currency: String(data.currency ?? "INR").toUpperCase(),
+  isEmi: Boolean(data.isEmi),
+  emiMonths: data.isEmi ? Number(data.emiMonths ?? 1) : null,
+  emiInterestRate: data.isEmi ? Number(data.emiInterestRate ?? 0) : null,
+  emiProcessingFee: data.isEmi ? Number(data.emiProcessingFee ?? 0) : null,
+  emiGst: data.isEmi ? Number(data.emiGst ?? 0) : null,
+  recurringFrequency: data.recurringFrequency ?? null,
+  recurringInterval: data.recurringFrequency ? Number(data.recurringInterval ?? 1) : null,
+  recurringEndDate: data.recurringEndDate ? new Date(data.recurringEndDate).toISOString() : null,
+  recurringTemplateId: data.recurringTemplateId ? String(data.recurringTemplateId) : null,
+  isRecurringInstance: Boolean(data.isRecurringInstance),
+});
+const getExpenseKey = (data, userId) =>
+  crypto
+    .createHash("sha256")
+    .update(JSON.stringify({ userId, ...expenseDuplicateFields(data) }))
+    .digest("hex");
+const getExpenseDuplicateFilter = (data, userId, id) => {
+  const fields = expenseDuplicateFields(data);
+  return {
+    userId,
+    cardId: fields.cardId,
+    categoryId: fields.categoryId,
+    details: fields.details,
+    amount: fields.amount,
+    date: new Date(fields.date),
+    currency: fields.currency,
+    ...(id ? { _id: { $ne: id } } : {}),
+  };
+};
 // Optional ?limit=&skip= support on list endpoints; no-op (returns full result set) when omitted.
 function withPagination(query, req) {
   const limit = Number(req.query.limit);
@@ -434,7 +470,14 @@ router.post(
     ) {
       return res.status(400).json({ error: "Expense category must exist" });
     }
-    const expense = await createWithId(Expense, req.body, req.user.userId);
+    if (await Expense.exists(getExpenseDuplicateFilter(req.body, req.user.userId))) {
+      return res.status(409).json({ error: "This expense has already been recorded." });
+    }
+    const expense = await createWithId(
+      Expense,
+      { ...req.body, expenseKey: getExpenseKey(req.body, req.user.userId) },
+      req.user.userId,
+    );
     res.status(201).json(expense);
   }),
 );
@@ -453,11 +496,20 @@ router.put(
   catchAsync(async (req, res) => {
     const id = toRecordId(req.params.id);
     if (id == null) return res.status(400).json({ error: "Invalid expense id" });
-    const expense = await Expense.findOneAndUpdate(
-      { _id: id, userId: req.user.userId },
-      stripProtectedFields(req.body),
-      { new: true, runValidators: true },
-    );
+    const currentExpense = await Expense.findOne({ _id: id, userId: req.user.userId });
+    if (!currentExpense) return res.status(404).json({ error: "Expense not found" });
+    const updatedValues = { ...currentExpense.toObject(), ...stripProtectedFields(req.body) };
+    if (await Expense.exists(getExpenseDuplicateFilter(updatedValues, req.user.userId, id))) {
+      return res.status(409).json({ error: "This expense has already been recorded." });
+    }
+    const updates = {
+      ...stripProtectedFields(req.body),
+      expenseKey: getExpenseKey(updatedValues, req.user.userId),
+    };
+    const expense = await Expense.findOneAndUpdate({ _id: id, userId: req.user.userId }, updates, {
+      new: true,
+      runValidators: true,
+    });
     if (!expense) return res.status(404).json({ error: "Expense not found" });
     res.json(expense);
   }),
