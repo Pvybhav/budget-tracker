@@ -6,7 +6,7 @@ import { type Expense, type Category } from "../db/db";
 import { calcMonthlyEmi } from "../services/card.service";
 import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
-import { fetchExpenses, fetchCategories } from "../services/backend.service";
+import { fetchCards, fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
 import { deleteExpense } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
@@ -20,6 +20,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const displayCurrency = useDisplayCurrency();
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
+  const cards = useBackendResource(() => fetchCards(), []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
@@ -32,6 +33,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   );
   const [showEmiOnly, setShowEmiOnly] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  const [selectedCardId, setSelectedCardId] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -99,9 +101,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       const matchesSearch = normalizedQuery.length === 0 || haystack.includes(normalizedQuery);
       const matchesCategory =
         selectedCategoryId === "all" || expense.categoryId?.toString() === selectedCategoryId;
+      const matchesCard = selectedCardId === "all" || expense.cardId === selectedCardId;
       const matchesEmi = !showEmiOnly || !!expense.isEmi;
 
-      return matchesSearch && matchesCategory && matchesEmi;
+      return matchesSearch && matchesCategory && matchesCard && matchesEmi;
     });
 
     result.sort((a, b) => {
@@ -119,7 +122,15 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     });
 
     return result;
-  }, [categories, periodFilteredExpenses, searchQuery, selectedCategoryId, showEmiOnly, sortBy]);
+  }, [
+    categories,
+    periodFilteredExpenses,
+    searchQuery,
+    selectedCategoryId,
+    selectedCardId,
+    showEmiOnly,
+    sortBy,
+  ]);
   const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / pageSize));
   const visibleExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
 
@@ -280,6 +291,25 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </select>
         </label>
 
+        <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
+          <span>Card</span>
+          <select
+            value={selectedCardId}
+            onChange={(e) => {
+              setSelectedCardId(e.target.value);
+              setPage(1);
+            }}
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
+          >
+            <option value="all">All cards</option>
+            {cards?.map((card) => (
+              <option key={card.id} value={card.id?.toString()}>
+                {card.title}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Quick filters</span>
           <div className="flex gap-2">
@@ -298,6 +328,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategoryId("all");
+                setSelectedCardId("all");
                 setSortBy("date-desc");
                 setShowEmiOnly(false);
               }}
