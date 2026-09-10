@@ -207,25 +207,6 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-sm text-slate-700 dark:text-slate-300">
-          <div className="font-semibold mb-1">Completed</div>
-          <div className="text-slate-600 dark:text-slate-400">
-            EMI repayment cycle finished for this expense.
-          </div>
-        </div>
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-          <div className="font-semibold mb-1">Ongoing</div>
-          <div className="text-slate-700 dark:text-slate-300">
-            EMI is active and current this month.
-          </div>
-        </div>
-        <div className="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-4 text-sm text-sky-200">
-          <div className="font-semibold mb-1">Upcoming</div>
-          <div className="text-slate-700 dark:text-slate-300">EMI starts in a future month.</div>
-        </div>
-      </div>
-
       <div className="flex flex-wrap gap-4">
         {mode !== "emi" && (
           <select
