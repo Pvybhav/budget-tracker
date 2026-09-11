@@ -457,26 +457,25 @@ export default function InvestmentsSection() {
                       </div>{" "}
                     </td>{" "}
                     <td className="px-4 py-3">{investment.purchaseDate}</td>{" "}
-                    <td className="px-4 py-3 text-right">
-                      {" "}
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(investment)}
-                        className="mr-2 rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                        title="Edit investment"
-                      >
-                        {" "}
-                        <Pencil className="h-4 w-4" />{" "}
-                      </button>{" "}
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(investment)}
-                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
-                        title="Delete investment"
-                      >
-                        {" "}
-                        <Trash2 className="h-4 w-4" />{" "}
-                      </button>{" "}
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(investment)}
+                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white"
+                          title="Edit investment"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(investment)}
+                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-rose-500 dark:border-slate-700 dark:text-slate-400 dark:hover:text-rose-400"
+                          title="Delete investment"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>{" "}
                   </tr>
                 );
