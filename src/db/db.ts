@@ -79,6 +79,7 @@ export interface Payment {
   cardId: string;
   amount: number;
   date: string;
+  note?: string;
   currency?: string;
 }
 export type BillType =

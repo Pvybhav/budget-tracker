@@ -66,6 +66,7 @@ export default function AddInvestmentModal({
     note: "",
     currency: getDisplayCurrency(),
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     if (!isOpen) return;
     setFormData({
@@ -99,6 +100,7 @@ export default function AddInvestmentModal({
   };
   const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
+    if (isSubmitting) return;
     const quantity = Number.parseFloat(formData.quantity || "0");
     const investedAmount = Number.parseFloat(formData.investedAmount || "0");
     const currentValue = Number.parseFloat(formData.currentValue || "0");
@@ -133,12 +135,18 @@ export default function AddInvestmentModal({
       note: formData.note.trim() || undefined,
       currency: formData.currency,
     };
-    if (initialInvestment?.id) {
-      await updateInvestment(initialInvestment.id, payload);
-    } else {
-      await createInvestment(payload);
+    setIsSubmitting(true);
+    try {
+      if (initialInvestment?.id) {
+        await updateInvestment(initialInvestment.id, payload);
+      } else {
+        await createInvestment(payload);
+      }
+      setFormData((previous) => ({ ...previous, name: "" }));
+      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -178,7 +186,7 @@ export default function AddInvestmentModal({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="e.g. HDFC Flexi Cap"
-                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-500"
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               />{" "}
             </label>{" "}
             <label className="text-sm text-slate-500 dark:text-slate-400">
@@ -344,10 +352,15 @@ export default function AddInvestmentModal({
           </div>{" "}
           <button
             type="submit"
-            className="w-full rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white transition-colors hover:bg-cyan-700"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {" "}
-            {initialInvestment ? "Update Investment" : "Save Investment"}{" "}
+            {isSubmitting
+              ? "Saving..."
+              : initialInvestment
+                ? "Update Investment"
+                : "Save Investment"}{" "}
           </button>{" "}
         </form>{" "}
       </div>{" "}

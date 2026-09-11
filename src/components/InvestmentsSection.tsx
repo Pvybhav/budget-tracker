@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { FundClassification, Investment, InvestmentSubtype } from "../db/db";
@@ -51,21 +51,27 @@ export default function InvestmentsSection() {
   const pageSize = 8;
   const platforms = useMemo(
     () =>
-      [...new Set((investments ?? []).map((investment) => investment.platform))].sort(
+      [...new Set((investments ?? []).map((investment) => investment.platform.trim()))].sort(
         (left, right) => left.localeCompare(right),
       ),
     [investments],
   );
+  useEffect(() => {
+    if (platformFilter !== "all" && !platforms.includes(platformFilter)) {
+      setPlatformFilter("all");
+    }
+  }, [platformFilter, platforms]);
   const filteredInvestments = useMemo(() => {
     const query = search.trim().toLowerCase();
     const rows = (investments ?? []).filter((investment) => {
+      const platform = investment.platform.trim();
       const matchesSearch =
         !query ||
         investment.name.toLowerCase().includes(query) ||
-        investment.platform.toLowerCase().includes(query);
+        platform.toLowerCase().includes(query);
       const matchesType = typeFilter === "all" || investment.type === typeFilter;
       const matchesSubtype = subtypeFilter === "all" || investment.subtype === subtypeFilter;
-      const matchesPlatform = platformFilter === "all" || investment.platform === platformFilter;
+      const matchesPlatform = platformFilter === "all" || platform === platformFilter;
       return matchesSearch && matchesType && matchesSubtype && matchesPlatform;
     });
     if (gainSort === "none") return rows;
@@ -123,6 +129,12 @@ export default function InvestmentsSection() {
     return [...totals.entries()];
   }, [filteredInvestments, displayCurrency]);
   const totalPages = Math.max(1, Math.ceil(filteredInvestments.length / pageSize));
+  useEffect(() => {
+    setPage((currentPage) => Math.min(currentPage, totalPages));
+  }, [totalPages]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, typeFilter, subtypeFilter, platformFilter, gainSort]);
   const visibleInvestments = filteredInvestments.slice((page - 1) * pageSize, page * pageSize);
   const totals = useMemo(() => {
     const rows = investments ?? [];

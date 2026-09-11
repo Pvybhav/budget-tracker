@@ -64,7 +64,7 @@ export default function ManageTransfersPage() {
             {" "}
             Account Transfers{" "}
           </h1>{" "}
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {" "}
             Move money between accounts without affecting your spending totals.{" "}
           </p>{" "}
@@ -116,12 +116,12 @@ export default function ManageTransfersPage() {
                 {" "}
                 <td className="px-6 py-4"> {formatDateOnly(transfer.date)} </td>{" "}
                 <td className="px-6 py-4"> {accountName(transfer.fromAccountId)} </td>{" "}
-                <td className="px-6 py-4 text-emerald-400">
+                <td className="px-6 py-4 text-emerald-600 dark:text-emerald-400">
                   {" "}
                   <ArrowRightLeft className="h-4 w-4" />{" "}
                 </td>{" "}
                 <td className="px-6 py-4"> {destinationName(transfer)} </td>{" "}
-                <td className="px-6 py-4 font-medium text-emerald-400">
+                <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">
                   {" "}
                   {formatMoney(
                     convertCurrency(transfer.amount, transfer.currency, displayCurrency),
@@ -132,7 +132,7 @@ export default function ManageTransfersPage() {
                   {" "}
                   <button
                     onClick={() => handleDelete(transfer)}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
                     title="Delete transfer"
                   >
                     {" "}
@@ -144,7 +144,10 @@ export default function ManageTransfersPage() {
             {filteredTransfers.length === 0 && (
               <tr>
                 {" "}
-                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                <td
+                  colSpan={6}
+                  className="px-6 py-12 text-center text-slate-600 dark:text-slate-500"
+                >
                   {" "}
                   {transfers?.length
                     ? "No transfers match your search."
@@ -181,7 +184,7 @@ export default function ManageTransfersPage() {
                   <div className="font-medium text-slate-900 dark:text-slate-100">
                     {beneficiary.name}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {[beneficiary.bankName, beneficiary.accountNumber, beneficiary.upiId]
                       .filter(Boolean)
                       .join(" · ") || "No bank details saved"}

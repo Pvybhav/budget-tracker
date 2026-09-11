@@ -153,6 +153,7 @@ const paymentSchema = new Schema(
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
     dateTimezoneVersion: { type: Number, default: 2, select: false },
+    note: String,
     currency: currencyField,
   },
   { timestamps: true },

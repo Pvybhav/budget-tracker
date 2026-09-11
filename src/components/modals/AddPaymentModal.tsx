@@ -29,6 +29,7 @@ export default function AddPaymentModal({
     cardId: "",
     amount: "",
     date: currentDateTimeInput(),
+    note: "",
     currency: getDisplayCurrency(),
   });
 
@@ -38,6 +39,7 @@ export default function AddPaymentModal({
         cardId: initialPayment.cardId.toString(),
         amount: initialPayment.amount.toString(),
         date: dateTimeInput(initialPayment.date),
+        note: initialPayment.note ?? "",
         currency: initialPayment.currency ?? getDisplayCurrency(),
       });
     } else if (isOpen) {
@@ -46,6 +48,7 @@ export default function AddPaymentModal({
         cardId: defaultPayment?.cardId ?? "",
         amount: defaultPayment?.amount?.toString() ?? "",
         date: defaultDate,
+        note: "",
         currency: defaultPayment?.currency ?? getDisplayCurrency(),
       });
     }
@@ -100,6 +103,7 @@ export default function AddPaymentModal({
       cardId: formData.cardId,
       amount: parseFloat(formData.amount),
       date: dateTimeInputToUTC(formData.date),
+      note: formData.note.trim() || undefined,
       currency: formData.currency,
     };
 
@@ -118,7 +122,9 @@ export default function AddPaymentModal({
     setFormData({ ...formData, amount: "" });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -192,6 +198,19 @@ export default function AddPaymentModal({
                 className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-purple-500"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Notes
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Add a note about this payment"
+              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-purple-500"
+            />
           </div>
           <div className="pt-4">
             <button

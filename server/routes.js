@@ -1101,6 +1101,20 @@ router.get(
     res.json(transactions);
   }),
 );
+const investmentTransactionAdjustment = (transaction, multiplier = 1) => {
+  const adjustment = {};
+  if (transaction.type === "buy" || transaction.type === "sell" || transaction.type === "fee") {
+    const direction = transaction.type === "sell" ? -1 : 1;
+    adjustment.investedAmount = direction * multiplier * Number(transaction.amount);
+    if (
+      (transaction.type === "buy" || transaction.type === "sell") &&
+      transaction.quantity != null
+    ) {
+      adjustment.quantity = direction * multiplier * Number(transaction.quantity);
+    }
+  }
+  return adjustment;
+};
 router.post(
   "/investment-transactions",
   catchAsync(async (req, res) => {
@@ -1114,6 +1128,21 @@ router.post(
     }
     if (!Number.isFinite(amount) || amount < 0) {
       return res.status(400).json({ error: "Transaction amount is invalid" });
+    }
+    const adjustment = investmentTransactionAdjustment(req.body);
+    const investment = await Investment.findOneAndUpdate(
+      {
+        _id: investmentId,
+        userId: req.user.userId,
+        ...Object.fromEntries(
+          Object.entries(adjustment).map(([field, value]) => [field, { $gte: -value }]),
+        ),
+      },
+      { $inc: adjustment },
+      { new: true, runValidators: true },
+    );
+    if (!investment) {
+      return res.status(400).json({ error: "Transaction would make the investment negative" });
     }
     const transaction = await createWithId(
       InvestmentTransaction,
@@ -1135,6 +1164,11 @@ router.delete(
     const transaction = await InvestmentTransaction.findOne({ _id: id, userId: req.user.userId });
     if (!transaction) return res.status(404).json({ error: "Investment transaction not found" });
     await transaction.deleteOne();
+    await Investment.findOneAndUpdate(
+      { _id: transaction.investmentId, userId: req.user.userId },
+      { $inc: investmentTransactionAdjustment(transaction, -1) },
+      { runValidators: true },
+    );
     res.json({ success: true });
   }),
 );

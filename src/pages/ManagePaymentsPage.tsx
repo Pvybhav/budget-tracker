@@ -26,7 +26,8 @@ export default function ManagePaymentsPage() {
         !query ||
         payment.cardId.toLowerCase().includes(query) ||
         cardTitle.toLowerCase().includes(query) ||
-        payment.date.toLowerCase().includes(query)
+        payment.date.toLowerCase().includes(query) ||
+        payment.note?.toLowerCase().includes(query)
       );
     });
   }, [payments, cards, search]);
@@ -75,6 +76,7 @@ export default function ManagePaymentsPage() {
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card ID</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Notes</th>
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
               </th>
@@ -93,6 +95,9 @@ export default function ManagePaymentsPage() {
                     convertCurrency(payment.amount, payment.currency, displayCurrency),
                     displayCurrency,
                   )}
+                </td>
+                <td className="px-6 py-4 max-w-xs truncate" title={payment.note ?? ""}>
+                  {payment.note || "-"}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button
@@ -118,7 +123,7 @@ export default function ManagePaymentsPage() {
             ))}
             {filteredPayments.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                   {payments?.length ? "No payments match your search." : "No payments found."}
                 </td>
               </tr>
