@@ -43,6 +43,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
+  const [continueAdding, setContinueAdding] = useState(false);
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -157,6 +158,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         currency: initialExpense.currency ?? getDisplayCurrency(),
       });
     } else {
+      setContinueAdding(false);
       setFormData({
         cardId: "",
         categoryId: "",
@@ -299,7 +301,28 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       await createExpense(payload);
     }
     await syncRecurringExpenses();
-    onClose();
+
+    if (continueAdding && !initialExpense) {
+      setFormData((current) => ({
+        ...current,
+        categoryId: "",
+        details: "",
+        amount: "",
+        isEmi: false,
+        emiMonths: 3,
+        emiInterestPreset: 0,
+        emiCustomInterest: "",
+        emiProcessingFee: "",
+        emiGst: "",
+        isRecurring: false,
+        recurringFrequency: "monthly",
+        recurringInterval: 1,
+        recurringEndDate: "",
+        currency: getDisplayCurrency(),
+      }));
+    } else {
+      onClose();
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -806,12 +829,27 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
             )}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-3">
+            {!initialExpense && (
+              <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={continueAdding}
+                  onChange={(event) => setContinueAdding(event.target.checked)}
+                  className="w-4 h-4 accent-emerald-500"
+                />
+                Add another expense using the same card and date
+              </label>
+            )}
             <button
               type="submit"
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              {initialExpense ? "Update Expense" : "Save Expense"}
+              {initialExpense
+                ? "Update Expense"
+                : continueAdding
+                  ? "Save & Add Another"
+                  : "Save Expense"}
             </button>
           </div>
         </form>
