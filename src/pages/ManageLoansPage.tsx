@@ -58,6 +58,31 @@ export default function ManageLoansPage() {
     );
   }, [loans, search]);
   const visibleLoans = filteredLoans.slice((page - 1) * pageSize, page * pageSize);
+  const loanSummary = useMemo(() => {
+    const loanList = loans ?? [];
+    return {
+      totalLoans: loanList.length,
+      totalPrincipal: loanList.reduce(
+        (sum, loan) => sum + convertCurrency(loan.principal, loan.currency, displayCurrency),
+        0,
+      ),
+      outstandingBalance: loanList.reduce(
+        (sum, loan) =>
+          sum + convertCurrency(getLoanRemainingBalance(loan), loan.currency, displayCurrency),
+        0,
+      ),
+      monthlyEmi: loanList.reduce(
+        (sum, loan) =>
+          sum +
+          convertCurrency(
+            calcMonthlyEmi(loan.principal, loan.annualInterestRate, loan.termMonths),
+            loan.currency,
+            displayCurrency,
+          ),
+        0,
+      ),
+    };
+  }, [displayCurrency, loans]);
 
   const schedule = useMemo(() => {
     if (!selectedLoan) return [];
@@ -239,21 +264,29 @@ export default function ManageLoansPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-          <div className="font-semibold mb-1">Completed</div>
-          <div className="text-emerald-100/70">Loan fully repaid or EMI past due date.</div>
-        </div>
-        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-200">
-          <div className="font-semibold mb-1">Due this month</div>
-          <div className="text-amber-100/70">
-            Repayment is current and due in this billing cycle.
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-4">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Total loans</div>
+          <div className="mt-1 text-2xl font-semibold text-cyan-700 dark:text-cyan-200">
+            {loanSummary.totalLoans}
           </div>
         </div>
-        <div className="rounded-2xl border border-sky-300 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-500/10 p-4 text-sm text-sky-800 dark:text-sky-200">
-          <div className="font-semibold mb-1">Upcoming</div>
-          <div className="text-sky-700 dark:text-slate-300">
-            Future loan payments or EMI installments.
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Total principal</div>
+          <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {formatMoney(loanSummary.totalPrincipal, displayCurrency)}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Outstanding balance</div>
+          <div className="mt-1 text-2xl font-semibold text-rose-700 dark:text-rose-200">
+            {formatMoney(loanSummary.outstandingBalance, displayCurrency)}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Monthly EMI</div>
+          <div className="mt-1 text-2xl font-semibold text-amber-700 dark:text-amber-200">
+            {formatMoney(loanSummary.monthlyEmi, displayCurrency)}
           </div>
         </div>
       </div>
@@ -361,21 +394,23 @@ export default function ManageLoansPage() {
                     </td>
                     <td className="px-6 py-4 max-w-xs truncate">{loan.note || "—"}</td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                          getLoanStatus(loan) === "completed"
-                            ? "bg-emerald-500/15 text-emerald-300"
+                      {selectedLoan?.id === loan.id && (
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                            getLoanStatus(loan) === "completed"
+                              ? "bg-emerald-500/15 text-emerald-300"
+                              : getLoanStatus(loan) === "due"
+                                ? "bg-amber-500/15 text-amber-300"
+                                : "bg-sky-500/15 text-sky-300"
+                          }`}
+                        >
+                          {getLoanStatus(loan) === "completed"
+                            ? "Completed"
                             : getLoanStatus(loan) === "due"
-                              ? "bg-amber-500/15 text-amber-300"
-                              : "bg-sky-500/15 text-sky-300"
-                        }`}
-                      >
-                        {getLoanStatus(loan) === "completed"
-                          ? "Completed"
-                          : getLoanStatus(loan) === "due"
-                            ? "Due this month"
-                            : "Upcoming"}
-                      </span>
+                              ? "Due this month"
+                              : "Upcoming"}
+                        </span>
+                      )}
                     </td>
                     <td
                       className="px-6 py-4 text-right space-x-3"

@@ -80,7 +80,7 @@ export default function CategoryExpensesModal({
   }, []);
 
   const getCardTitle = (cardId: string) =>
-    cards?.find((c) => c.id === cardId)?.title ?? `Card #${cardId}`;
+    cards?.find((c) => c.id === cardId)?.title ?? "Unknown card";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">

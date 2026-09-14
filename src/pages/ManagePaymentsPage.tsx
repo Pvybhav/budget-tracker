@@ -74,7 +74,7 @@ export default function ManagePaymentsPage() {
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card ID</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Notes</th>
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
@@ -89,7 +89,9 @@ export default function ManagePaymentsPage() {
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors"
               >
                 <td className="px-6 py-4">{formatDateOnly(payment.date)}</td>
-                <td className="px-6 py-4">{payment.cardId}</td>
+                <td className="px-6 py-4">
+                  {cards?.find((card) => card.id === payment.cardId)?.title ?? "Unknown card"}
+                </td>
                 <td className="px-6 py-4">
                   {formatMoney(
                     convertCurrency(payment.amount, payment.currency, displayCurrency),

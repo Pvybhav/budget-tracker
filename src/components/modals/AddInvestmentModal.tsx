@@ -27,6 +27,7 @@ const investmentPlatforms = [
   "Angel One",
   "ICICI Direct",
   "HDFC Securities",
+  "KFINTECH",
   "Other",
 ];
 const subtypeOptions: { value: InvestmentSubtype; label: string }[] = [
@@ -101,18 +102,17 @@ export default function AddInvestmentModal({
   const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     if (isSubmitting) return;
+    const isPf = formData.subtype === "pf";
     const quantity = Number.parseFloat(formData.quantity || "0");
     const investedAmount = Number.parseFloat(formData.investedAmount || "0");
     const currentValue = Number.parseFloat(formData.currentValue || "0");
     if (
       !formData.name.trim() ||
       !formData.platform.trim() ||
-      !Number.isFinite(quantity) ||
-      quantity < 0 ||
+      (!isPf && (!Number.isFinite(quantity) || quantity < 0)) ||
       !Number.isFinite(investedAmount) ||
       investedAmount < 0 ||
-      !Number.isFinite(currentValue) ||
-      currentValue < 0
+      (!isPf && (!Number.isFinite(currentValue) || currentValue < 0))
     ) {
       return;
     }
@@ -130,7 +130,7 @@ export default function AddInvestmentModal({
           : undefined,
       quantity,
       investedAmount,
-      currentValue,
+      currentValue: isPf ? investedAmount : currentValue,
       purchaseDate: formData.purchaseDate,
       note: formData.note.trim() || undefined,
       currency: formData.currency,
@@ -269,26 +269,28 @@ export default function AddInvestmentModal({
                 </select>
               </label>
             )}{" "}
-            <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Quantity / units{" "}
-              <input
-                required
-                min="0"
-                step="0.0001"
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
+            {formData.subtype !== "pf" && (
+              <label className="text-sm text-slate-500 dark:text-slate-400">
+                {" "}
+                Quantity / units{" "}
+                <input
+                  required
+                  min="0"
+                  step="0.0001"
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
+                />{" "}
+              </label>
+            )}{" "}
           </div>{" "}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {" "}
             <label className="text-sm text-slate-500 dark:text-slate-400">
               {" "}
-              Invested amount{" "}
+              {formData.subtype === "pf" ? "Newly invested amount" : "Invested amount"}{" "}
               <input
                 required
                 min="0"
@@ -300,20 +302,22 @@ export default function AddInvestmentModal({
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               />{" "}
             </label>{" "}
-            <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Current value{" "}
-              <input
-                required
-                min="0"
-                step="0.01"
-                type="number"
-                name="currentValue"
-                value={formData.currentValue}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
+            {formData.subtype !== "pf" && (
+              <label className="text-sm text-slate-500 dark:text-slate-400">
+                {" "}
+                Current value{" "}
+                <input
+                  required
+                  min="0"
+                  step="0.01"
+                  type="number"
+                  name="currentValue"
+                  value={formData.currentValue}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
+                />{" "}
+              </label>
+            )}{" "}
             <label className="text-sm text-slate-500 dark:text-slate-400">
               {" "}
               Currency{" "}

@@ -455,9 +455,11 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 Description
               </th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card ID</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
+              {mode === "emi" && (
+                <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
+              )}
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
               </th>
@@ -527,7 +529,9 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       <span className="text-slate-600 text-sm italic">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">{expense.cardId}</td>
+                  <td className="px-6 py-4">
+                    {cards?.find((card) => card.id === expense.cardId)?.title ?? "Unknown card"}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span>
@@ -539,30 +543,32 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       {isEmi && <span className="text-xs text-slate-500">principal</span>}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    {isEmi ? (
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
-                          const status = getEmiExpenseStatus(expense);
-                          if (status === "completed") {
-                            return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
-                          }
-                          if (status === "current") {
-                            return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-                          }
-                          return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
-                        })()}`}
-                      >
-                        {getEmiExpenseStatus(expense) === "completed"
-                          ? "Completed"
-                          : getEmiExpenseStatus(expense) === "current"
-                            ? "Ongoing"
-                            : "Upcoming"}
-                      </span>
-                    ) : (
-                      <span className="text-slate-500 text-xs">—</span>
-                    )}
-                  </td>
+                  {mode === "emi" && (
+                    <td className="px-6 py-4">
+                      {isEmi ? (
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
+                            const status = getEmiExpenseStatus(expense);
+                            if (status === "completed") {
+                              return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
+                            }
+                            if (status === "current") {
+                              return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
+                            }
+                            return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
+                          })()}`}
+                        >
+                          {getEmiExpenseStatus(expense) === "completed"
+                            ? "Completed"
+                            : getEmiExpenseStatus(expense) === "current"
+                              ? "Ongoing"
+                              : "Upcoming"}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-xs">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => openEditModal(expense)}
@@ -582,7 +588,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             })}
             {filteredExpenses.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                <td
+                  colSpan={mode === "emi" ? 7 : 6}
+                  className="px-6 py-12 text-center text-slate-500"
+                >
                   No expenses found for the selected filters.
                 </td>
               </tr>

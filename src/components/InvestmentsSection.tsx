@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useTheme } from "../context/ThemeContextCore";
 import type { FundClassification, Investment, InvestmentSubtype } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchInvestments } from "../services/backend.service";
@@ -38,6 +39,7 @@ const classificationLabels: Record<FundClassification, string> = {
   other: "Other",
 };
 export default function InvestmentsSection() {
+  const { theme } = useTheme();
   const displayCurrency = useDisplayCurrency();
   const investments = useBackendResource(() => fetchInvestments(), []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -137,17 +139,18 @@ export default function InvestmentsSection() {
   }, [search, typeFilter, subtypeFilter, platformFilter, gainSort]);
   const visibleInvestments = filteredInvestments.slice((page - 1) * pageSize, page * pageSize);
   const totals = useMemo(() => {
-    const rows = investments ?? [];
-    const invested = rows.reduce(
+    const invested = filteredInvestments.reduce(
       (sum, item) => sum + convertCurrency(item.investedAmount, item.currency, displayCurrency),
       0,
     );
-    const current = rows.reduce(
+    const current = filteredInvestments.reduce(
       (sum, item) => sum + convertCurrency(item.currentValue, item.currency, displayCurrency),
       0,
     );
     return { invested, current, gain: current - invested };
-  }, [investments, displayCurrency]);
+  }, [filteredInvestments, displayCurrency]);
+  const chartTextColor = theme === "dark" ? "#cbd5e1" : "#475569";
+  const chartGridColor = theme === "dark" ? "#334155" : "#cbd5e1";
   const openCreateModal = () => {
     setSelectedInvestment(undefined);
     setIsModalOpen(true);
@@ -344,21 +347,29 @@ export default function InvestmentsSection() {
                 layout="vertical"
                 margin={{ top: 0, right: 16, left: 8, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartGridColor} />
                 <XAxis
                   type="number"
-                  stroke="#94a3b8"
+                  stroke={chartTextColor}
+                  tick={{ fill: chartTextColor, fontSize: 12 }}
                   tickFormatter={(value) => formatMoney(Number(value), displayCurrency)}
                 />
                 <YAxis
                   type="category"
                   dataKey="subtype"
                   width={92}
-                  stroke="#94a3b8"
-                  tick={{ fontSize: 12 }}
+                  stroke={chartTextColor}
+                  tick={{ fill: chartTextColor, fontSize: 12 }}
                 />
                 <Tooltip
                   cursor={{ fill: "rgba(14, 165, 233, 0.08)" }}
+                  contentStyle={{
+                    backgroundColor: theme === "dark" ? "#0f172a" : "#ffffff",
+                    borderColor: theme === "dark" ? "#334155" : "#cbd5e1",
+                    color: chartTextColor,
+                  }}
+                  labelStyle={{ color: chartTextColor }}
+                  itemStyle={{ color: chartTextColor }}
                   formatter={(value) => formatMoney(Number(value), displayCurrency)}
                 />
                 <Bar dataKey="value" fill="#0891b2" radius={[0, 4, 4, 0]} />
@@ -444,7 +455,9 @@ export default function InvestmentsSection() {
                     </td>{" "}
                     <td className="px-4 py-3 text-right">
                       {" "}
-                      {investment.quantity.toLocaleString("en-IN")}{" "}
+                      {investment.subtype === "pf"
+                        ? "-"
+                        : investment.quantity.toLocaleString("en-IN")}{" "}
                     </td>{" "}
                     <td className="px-4 py-3 text-right">
                       {" "}

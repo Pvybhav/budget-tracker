@@ -20,7 +20,7 @@ export default function ManageTransfersPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const accountName = (id: string) =>
-    cards?.find((card) => card.id === id)?.title ?? `Account #${id}`;
+    cards?.find((card) => card.id === id)?.title ?? "Unknown account";
   const sortedTransfers = [...(transfers ?? [])].sort((a, b) => b.date.localeCompare(a.date));
   const destinationName = (transfer: Transfer) =>
     transfer.destinationType === "external"

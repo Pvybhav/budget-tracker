@@ -2,7 +2,7 @@ import moment from "moment";
 
 export const DATE_INPUT_FORMAT = "YYYY-MM-DD";
 export const DATE_TIME_INPUT_FORMAT = "YYYY-MM-DDTHH:mm";
-export const DISPLAY_DATE_FORMAT = "DD/MM/YYYY";
+export const DISPLAY_DATE_FORMAT = "D MMM YY";
 
 export function dateOnly(value: string) {
   const datePart = value.match(/^\d{4}-\d{2}-\d{2}/)?.[0];

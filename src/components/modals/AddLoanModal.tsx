@@ -244,7 +244,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                   type="number"
                   min="0"
                   max="100"
-                  step="0.1"
+                  step="0.01"
                   name="customInterest"
                   value={formData.customInterest}
                   onChange={handleChange}

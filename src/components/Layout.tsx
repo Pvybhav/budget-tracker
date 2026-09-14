@@ -45,9 +45,7 @@ export default function Layout({ logout }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const displayCurrency = useDisplayCurrency();
   useEffect(() => {
-    if (location.pathname.includes("/expenses")) {
-      setIsExpensesOpen(true);
-    }
+    setIsExpensesOpen(location.pathname.includes("/expenses"));
     setIsSidebarOpen(false);
   }, [location.pathname]);
   const navItems = [

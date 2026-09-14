@@ -66,24 +66,31 @@ export default function NetWorthHistoryPage() {
           : total,
       0,
     );
-    const assets =
-      accountValue +
-      investments.reduce(
-        (sum, item) => sum + convertCurrency(item.currentValue, item.currency, displayCurrency),
-        0,
-      ) +
-      savings.reduce(
-        (sum, item) => sum + convertCurrency(item.currentAmount, item.currency, displayCurrency),
-        0,
-      );
-    const liabilities =
-      creditDebt +
-      loans.reduce(
-        (sum, loan) =>
-          sum + convertCurrency(getLoanRemainingBalance(loan), loan.currency, displayCurrency),
-        0,
-      );
-    return { assets, liabilities, netWorth: assets - liabilities };
+    const investmentsValue = investments.reduce(
+      (sum, item) => sum + convertCurrency(item.currentValue, item.currency, displayCurrency),
+      0,
+    );
+    const savingsValue = savings.reduce(
+      (sum, item) => sum + convertCurrency(item.currentAmount, item.currency, displayCurrency),
+      0,
+    );
+    const loansValue = loans.reduce(
+      (sum, loan) =>
+        sum + convertCurrency(getLoanRemainingBalance(loan), loan.currency, displayCurrency),
+      0,
+    );
+    const assets = accountValue + investmentsValue + savingsValue;
+    const liabilities = creditDebt + loansValue;
+    return {
+      accountValue,
+      investmentsValue,
+      savingsValue,
+      creditDebt,
+      loansValue,
+      assets,
+      liabilities,
+      netWorth: assets - liabilities,
+    };
   }, [cards, expenses, investments, loans, payments, savings, transfers, displayCurrency]);
   const saveSnapshot = async () => {
     if (!current) return;
@@ -126,21 +133,65 @@ export default function NetWorthHistoryPage() {
       {current && (
         <div className="grid gap-3 sm:grid-cols-3">
           {" "}
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/5">
+          <div
+            tabIndex={0}
+            aria-describedby="net-worth-assets-details"
+            className="group relative rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm outline-none focus:ring-2 focus:ring-emerald-500 dark:border-emerald-500/20 dark:bg-emerald-500/5"
+          >
             {" "}
             <div className="text-sm text-slate-600 dark:text-slate-400">Assets</div>{" "}
             <div className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
               {" "}
               {formatMoney(current.assets, displayCurrency)}{" "}
             </div>{" "}
+            <div
+              id="net-worth-assets-details"
+              className="invisible pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 text-sm opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <div className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+                Asset details
+              </div>
+              <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
+                <span>Accounts</span>
+                <span>{formatMoney(current.accountValue, displayCurrency)}</span>
+              </div>
+              <div className="mt-1 flex justify-between gap-4 text-slate-600 dark:text-slate-400">
+                <span>Investments</span>
+                <span>{formatMoney(current.investmentsValue, displayCurrency)}</span>
+              </div>
+              <div className="mt-1 flex justify-between gap-4 text-slate-600 dark:text-slate-400">
+                <span>Savings</span>
+                <span>{formatMoney(current.savingsValue, displayCurrency)}</span>
+              </div>
+            </div>
           </div>{" "}
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm dark:border-rose-500/20 dark:bg-rose-500/5">
+          <div
+            tabIndex={0}
+            aria-describedby="net-worth-liabilities-details"
+            className="group relative rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm outline-none focus:ring-2 focus:ring-rose-500 dark:border-rose-500/20 dark:bg-rose-500/5"
+          >
             {" "}
             <div className="text-sm text-slate-600 dark:text-slate-400">Liabilities</div>{" "}
             <div className="mt-1 text-2xl font-semibold text-rose-700 dark:text-rose-300">
               {" "}
               {formatMoney(current.liabilities, displayCurrency)}{" "}
             </div>{" "}
+            <div
+              id="net-worth-liabilities-details"
+              className="invisible pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 text-sm opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <div className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+                Liability details
+              </div>
+              <div className="flex justify-between gap-4 text-slate-600 dark:text-slate-400">
+                <span>Credit cards</span>
+                <span>{formatMoney(current.creditDebt, displayCurrency)}</span>
+              </div>
+              <div className="mt-1 flex justify-between gap-4 text-slate-600 dark:text-slate-400">
+                <span>Personal loans</span>
+                <span>{formatMoney(current.loansValue, displayCurrency)}</span>
+              </div>
+            </div>
           </div>{" "}
           <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
             {" "}

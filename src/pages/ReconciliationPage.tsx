@@ -30,7 +30,7 @@ export default function ReconciliationPage() {
       0,
     );
   const accountName = (id: string) =>
-    cards?.find((card) => card.id === id)?.title ?? `Account #${id}`;
+    cards?.find((card) => card.id === id)?.title ?? "Unknown account";
   const markAllVerified = async () => {
     await Promise.all(
       pending
