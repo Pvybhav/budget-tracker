@@ -29,6 +29,42 @@ const BUDGET_MODE_COLORS: Record<string, string> = {
   yearly: "text-sky-400 bg-sky-400/10 border-sky-400/30",
 };
 
+const CATEGORY_ACCENTS = [
+  {
+    border: "border-l-emerald-500",
+    icon: "bg-emerald-500/15 border-emerald-500/35 text-emerald-700 dark:text-emerald-300",
+  },
+  {
+    border: "border-l-sky-500",
+    icon: "bg-sky-500/15 border-sky-500/35 text-sky-700 dark:text-sky-300",
+  },
+  {
+    border: "border-l-amber-500",
+    icon: "bg-amber-500/15 border-amber-500/35 text-amber-700 dark:text-amber-300",
+  },
+  {
+    border: "border-l-rose-500",
+    icon: "bg-rose-500/15 border-rose-500/35 text-rose-700 dark:text-rose-300",
+  },
+  {
+    border: "border-l-violet-500",
+    icon: "bg-violet-500/15 border-violet-500/35 text-violet-700 dark:text-violet-300",
+  },
+  {
+    border: "border-l-cyan-500",
+    icon: "bg-cyan-500/15 border-cyan-500/35 text-cyan-700 dark:text-cyan-300",
+  },
+] as const;
+
+function getCategoryAccent(category: Category) {
+  const key = `${category.id ?? ""}-${category.title}`;
+  const hash = Array.from(key).reduce(
+    (total, character) => total + (character.codePointAt(0) ?? 0),
+    0,
+  );
+  return CATEGORY_ACCENTS[hash % CATEGORY_ACCENTS.length];
+}
+
 function fmtPreview(n: number, currency: string) {
   if (n >= 1000)
     return formatMoney(n / 1000, currency)
@@ -240,15 +276,18 @@ export default function ManageCategoriesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {visibleCategories.map((category) => {
             const previews = getBudgetPreviews(category, displayCurrency);
+            const accent = getCategoryAccent(category);
             return (
               <div
                 key={category.id}
-                className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl ${compactMode ? "p-3 gap-2 text-sm" : "p-5 gap-3"} hover:border-slate-300 dark:hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
+                className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 ${accent.border} rounded-2xl ${compactMode ? "p-3 gap-2 text-sm" : "p-5 gap-3"} hover:border-slate-300 dark:hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
-                      <Tags className="w-4 h-4 text-violet-400" />
+                    <span
+                      className={`flex-shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center ${accent.icon}`}
+                    >
+                      <Tags className="w-4 h-4" />
                     </span>
                     <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                       {category.title}
@@ -274,7 +313,7 @@ export default function ManageCategoriesPage() {
 
                 <div className="min-h-[36px] mt-1">
                   {compactMode ? (
-                    <div className="text-xs text-slate-700 dark:text-slate-400 flex items-center gap-3">
+                    <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-3">
                       <button
                         onClick={() => openCategoryExpenses(category)}
                         className="text-left hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
@@ -293,12 +332,12 @@ export default function ManageCategoriesPage() {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-sm text-slate-700 dark:text-slate-400 leading-relaxed">
+                      <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                         {category.description ?? (
                           <span className="text-transparent">placeholder</span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-700 dark:text-slate-400 mt-2 flex items-center gap-3">
+                      <div className="text-xs text-slate-600 dark:text-slate-300 mt-2 flex items-center gap-3">
                         <button
                           onClick={() => openCategoryExpenses(category)}
                           className="text-left hover:text-slate-900 dark:hover:text-slate-200 transition-colors"

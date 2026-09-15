@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  main,
+  main * {
+    min-width: 0;
+  }
+
   body {
     @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300;
   }
@@ -16,7 +21,7 @@
 
 @layer components {
   .card {
-    @apply bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-lg transition-all duration-300 hover:shadow-md dark:hover:shadow-xl;
+    @apply min-w-0 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-lg transition-all duration-300 hover:shadow-md dark:hover:shadow-xl;
   }
 
   .btn-primary {
