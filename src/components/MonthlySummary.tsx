@@ -71,26 +71,26 @@ export default function MonthlySummary({ className }: { className?: string }) {
 
       <div className="mt-4 grid grid-cols-3 gap-4">
         <div className="col-span-1">
-          <div className="text-sm text-slate-400">Spent</div>
-          <div className="text-xl font-semibold text-rose-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Spent</div>
+          <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
             {formatMoney(spentThis, displayCurrency)}
           </div>
         </div>
         <div className="col-span-1">
-          <div className="text-sm text-slate-400">Paid</div>
-          <div className="text-xl font-semibold text-emerald-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Paid</div>
+          <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
             {formatMoney(paidThis, displayCurrency)}
           </div>
         </div>
         <div className="col-span-1 text-right">
-          <div className="text-sm text-slate-400">Net</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Net</div>
           <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             {formatMoney(net, displayCurrency)}{" "}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-slate-400">
+      <div className="mt-4 text-xs text-slate-600 dark:text-slate-400">
         {spentLast !== 0
           ? `${pctChange >= 0 ? "↑" : "↓"} ${Math.abs(pctChange)}% vs last month`
           : "No data for previous month"}

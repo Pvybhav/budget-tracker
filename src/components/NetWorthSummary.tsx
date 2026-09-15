@@ -74,8 +74,16 @@ export default function NetWorthSummary() {
   }
   const liabilities = summary.cardLiabilities + summary.loanLiabilities;
   const metricItems = [
-    { label: "Assets", value: summary.assets, color: "text-emerald-400" },
-    { label: "Liabilities", value: liabilities, color: "text-rose-400" },
+    {
+      label: "Assets",
+      value: summary.assets,
+      color: "text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      label: "Liabilities",
+      value: liabilities,
+      color: "text-rose-600 dark:text-rose-400",
+    },
     {
       label: "Net worth",
       value: summary.netWorth,
@@ -100,7 +108,7 @@ export default function NetWorthSummary() {
             {" "}
             Net worth snapshot{" "}
           </h2>{" "}
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {" "}
             Accounts, investments, and loans in one view.{" "}
           </p>{" "}
@@ -112,7 +120,7 @@ export default function NetWorthSummary() {
         {metricItems.map((item) => (
           <div key={item.label}>
             {" "}
-            <div className="text-sm text-slate-400">{item.label}</div>{" "}
+            <div className="text-sm text-slate-600 dark:text-slate-400">{item.label}</div>{" "}
             <div className={`mt-1 text-xl font-semibold ${item.color}`}>
               {" "}
               {formatMoney(item.value, displayCurrency)}{" "}
@@ -132,8 +140,8 @@ export default function NetWorthSummary() {
             summary.accountGroups.map(([label, value]) => (
               <div key={label} className="flex items-center justify-between text-sm">
                 {" "}
-                <span className="text-slate-400">{label}</span>{" "}
-                <span className="font-medium text-slate-200">
+                <span className="text-slate-600 dark:text-slate-400">{label}</span>{" "}
+                <span className="font-medium text-slate-700 dark:text-slate-200">
                   {" "}
                   {formatMoney(value, displayCurrency)}{" "}
                 </span>{" "}
@@ -151,16 +159,16 @@ export default function NetWorthSummary() {
           </div>{" "}
           <div className="flex items-center justify-between text-sm">
             {" "}
-            <span className="text-slate-400">Credit cards</span>{" "}
-            <span className="font-medium text-slate-200">
+            <span className="text-slate-600 dark:text-slate-400">Credit cards</span>{" "}
+            <span className="font-medium text-slate-700 dark:text-slate-200">
               {" "}
               {formatMoney(summary.cardLiabilities, displayCurrency)}{" "}
             </span>{" "}
           </div>{" "}
           <div className="flex items-center justify-between text-sm">
             {" "}
-            <span className="text-slate-400">Loans</span>{" "}
-            <span className="font-medium text-slate-200">
+            <span className="text-slate-600 dark:text-slate-400">Loans</span>{" "}
+            <span className="font-medium text-slate-700 dark:text-slate-200">
               {" "}
               {formatMoney(summary.loanLiabilities, displayCurrency)}{" "}
             </span>{" "}

@@ -148,7 +148,7 @@ export default function AlertsPanel() {
         <div className="space-y-3">
           {" "}
           {alerts.length === 0 && (
-            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-300">
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-300">
               {" "}
               Everything looks healthy right now.{" "}
             </div>
@@ -175,11 +175,14 @@ export default function AlertsPanel() {
                   {" "}
                   <div className="flex items-center justify-between gap-2">
                     {" "}
-                    <p className="text-sm font-semibold text-slate-100"> {alert.title} </p>{" "}
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {" "}
+                      {alert.title}{" "}
+                    </p>{" "}
                     <div className="flex items-center gap-2">
                       {" "}
                       <span
-                        className={`text-[10px] font-semibold uppercase tracking-wide ${alert.severity === "danger" ? "text-red-300" : "text-amber-300"}`}
+                        className={`text-[10px] font-semibold uppercase tracking-wide ${alert.severity === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}
                       >
                         {" "}
                         {alert.severity === "danger" ? "Urgent" : "Watch"}{" "}
@@ -195,8 +198,10 @@ export default function AlertsPanel() {
                       </button>{" "}
                     </div>{" "}
                   </div>{" "}
-                  <p className="mt-1 text-sm text-slate-300">{alert.message}</p>{" "}
-                  <p className="mt-1 text-xs text-slate-500">{alert.detail}</p>{" "}
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{alert.message}</p>{" "}
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                    {alert.detail}
+                  </p>{" "}
                 </div>{" "}
               </div>{" "}
             </div>

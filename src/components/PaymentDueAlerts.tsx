@@ -69,11 +69,13 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
         {dueItems.map(({ card, metrics, daysUntil }) => (
           <div
             key={card.id}
-            className="flex items-center justify-between bg-slate-800/40 p-3 rounded-lg"
+            className="flex items-center justify-between rounded-lg bg-slate-100 p-3 dark:bg-slate-800/40"
           >
             <div>
-              <div className="text-sm font-semibold text-slate-100">{card.title}</div>
-              <div className="text-xs text-slate-400">
+              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {card.title}
+              </div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">
                 Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} •{" "}
                 {formatMoney(
                   convertCurrency(metrics.amountToPayNext, card.currency, displayCurrency),

@@ -41,37 +41,39 @@ export default function IncomeExpenseSummary({ className }: { className?: string
         {" "}
         Income vs Expense{" "}
       </div>{" "}
-      <div className="text-lg font-bold text-slate-100 mb-4"> This month's cash flow </div>{" "}
+      <div className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+        This month's cash flow
+      </div>{" "}
       <div className="grid grid-cols-3 gap-4">
         {" "}
         <div>
           {" "}
-          <div className="text-sm text-slate-400">Income</div>{" "}
-          <div className="text-xl font-semibold text-emerald-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Income</div>{" "}
+          <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
             {" "}
             {formatMoney(incomeThis, displayCurrency)}{" "}
           </div>{" "}
         </div>{" "}
         <div>
           {" "}
-          <div className="text-sm text-slate-400">Expense</div>{" "}
-          <div className="text-xl font-semibold text-rose-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">Expense</div>{" "}
+          <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
             {" "}
             {formatMoney(expenseThis, displayCurrency)}{" "}
           </div>{" "}
         </div>{" "}
         <div className="text-right">
           {" "}
-          <div className="text-sm text-slate-400">Net Savings</div>{" "}
+          <div className="text-sm text-slate-600 dark:text-slate-400">Net Savings</div>{" "}
           <div
-            className={`text-xl font-semibold ${netSavings >= 0 ? "text-slate-100" : "text-rose-400"}`}
+            className={`text-xl font-semibold ${netSavings >= 0 ? "text-slate-900 dark:text-slate-100" : "text-rose-600 dark:text-rose-400"}`}
           >
             {" "}
             {formatMoney(netSavings, displayCurrency)}{" "}
           </div>{" "}
         </div>{" "}
       </div>{" "}
-      <div className="mt-4 text-xs text-slate-400">
+      <div className="mt-4 text-xs text-slate-600 dark:text-slate-400">
         {" "}
         {incomeThis > 0
           ? `Saving ${savingsRate}% of income this month`
