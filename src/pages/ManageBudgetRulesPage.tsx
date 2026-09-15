@@ -70,31 +70,31 @@ export default function ManageBudgetRulesPage() {
   };
   return (
     <div className="space-y-8">
-      {" "}
+      
       <div>
-        {" "}
+        
         <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-          {" "}
-          Budget Rules & Automation{" "}
-        </h1>{" "}
+          
+          Budget Rules & Automation
+        </h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {" "}
-          Flag overspending on categories or cards, and auto-categorize expenses by keyword.{" "}
-        </p>{" "}
-      </div>{" "}
-      {/* Budget Rules */}{" "}
+          
+          Flag overspending on categories or cards, and auto-categorize expenses by keyword.
+        </p>
+      </div>
+      {/* Budget Rules */}
       <div className="space-y-4">
-        {" "}
+        
         <div className="flex items-center justify-between">
-          {" "}
+          
           <div className="flex items-center gap-2">
-            {" "}
-            <ShieldAlert className="w-5 h-5 text-sky-400" />{" "}
+            
+            <ShieldAlert className="w-5 h-5 text-sky-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {" "}
-              Spending Threshold Rules{" "}
-            </h2>{" "}
-          </div>{" "}
+              
+              Spending Threshold Rules
+            </h2>
+          </div>
           <button
             onClick={() => {
               setRuleToEdit(undefined);
@@ -102,63 +102,63 @@ export default function ManageBudgetRulesPage() {
             }}
             className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
-            {" "}
-            <Plus className="w-4 h-4" /> Add Rule{" "}
-          </button>{" "}
-        </div>{" "}
+            
+            <Plus className="w-4 h-4" /> Add Rule
+          </button>
+        </div>
         {!budgetRules || budgetRules.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/40 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
-            {" "}
-            No budget rules yet. e.g. "Flag if Groceries exceed ₹2000".{" "}
+            
+            No budget rules yet. e.g. "Flag if Groceries exceed ₹2000".
           </div>
         ) : (
           <>
             <div className="space-y-3">
-              {" "}
+              
               {visibleRules.map((rule) => (
                 <div
                   key={rule.id}
                   className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {" "}
+                  
                   <div>
-                    {" "}
+                    
                     <div className="flex items-center gap-2">
-                      {" "}
+                      
                       <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-700 dark:text-slate-400">
-                        {" "}
-                        {rule.type}{" "}
-                      </span>{" "}
+                        
+                        {rule.type}
+                      </span>
                       <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                        {" "}
-                        {targetName(rule)}{" "}
-                      </h3>{" "}
+                        
+                        {targetName(rule)}
+                      </h3>
                       {!rule.enabled && (
                         <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] text-slate-500">
-                          {" "}
-                          Disabled{" "}
+                          
+                          Disabled
                         </span>
-                      )}{" "}
-                    </div>{" "}
+                      )}
+                    </div>
                     <div className="mt-1 text-sm text-slate-700 dark:text-slate-400">
-                      {" "}
-                      Flag if spend exceeds{" "}
+                      
+                      Flag if spend exceeds
                       {formatMoney(
                         convertCurrency(rule.thresholdAmount, rule.currency, displayCurrency),
                         displayCurrency,
-                      )}{" "}
-                      per {rule.period.replace("ly", "")} {rule.note ? ` · ${rule.note}` : ""}{" "}
-                    </div>{" "}
-                  </div>{" "}
+                      )}
+                      per {rule.period.replace("ly", "")} {rule.note ? ` · ${rule.note}` : ""}
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    {" "}
+                    
                     <button
                       onClick={() => toggleRuleEnabled(rule)}
                       className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
-                      {" "}
-                      {rule.enabled ? "Disable" : "Enable"}{" "}
-                    </button>{" "}
+                      
+                      {rule.enabled ? "Disable" : "Enable"}
+                    </button>
                     <button
                       onClick={() => {
                         setRuleToEdit(rule);
@@ -167,20 +167,20 @@ export default function ManageBudgetRulesPage() {
                       className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       title="Edit rule"
                     >
-                      {" "}
-                      <Pencil className="h-4 w-4" />{" "}
-                    </button>{" "}
+                      
+                      <Pencil className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => handleDeleteRule(rule)}
                       className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
                       title="Delete rule"
                     >
-                      {" "}
-                      <Trash2 className="h-4 w-4" />{" "}
-                    </button>{" "}
-                  </div>{" "}
+                      
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              ))}{" "}
+              ))}
             </div>
             <PaginationControls
               page={rulePage}
@@ -189,21 +189,21 @@ export default function ManageBudgetRulesPage() {
               onPageChange={setRulePage}
             />
           </>
-        )}{" "}
-      </div>{" "}
-      {/* Auto-Categorize Rules */}{" "}
+        )}
+      </div>
+      {/* Auto-Categorize Rules */}
       <div className="space-y-4">
-        {" "}
+        
         <div className="flex items-center justify-between">
-          {" "}
+          
           <div className="flex items-center gap-2">
-            {" "}
-            <Tags className="w-5 h-5 text-emerald-400" />{" "}
+            
+            <Tags className="w-5 h-5 text-emerald-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {" "}
-              Auto-Categorize Rules{" "}
-            </h2>{" "}
-          </div>{" "}
+              
+              Auto-Categorize Rules
+            </h2>
+          </div>
           <button
             onClick={() => {
               setAutoRuleToEdit(undefined);
@@ -211,56 +211,56 @@ export default function ManageBudgetRulesPage() {
             }}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
-            {" "}
-            <Plus className="w-4 h-4" /> Add Rule{" "}
-          </button>{" "}
-        </div>{" "}
+            
+            <Plus className="w-4 h-4" /> Add Rule
+          </button>
+        </div>
         {!autoCategorizeRules || autoCategorizeRules.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/40 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
-            {" "}
+            
             No auto-categorize rules yet. Expenses whose description contains a keyword will be
-            auto-assigned to the matching category.{" "}
+            auto-assigned to the matching category.
           </div>
         ) : (
           <>
             <div className="space-y-3">
-              {" "}
+              
               {visibleAutoRules.map((rule) => (
                 <div
                   key={rule.id}
                   className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {" "}
+                  
                   <div>
-                    {" "}
+                    
                     <div className="flex items-center gap-2">
-                      {" "}
+                      
                       <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                        {" "}
-                        "{rule.keyword}"{" "}
-                      </h3>{" "}
-                      <span className="text-slate-500">→</span>{" "}
+                        
+                        "{rule.keyword}"
+                      </h3>
+                      <span className="text-slate-500">→</span>
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {" "}
-                        {categoryName(rule)}{" "}
-                      </span>{" "}
+                        
+                        {categoryName(rule)}
+                      </span>
                       {!rule.enabled && (
                         <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-[11px] text-slate-500">
-                          {" "}
-                          Disabled{" "}
+                          
+                          Disabled
                         </span>
-                      )}{" "}
-                    </div>{" "}
-                  </div>{" "}
+                      )}
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    {" "}
+                    
                     <button
                       onClick={() => toggleAutoRuleEnabled(rule)}
                       className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
-                      {" "}
-                      {rule.enabled ? "Disable" : "Enable"}{" "}
-                    </button>{" "}
+                      
+                      {rule.enabled ? "Disable" : "Enable"}
+                    </button>
                     <button
                       onClick={() => {
                         setAutoRuleToEdit(rule);
@@ -269,20 +269,20 @@ export default function ManageBudgetRulesPage() {
                       className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-white"
                       title="Edit rule"
                     >
-                      {" "}
-                      <Pencil className="h-4 w-4" />{" "}
-                    </button>{" "}
+                      
+                      <Pencil className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => handleDeleteAutoRule(rule)}
                       className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-rose-400"
                       title="Delete rule"
                     >
-                      {" "}
-                      <Trash2 className="h-4 w-4" />{" "}
-                    </button>{" "}
-                  </div>{" "}
+                      
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              ))}{" "}
+              ))}
             </div>
             <PaginationControls
               page={autoRulePage}
@@ -291,21 +291,21 @@ export default function ManageBudgetRulesPage() {
               onPageChange={setAutoRulePage}
             />
           </>
-        )}{" "}
-      </div>{" "}
+        )}
+      </div>
       <AddBudgetRuleModal
         isOpen={isRuleModalOpen}
         onClose={() => setIsRuleModalOpen(false)}
         initialRule={ruleToEdit}
         categories={categories ?? []}
         cards={cards ?? []}
-      />{" "}
+      />
       <AddAutoCategorizeRuleModal
         isOpen={isAutoModalOpen}
         onClose={() => setIsAutoModalOpen(false)}
         initialRule={autoRuleToEdit}
         categories={categories ?? []}
-      />{" "}
+      />
     </div>
   );
 }

@@ -280,159 +280,159 @@ export default function ExportPage() {
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {" "}
+      
       <div className="flex items-center gap-4">
-        {" "}
+        
         <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
-          {" "}
-          <FileSpreadsheet className="w-6 h-6 text-emerald-400" />{" "}
-        </div>{" "}
+          
+          <FileSpreadsheet className="w-6 h-6 text-emerald-400" />
+        </div>
         <div>
-          {" "}
+          
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            {" "}
-            Import, Export & Backups{" "}
-          </h1>{" "}
+            
+            Import, Export & Backups
+          </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            {" "}
-            Download reports, create backup snapshots, and restore local data{" "}
-          </p>{" "}
-        </div>{" "}
-      </div>{" "}
+            
+            Download reports, create backup snapshots, and restore local data
+          </p>
+        </div>
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        {" "}
+        
         <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          {" "}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-600 mb-2 dark:text-slate-400">
-                {" "}
-                Select Month{" "}
-              </label>{" "}
+                
+                Select Month
+              </label>
               <div className="relative">
-                {" "}
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />{" "}
+                
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                   className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
                 >
-                  {" "}
+                  
                   {months.map((m, i) => (
                     <option key={m} value={i}>
-                      {" "}
-                      {m}{" "}
+                      
+                      {m}
                     </option>
-                  ))}{" "}
-                </select>{" "}
-              </div>{" "}
-            </div>{" "}
+                  ))}
+                </select>
+              </div>
+            </div>
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-600 mb-2 dark:text-slate-400">
-                {" "}
-                Select Year{" "}
-              </label>{" "}
+                
+                Select Year
+              </label>
               <div className="relative">
-                {" "}
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />{" "}
+                
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                   className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
                 >
-                  {" "}
+                  
                   {years.map((y) => (
                     <option key={y} value={y}>
-                      {" "}
-                      {y}{" "}
+                      
+                      {y}
                     </option>
-                  ))}{" "}
-                </select>{" "}
-              </div>{" "}
-            </div>{" "}
-          </div>{" "}
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
           <button
             onClick={handleExportExcel}
             disabled={isProcessing}
             className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/20"
           >
-            {" "}
+            
             {isProcessing ? (
               "Preparing export..."
             ) : (
               <>
-                {" "}
-                <Download className="w-5 h-5" /> Download Excel Report{" "}
+                
+                <Download className="w-5 h-5" /> Download Excel Report
               </>
-            )}{" "}
-          </button>{" "}
+            )}
+          </button>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {" "}
+            
             <button
               onClick={handleExportCsv}
               disabled={isProcessing}
               className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              {" "}
-              <Download className="w-4 h-4" /> Export CSV{" "}
-            </button>{" "}
+              
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
             <button
               onClick={handleExportJson}
               disabled={isProcessing}
               className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-slate-200 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              {" "}
-              <Database className="w-4 h-4" /> Export JSON Backup{" "}
-            </button>{" "}
-          </div>{" "}
-        </div>{" "}
+              
+              <Database className="w-4 h-4" /> Export JSON Backup
+            </button>
+          </div>
+        </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          {" "}
+          
           <div className="space-y-4">
-            {" "}
+            
             <div>
-              {" "}
+              
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {" "}
-                Server export only{" "}
-              </h2>{" "}
+                
+                Server export only
+              </h2>
               <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
-                {" "}
+                
                 Data is stored on the server, and this page produces exports for analysis or
-                archive. Local browser restore is no longer supported.{" "}
-              </p>{" "}
-            </div>{" "}
-          </div>{" "}
-        </div>{" "}
-      </div>{" "}
+                archive. Local browser restore is no longer supported.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-3xl shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        {" "}
+        
         <h3 className="text-slate-900 font-medium mb-4 dark:text-slate-200">
-          {" "}
-          What you can do here:{" "}
-        </h3>{" "}
+          
+          What you can do here:
+        </h3>
         <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-          {" "}
+          
           <li className="flex items-center gap-2">
-            {" "}
+            
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Export monthly reports as
-            Excel workbooks for each card{" "}
-          </li>{" "}
+            Excel workbooks for each card
+          </li>
           <li className="flex items-center gap-2">
-            {" "}
+            
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Download all transactions as
-            CSV for spreadsheet tools{" "}
-          </li>{" "}
+            CSV for spreadsheet tools
+          </li>
           <li className="flex items-center gap-2">
-            {" "}
+            
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Create JSON backups for
-            archive or transfer to another system{" "}
-          </li>{" "}
-        </ul>{" "}
-      </div>{" "}
+            archive or transfer to another system
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }

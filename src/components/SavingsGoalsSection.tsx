@@ -184,11 +184,11 @@ export default function SavingsGoalsSection() {
                       </span>
                     </div>
                     <div className="text-sm text-slate-400">
-                      Target:{" "}
+                      Target:
                       {formatMoney(
                         convertCurrency(goal.targetAmount, goal.currency, displayCurrency),
                         displayCurrency,
-                      )}{" "}
+                      )}
                       by {goal.targetDate}
                     </div>
                   </div>
@@ -228,8 +228,8 @@ export default function SavingsGoalsSection() {
                       {formatMoney(
                         convertCurrency(goal.currentAmount, goal.currency, displayCurrency),
                         displayCurrency,
-                      )}{" "}
-                      /{" "}
+                      )}
+                      /
                       {formatMoney(
                         convertCurrency(goal.targetAmount, goal.currency, displayCurrency),
                         displayCurrency,

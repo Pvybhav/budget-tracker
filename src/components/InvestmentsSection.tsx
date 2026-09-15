@@ -169,33 +169,33 @@ export default function InvestmentsSection() {
   };
   return (
     <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
-      {" "}
+      
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        {" "}
+        
         <div>
-          {" "}
+          
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-            {" "}
-            Investments{" "}
-          </div>{" "}
+            
+            Investments
+          </div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {" "}
-            Equity, mutual funds, and more{" "}
-          </h2>{" "}
+            
+            Equity, mutual funds, and more
+          </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {" "}
-            Track holdings across Zerodha, 5Paisa, and other platforms.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Track holdings across Zerodha, 5Paisa, and other platforms.
+          </p>
+        </div>
         <button
           type="button"
           onClick={openCreateModal}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-700"
         >
-          {" "}
-          <Plus className="h-4 w-4" /> Add investment{" "}
-        </button>{" "}
-      </div>{" "}
+          
+          <Plus className="h-4 w-4" /> Add investment
+        </button>
+      </div>
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr]">
         <input
           type="search"
@@ -254,44 +254,44 @@ export default function InvestmentsSection() {
           <option value="desc">Gain: highest first</option>
           <option value="asc">Gain: lowest first</option>
         </select>
-      </div>{" "}
+      </div>
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {" "}
+        
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          {" "}
-          <div className="text-sm text-slate-600 dark:text-slate-400">Invested</div>{" "}
+          
+          <div className="text-sm text-slate-600 dark:text-slate-400">Invested</div>
           <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            {" "}
-            {formatMoney(totals.invested, displayCurrency)}{" "}
-          </div>{" "}
-        </div>{" "}
+            
+            {formatMoney(totals.invested, displayCurrency)}
+          </div>
+        </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          {" "}
-          <div className="text-sm text-slate-600 dark:text-slate-400">Current value</div>{" "}
+          
+          <div className="text-sm text-slate-600 dark:text-slate-400">Current value</div>
           <div className="mt-1 text-lg font-semibold text-cyan-600 dark:text-cyan-400">
-            {" "}
-            {formatMoney(totals.current, displayCurrency)}{" "}
-          </div>{" "}
-        </div>{" "}
+            
+            {formatMoney(totals.current, displayCurrency)}
+          </div>
+        </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          {" "}
+          
           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            {" "}
+            
             {totals.gain >= 0 ? (
               <TrendingUp className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
             ) : (
               <TrendingDown className="h-4 w-4 text-rose-500 dark:text-rose-400" />
-            )}{" "}
-            Gain / loss{" "}
-          </div>{" "}
+            )}
+            Gain / loss
+          </div>
           <div
             className={`mt-1 text-lg font-semibold ${totals.gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
           >
-            {" "}
-            {formatMoney(totals.gain, displayCurrency)}{" "}
-          </div>{" "}
-        </div>{" "}
-      </div>{" "}
+            
+            {formatMoney(totals.gain, displayCurrency)}
+          </div>
+        </div>
+      </div>
       {subtypeTotals.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2" aria-label="Current value by investment subtype">
           {subtypeTotals.map(([subtype, value]) => (
@@ -306,7 +306,7 @@ export default function InvestmentsSection() {
             </div>
           ))}
         </div>
-      )}{" "}
+      )}
       {classificationTotals.length > 0 && (
         <div
           className="mt-3 flex flex-wrap gap-2"
@@ -326,7 +326,7 @@ export default function InvestmentsSection() {
             </div>
           ))}
         </div>
-      )}{" "}
+      )}
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/50">
         <div className="flex items-baseline justify-between gap-3">
           <div>
@@ -381,27 +381,27 @@ export default function InvestmentsSection() {
             Add a mutual fund with a subtype to see its allocation here.
           </div>
         )}
-      </div>{" "}
+      </div>
       {filteredInvestments.length > 0 ? (
         <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          {" "}
+          
           <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
-            {" "}
+            
             <thead className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-              {" "}
+              
               <tr>
-                {" "}
-                <th className="px-4 py-3 font-medium">Investment</th>{" "}
-                <th className="px-4 py-3 font-medium">Platform</th>{" "}
-                <th className="px-4 py-3 font-medium">Type</th>{" "}
-                <th className="px-4 py-3 font-medium text-right">Units</th>{" "}
-                <th className="px-4 py-3 font-medium text-right"> Current value </th>{" "}
-                <th className="px-4 py-3 font-medium">Updated</th>{" "}
-                <th className="px-4 py-3 text-right font-medium">Actions</th>{" "}
-              </tr>{" "}
-            </thead>{" "}
+                
+                <th className="px-4 py-3 font-medium">Investment</th>
+                <th className="px-4 py-3 font-medium">Platform</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium text-right">Units</th>
+                <th className="px-4 py-3 font-medium text-right"> Current value </th>
+                <th className="px-4 py-3 font-medium">Updated</th>
+                <th className="px-4 py-3 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {" "}
+              
               {visibleInvestments.map((investment) => {
                 const investedConverted = convertCurrency(
                   investment.investedAmount,
@@ -416,18 +416,18 @@ export default function InvestmentsSection() {
                 const gain = currentConverted - investedConverted;
                 return (
                   <tr key={investment.id} className="hover:bg-slate-100 dark:hover:bg-slate-800/20">
-                    {" "}
+                    
                     <td className="px-4 py-3">
-                      {" "}
+                      
                       <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {" "}
-                        {investment.name}{" "}
-                      </div>{" "}
+                        
+                        {investment.name}
+                      </div>
                       {investment.note && (
                         <div className="mt-0.5 text-xs text-slate-500"> {investment.note} </div>
-                      )}{" "}
-                    </td>{" "}
-                    <td className="px-4 py-3">{investment.platform}</td>{" "}
+                      )}
+                    </td>
+                    <td className="px-4 py-3">{investment.platform}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-2">
                         {(() => {
@@ -452,19 +452,19 @@ export default function InvestmentsSection() {
                           }
                         </div>
                       )}
-                    </td>{" "}
+                    </td>
                     <td className="px-4 py-3 text-right">
-                      {" "}
+                      
                       {investment.subtype === "pf"
                         ? "-"
-                        : investment.quantity.toLocaleString("en-IN")}{" "}
-                    </td>{" "}
+                        : investment.quantity.toLocaleString("en-IN")}
+                    </td>
                     <td className="px-4 py-3 text-right">
-                      {" "}
+                      
                       <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {" "}
-                        {formatMoney(currentConverted, displayCurrency)}{" "}
-                      </div>{" "}
+                        
+                        {formatMoney(currentConverted, displayCurrency)}
+                      </div>
                       <div
                         className={
                           gain >= 0
@@ -472,16 +472,16 @@ export default function InvestmentsSection() {
                             : "text-xs text-rose-600 dark:text-rose-400"
                         }
                       >
-                        {" "}
-                        {gain >= 0 ? "+" : ""} {formatMoney(gain, displayCurrency)}{" "}
+                        
+                        {gain >= 0 ? "+" : ""} {formatMoney(gain, displayCurrency)}
                         <div className="text-xs text-slate-500">
                           {investedConverted !== 0
                             ? `${((gain / investedConverted) * 100).toFixed(2)}% gain`
                             : "Gain n/a"}
                         </div>
-                      </div>{" "}
-                    </td>{" "}
-                    <td className="px-4 py-3">{investment.purchaseDate}</td>{" "}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{investment.purchaseDate}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <button
@@ -501,12 +501,12 @@ export default function InvestmentsSection() {
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                    </td>{" "}
+                    </td>
                   </tr>
                 );
-              })}{" "}
-            </tbody>{" "}
-          </table>{" "}
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="mt-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/40 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
@@ -514,7 +514,7 @@ export default function InvestmentsSection() {
             ? "No investments match the selected filters."
             : "No investments recorded yet. Add your first holding to start tracking your portfolio."}
         </div>
-      )}{" "}
+      )}
       {filteredInvestments.length > 0 && (
         <div className="mt-4 flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
           <span>
@@ -543,7 +543,7 @@ export default function InvestmentsSection() {
             </button>
           </div>
         </div>
-      )}{" "}
+      )}
       <AddInvestmentModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -551,7 +551,7 @@ export default function InvestmentsSection() {
           setSelectedInvestment(undefined);
         }}
         initialInvestment={selectedInvestment}
-      />{" "}
+      />
     </section>
   );
 }

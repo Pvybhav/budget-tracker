@@ -102,7 +102,7 @@ export default function CategoryExpensesModal({
             </h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Expenses in{" "}
+            Expenses in
             <span className="text-slate-700 dark:text-slate-300 font-medium">{periodName}</span>
           </p>
         </div>

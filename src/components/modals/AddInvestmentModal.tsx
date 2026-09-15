@@ -150,36 +150,36 @@ export default function AddInvestmentModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      {" "}
+      
       <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl max-h-[90vh] overflow-y-auto">
-        {" "}
+        
         <button
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           title="Close"
         >
-          {" "}
-          <X className="h-5 w-5" />{" "}
-        </button>{" "}
+          
+          <X className="h-5 w-5" />
+        </button>
         <div className="border-b border-slate-200 dark:border-slate-800 p-6">
-          {" "}
+          
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {" "}
-            {initialInvestment ? "Edit Investment" : "Add Investment"}{" "}
-          </h2>{" "}
+            
+            {initialInvestment ? "Edit Investment" : "Add Investment"}
+          </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {" "}
-            Record the latest value from your investment platform.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Record the latest value from your investment platform.
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          {" "}
+          
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Investment name{" "}
+              
+              Investment name
               <input
                 required
                 name="name"
@@ -187,11 +187,11 @@ export default function AddInvestmentModal({
                 onChange={handleChange}
                 placeholder="e.g. HDFC Flexi Cap"
                 className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
+              />
+            </label>
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Platform / broker{" "}
+              
+              Platform / broker
               <select
                 required
                 name="platform"
@@ -208,27 +208,27 @@ export default function AddInvestmentModal({
                     {platform}
                   </option>
                 ))}
-              </select>{" "}
-            </label>{" "}
-          </div>{" "}
+              </select>
+            </label>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Instrument type{" "}
+              
+              Instrument type
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               >
-                {" "}
-                <option value="equity">Equity</option>{" "}
-                <option value="mutual-fund">Mutual Fund</option> <option value="etf">ETF</option>{" "}
-                <option value="bond">Bond</option> <option value="other">Other</option>{" "}
-                <option value="retirement">Retirement savings</option>{" "}
-              </select>{" "}
-            </label>{" "}
+                
+                <option value="equity">Equity</option>
+                <option value="mutual-fund">Mutual Fund</option> <option value="etf">ETF</option>
+                <option value="bond">Bond</option> <option value="other">Other</option>
+                <option value="retirement">Retirement savings</option>
+              </select>
+            </label>
             {(formData.type === "mutual-fund" || formData.type === "retirement") && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
                 {formData.type === "retirement" ? "Retirement vehicle" : "Fund subtype"}
@@ -251,7 +251,7 @@ export default function AddInvestmentModal({
                     ))}
                 </select>
               </label>
-            )}{" "}
+            )}
             {(formData.type === "mutual-fund" || formData.type === "equity") && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
                 Fund classification
@@ -268,11 +268,11 @@ export default function AddInvestmentModal({
                   ))}
                 </select>
               </label>
-            )}{" "}
+            )}
             {formData.subtype !== "pf" && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
-                {" "}
-                Quantity / units{" "}
+                
+                Quantity / units
                 <input
                   required
                   min="0"
@@ -282,15 +282,15 @@ export default function AddInvestmentModal({
                   value={formData.quantity}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-                />{" "}
+                />
               </label>
-            )}{" "}
-          </div>{" "}
+            )}
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              {formData.subtype === "pf" ? "Newly invested amount" : "Invested amount"}{" "}
+              
+              {formData.subtype === "pf" ? "Newly invested amount" : "Invested amount"}
               <input
                 required
                 min="0"
@@ -300,12 +300,12 @@ export default function AddInvestmentModal({
                 value={formData.investedAmount}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
+              />
+            </label>
             {formData.subtype !== "pf" && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
-                {" "}
-                Current value{" "}
+                
+                Current value
                 <input
                   required
                   min="0"
@@ -315,24 +315,24 @@ export default function AddInvestmentModal({
                   value={formData.currentValue}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-                />{" "}
+                />
               </label>
-            )}{" "}
+            )}
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Currency{" "}
+              
+              Currency
               <CurrencySelect
                 value={formData.currency}
                 onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               />
-            </label>{" "}
-          </div>{" "}
+            </label>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Purchase date{" "}
+              
+              Purchase date
               <input
                 required
                 type="date"
@@ -340,34 +340,34 @@ export default function AddInvestmentModal({
                 value={formData.purchaseDate}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
+              />
+            </label>
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {" "}
-              Note{" "}
+              
+              Note
               <input
                 name="note"
                 value={formData.note}
                 onChange={handleChange}
                 placeholder="Optional"
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-              />{" "}
-            </label>{" "}
-          </div>{" "}
+              />
+            </label>
+          </div>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {" "}
+            
             {isSubmitting
               ? "Saving..."
               : initialInvestment
                 ? "Update Investment"
-                : "Save Investment"}{" "}
-          </button>{" "}
-        </form>{" "}
-      </div>{" "}
+                : "Save Investment"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

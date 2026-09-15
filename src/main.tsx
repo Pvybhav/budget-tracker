@@ -15,11 +15,11 @@ void Promise.all([
 ]).finally(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      {" "}
+      
       <NetworkToastProvider>
-        {" "}
-        <App />{" "}
-      </NetworkToastProvider>{" "}
+        
+        <App />
+      </NetworkToastProvider>
     </StrictMode>,
   );
 });

@@ -1,32 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { ThemeContext } from "./ThemeContextCore";
 
 export type Theme = "light" | "dark";
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first
-    const saved = localStorage.getItem("budget-tracker-theme") as Theme | null;
-    if (saved) return saved;
-
-    // Check system preference
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") {
     return "light";
-  });
+  }
 
-  useEffect(() => {
-    // Save to localStorage
-    localStorage.setItem("budget-tracker-theme", theme);
+  const saved = window.localStorage.getItem("budget-tracker-theme") as Theme | null;
+  if (saved === "light" || saved === "dark") {
+    return saved;
+  }
 
-    // Update document class
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+
+  useLayoutEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+    window.localStorage.setItem("budget-tracker-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

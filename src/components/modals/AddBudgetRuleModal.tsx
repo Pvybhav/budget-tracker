@@ -100,54 +100,54 @@ export default function AddBudgetRuleModal({
   };
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      {" "}
+      
       <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        {" "}
+        
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
-          {" "}
-          <X className="w-5 h-5" />{" "}
-        </button>{" "}
+          
+          <X className="w-5 h-5" />
+        </button>
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-          {" "}
+          
           <h2 className="text-xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
-            {" "}
-            {initialRule ? "Edit Budget Rule" : "Add Budget Rule"}{" "}
-          </h2>{" "}
-        </div>{" "}
+            
+            {initialRule ? "Edit Budget Rule" : "Add Budget Rule"}
+          </h2>
+        </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {" "}
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {" "}
-                Applies To{" "}
-              </label>{" "}
+                
+                Applies To
+              </label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
-                {" "}
+                
                 {TYPE_OPTIONS.map((t) => (
                   <option key={t.value} value={t.value}>
-                    {" "}
-                    {t.label}{" "}
+                    
+                    {t.label}
                   </option>
-                ))}{" "}
-              </select>{" "}
-            </div>{" "}
+                ))}
+              </select>
+            </div>
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {" "}
-                {formData.type === "category" ? "Category" : "Card"}{" "}
-              </label>{" "}
+                
+                {formData.type === "category" ? "Category" : "Card"}
+              </label>
               <select
                 required
                 name="targetId"
@@ -155,25 +155,25 @@ export default function AddBudgetRuleModal({
                 onChange={handleChange}
                 className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
-                {" "}
-                <option value="">Select...</option>{" "}
+                
+                <option value="">Select...</option>
                 {options.map((option) => (
                   <option key={option.id} value={option.id}>
-                    {" "}
-                    {option.title}{" "}
+                    
+                    {option.title}
                   </option>
-                ))}{" "}
-              </select>{" "}
-            </div>{" "}
-          </div>{" "}
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {" "}
-                Threshold Amount{" "}
-              </label>{" "}
+                
+                Threshold Amount
+              </label>
               <div className="flex gap-2">
                 <input
                   required
@@ -183,72 +183,72 @@ export default function AddBudgetRuleModal({
                   value={formData.thresholdAmount}
                   onChange={handleChange}
                   className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
-                />{" "}
+                />
                 <CurrencySelect
                   value={formData.currency}
                   onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
                 />
               </div>
-            </div>{" "}
+            </div>
             <div>
-              {" "}
+              
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                {" "}
-                Period{" "}
-              </label>{" "}
+                
+                Period
+              </label>
               <select
                 name="period"
                 value={formData.period}
                 onChange={handleChange}
                 className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
               >
-                {" "}
+                
                 {PERIOD_OPTIONS.map((p) => (
                   <option key={p.value} value={p.value}>
-                    {" "}
-                    {p.label}{" "}
+                    
+                    {p.label}
                   </option>
-                ))}{" "}
-              </select>{" "}
-            </div>{" "}
-          </div>{" "}
+                ))}
+              </select>
+            </div>
+          </div>
           <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            {" "}
+            
             <input
               type="checkbox"
               name="enabled"
               checked={formData.enabled}
               onChange={handleChange}
               className="rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />{" "}
-            Rule enabled{" "}
-          </label>{" "}
+            />
+            Rule enabled
+          </label>
           <div>
-            {" "}
+            
             <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-              {" "}
-              Notes (optional){" "}
-            </label>{" "}
+              
+              Notes (optional)
+            </label>
             <textarea
               name="note"
               value={formData.note}
               onChange={handleChange}
               rows={2}
               className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-sky-500"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div className="pt-2">
-            {" "}
+            
             <button
               type="submit"
               className="w-full bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              {" "}
-              {initialRule ? "Save Changes" : "Add Rule"}{" "}
-            </button>{" "}
-          </div>{" "}
-        </form>{" "}
-      </div>{" "}
+              
+              {initialRule ? "Save Changes" : "Add Rule"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

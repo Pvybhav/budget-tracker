@@ -107,43 +107,43 @@ export default function NetWorthHistoryPage() {
   }));
   return (
     <div className="space-y-6">
-      {" "}
+      
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        {" "}
+        
         <div>
-          {" "}
+          
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {" "}
-            Net Worth History{" "}
-          </h1>{" "}
+            
+            Net Worth History
+          </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {" "}
-            Capture monthly snapshots of your assets and liabilities.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Capture monthly snapshots of your assets and liabilities.
+          </p>
+        </div>
         <button
           onClick={saveSnapshot}
           disabled={!current}
           className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:opacity-50"
         >
-          {" "}
-          <Save className="h-4 w-4" /> Save current snapshot{" "}
-        </button>{" "}
-      </div>{" "}
+          
+          <Save className="h-4 w-4" /> Save current snapshot
+        </button>
+      </div>
       {current && (
         <div className="grid gap-3 sm:grid-cols-3">
-          {" "}
+          
           <div
             tabIndex={0}
             aria-describedby="net-worth-assets-details"
             className="group relative rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm outline-none focus:ring-2 focus:ring-emerald-500 dark:border-emerald-500/20 dark:bg-emerald-500/5"
           >
-            {" "}
-            <div className="text-sm text-slate-600 dark:text-slate-400">Assets</div>{" "}
+            
+            <div className="text-sm text-slate-600 dark:text-slate-400">Assets</div>
             <div className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
-              {" "}
-              {formatMoney(current.assets, displayCurrency)}{" "}
-            </div>{" "}
+              
+              {formatMoney(current.assets, displayCurrency)}
+            </div>
             <div
               id="net-worth-assets-details"
               className="invisible pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 text-sm opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900"
@@ -164,18 +164,18 @@ export default function NetWorthHistoryPage() {
                 <span>{formatMoney(current.savingsValue, displayCurrency)}</span>
               </div>
             </div>
-          </div>{" "}
+          </div>
           <div
             tabIndex={0}
             aria-describedby="net-worth-liabilities-details"
             className="group relative rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm outline-none focus:ring-2 focus:ring-rose-500 dark:border-rose-500/20 dark:bg-rose-500/5"
           >
-            {" "}
-            <div className="text-sm text-slate-600 dark:text-slate-400">Liabilities</div>{" "}
+            
+            <div className="text-sm text-slate-600 dark:text-slate-400">Liabilities</div>
             <div className="mt-1 text-2xl font-semibold text-rose-700 dark:text-rose-300">
-              {" "}
-              {formatMoney(current.liabilities, displayCurrency)}{" "}
-            </div>{" "}
+              
+              {formatMoney(current.liabilities, displayCurrency)}
+            </div>
             <div
               id="net-worth-liabilities-details"
               className="invisible pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 text-sm opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 dark:border-slate-700 dark:bg-slate-900"
@@ -192,46 +192,46 @@ export default function NetWorthHistoryPage() {
                 <span>{formatMoney(current.loansValue, displayCurrency)}</span>
               </div>
             </div>
-          </div>{" "}
+          </div>
           <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-            {" "}
-            <div className="text-sm text-slate-600 dark:text-slate-400">Net worth</div>{" "}
+            
+            <div className="text-sm text-slate-600 dark:text-slate-400">Net worth</div>
             <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-              {" "}
-              {formatMoney(current.netWorth, displayCurrency)}{" "}
-            </div>{" "}
-          </div>{" "}
+              
+              {formatMoney(current.netWorth, displayCurrency)}
+            </div>
+          </div>
         </div>
-      )}{" "}
+      )}
       {chartData.length > 1 && (
         <div className="h-80 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          {" "}
+          
           <h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">
             Net worth trend
-          </h2>{" "}
+          </h2>
           <ResponsiveContainer width="100%" height="90%">
-            {" "}
+            
             <LineChart data={chartData}>
-              {" "}
-              <XAxis dataKey="label" stroke="#94a3b8" /> <YAxis stroke="#94a3b8" />{" "}
-              <Tooltip formatter={(value) => formatMoney(Number(value), displayCurrency)} />{" "}
+              
+              <XAxis dataKey="label" stroke="#94a3b8" /> <YAxis stroke="#94a3b8" />
+              <Tooltip formatter={(value) => formatMoney(Number(value), displayCurrency)} />
               <Line
                 type="monotone"
                 dataKey="netWorth"
                 stroke="#34d399"
                 strokeWidth={3}
                 dot={{ r: 4 }}
-              />{" "}
-            </LineChart>{" "}
-          </ResponsiveContainer>{" "}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-      )}{" "}
+      )}
       {chartData.length <= 1 && (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100 p-10 text-center text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500">
-          {" "}
-          Save another snapshot next month to see the trend chart.{" "}
+          
+          Save another snapshot next month to see the trend chart.
         </div>
-      )}{" "}
+      )}
     </div>
   );
 }

@@ -205,7 +205,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
                     {"monthly" in previews && (
                       <span className="text-slate-500 dark:text-slate-400">
-                        Monthly:{" "}
+                        Monthly:
                         <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.monthly!)}
                         </span>
@@ -213,7 +213,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
                     )}
                     {"weekly" in previews && previews.weekly != null && (
                       <span className="text-slate-500 dark:text-slate-400">
-                        Weekly:{" "}
+                        Weekly:
                         <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.weekly)}
                         </span>
@@ -221,7 +221,7 @@ export default function AddCategoryModal({ isOpen, onClose, initialCategory }: P
                     )}
                     {"daily" in previews && previews.daily != null && (
                       <span className="text-slate-500 dark:text-slate-400">
-                        Daily:{" "}
+                        Daily:
                         <span className="text-slate-700 dark:text-slate-200 font-semibold">
                           {fmtPreview(previews.daily)}
                         </span>

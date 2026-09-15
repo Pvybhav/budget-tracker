@@ -113,36 +113,36 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      {" "}
+      
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
-        {" "}
+        
         <button
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           title="Close"
         >
-          {" "}
-          <X className="h-5 w-5" />{" "}
-        </button>{" "}
+          
+          <X className="h-5 w-5" />
+        </button>
         <div className="border-b border-slate-200 dark:border-slate-800 p-6">
-          {" "}
+          
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {" "}
-            {initialBill ? "Edit Bill" : "Add Bill"}{" "}
-          </h2>{" "}
-        </div>{" "}
+            
+            {initialBill ? "Edit Bill" : "Add Bill"}
+          </h2>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          {" "}
+          
           <div>
-            {" "}
+            
             <label
               htmlFor="bill-name"
               className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
             >
-              {" "}
-              Bill Name{" "}
-            </label>{" "}
+              
+              Bill Name
+            </label>
             <input
               id="bill-name"
               required
@@ -151,50 +151,50 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               onChange={handleChange}
               placeholder="e.g. Home broadband"
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div className="space-y-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 dark:bg-slate-950/50">
-            {" "}
+            
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              {" "}
+              
               <input
                 type="checkbox"
                 name="isSubscription"
                 checked={formData.isSubscription}
                 onChange={handleChange}
                 className="h-4 w-4 accent-emerald-500"
-              />{" "}
-              This is a recurring subscription{" "}
-            </label>{" "}
+              />
+              This is a recurring subscription
+            </label>
             {formData.isSubscription && (
               <label className="block text-sm text-slate-500 dark:text-slate-400">
-                {" "}
-                Renewal frequency{" "}
+                
+                Renewal frequency
                 <select
                   name="subscriptionFrequency"
                   value={formData.subscriptionFrequency}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100"
                 >
-                  {" "}
-                  <option value="monthly">Monthly</option>{" "}
-                  <option value="quarterly">Quarterly</option>{" "}
-                  <option value="yearly">Yearly</option>{" "}
-                </select>{" "}
+                  
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
               </label>
-            )}{" "}
-          </div>{" "}
+            )}
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label
                 htmlFor="bill-type"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                {" "}
-                Bill Type{" "}
-              </label>{" "}
+                
+                Bill Type
+              </label>
               <select
                 id="bill-type"
                 name="type"
@@ -202,24 +202,24 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               >
-                {" "}
+                
                 {TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {" "}
-                    {option.label}{" "}
+                    
+                    {option.label}
                   </option>
-                ))}{" "}
-              </select>{" "}
-            </div>{" "}
+                ))}
+              </select>
+            </div>
             <div>
-              {" "}
+              
               <label
                 htmlFor="bill-provider"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                {" "}
-                Provider (optional){" "}
-              </label>{" "}
+                
+                Provider (optional)
+              </label>
               <input
                 id="bill-provider"
                 name="provider"
@@ -227,20 +227,20 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 onChange={handleChange}
                 placeholder="e.g. Airtel"
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-              />{" "}
-            </div>{" "}
-          </div>{" "}
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label
                 htmlFor="bill-amount"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                {" "}
-                Amount{" "}
-              </label>{" "}
+                
+                Amount
+              </label>
               <input
                 id="bill-amount"
                 required
@@ -251,29 +251,29 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 value={formData.amount}
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-              />{" "}
-            </div>{" "}
+              />
+            </div>
             <div>
-              {" "}
+              
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
-                {" "}
-                Currency{" "}
-              </label>{" "}
+                
+                Currency
+              </label>
               <CurrencySelect
                 value={formData.currency}
                 onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               />
-            </div>{" "}
+            </div>
             <div>
-              {" "}
+              
               <label
                 htmlFor="bill-due-date"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                {" "}
-                Due Date{" "}
-              </label>{" "}
+                
+                Due Date
+              </label>
               <input
                 id="bill-due-date"
                 required
@@ -282,32 +282,32 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 value={formData.dueDate}
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-              />{" "}
-            </div>{" "}
-          </div>{" "}
+              />
+            </div>
+          </div>
           <div>
-            {" "}
+            
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              {" "}
+              
               <input
                 type="checkbox"
                 name="paid"
                 checked={formData.paid}
                 onChange={handleChange}
                 className="h-4 w-4 accent-emerald-500"
-              />{" "}
-              Already paid{" "}
-            </label>{" "}
-          </div>{" "}
+              />
+              Already paid
+            </label>
+          </div>
           <div>
-            {" "}
+            
             <label
               htmlFor="bill-note"
               className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
             >
-              {" "}
-              Note (optional){" "}
-            </label>{" "}
+              
+              Note (optional)
+            </label>
             <textarea
               id="bill-note"
               name="note"
@@ -315,18 +315,18 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               value={formData.note}
               onChange={handleChange}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition-colors hover:bg-emerald-700"
           >
-            {" "}
-            {submitLabel}{" "}
-          </button>{" "}
-        </form>{" "}
-      </div>{" "}
+            
+            {submitLabel}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -40,37 +40,37 @@ function ProtectedApp({ onLogout }: { onLogout: () => void }) {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        {" "}
+        
         <Route path="/" element={<Layout logout={onLogout} />}>
-          {" "}
-          <Route index element={<HomePage />} />{" "}
-          <Route path="cards" element={<ManageCardsPage />} />{" "}
-          <Route path="rewards" element={<RewardsPage />} />{" "}
-          <Route path="categories" element={<ManageCategoriesPage />} />{" "}
-          <Route path="expenses/monthly" element={<ManageExpensesPage mode="monthly" />} />{" "}
-          <Route path="expenses/yearly" element={<ManageExpensesPage mode="yearly" />} />{" "}
-          <Route path="expenses/emi" element={<ManageExpensesPage mode="emi" />} />{" "}
-          <Route path="payments" element={<ManagePaymentsPage />} />{" "}
-          <Route path="transfers" element={<ManageTransfersPage />} />{" "}
-          <Route path="import" element={<ImportPage />} />{" "}
-          <Route path="reconciliation" element={<ReconciliationPage />} />{" "}
-          <Route path="calendar" element={<FinancialCalendarPage />} />{" "}
-          <Route path="subscriptions" element={<SubscriptionsPage />} />{" "}
-          <Route path="net-worth-history" element={<NetWorthHistoryPage />} />{" "}
-          <Route path="bills" element={<ManageBillsPage />} />{" "}
-          <Route path="income" element={<ManageIncomePage />} />{" "}
-          <Route path="loans" element={<ManageLoansPage />} />{" "}
-          <Route path="insurance" element={<ManageInsurancePage />} />{" "}
-          <Route path="budget-rules" element={<ManageBudgetRulesPage />} />{" "}
-          <Route path="savings-goals" element={<SavingsGoalsPage />} />{" "}
-          <Route path="investments" element={<InvestmentsPage />} />{" "}
-          <Route path="visualize" element={<VisualizePage />} />{" "}
-          <Route path="export" element={<ExportPage />} />{" "}
-          <Route path="household" element={<ManageHouseholdPage />} />{" "}
-          <Route path="accept-invite" element={<AcceptInvitePage />} />{" "}
-          <Route path="about" element={<AboutPage />} />{" "}
-          <Route path="*" element={<Navigate to="/" replace />} />{" "}
-        </Route>{" "}
+          
+          <Route index element={<HomePage />} />
+          <Route path="cards" element={<ManageCardsPage />} />
+          <Route path="rewards" element={<RewardsPage />} />
+          <Route path="categories" element={<ManageCategoriesPage />} />
+          <Route path="expenses/monthly" element={<ManageExpensesPage mode="monthly" />} />
+          <Route path="expenses/yearly" element={<ManageExpensesPage mode="yearly" />} />
+          <Route path="expenses/emi" element={<ManageExpensesPage mode="emi" />} />
+          <Route path="payments" element={<ManagePaymentsPage />} />
+          <Route path="transfers" element={<ManageTransfersPage />} />
+          <Route path="import" element={<ImportPage />} />
+          <Route path="reconciliation" element={<ReconciliationPage />} />
+          <Route path="calendar" element={<FinancialCalendarPage />} />
+          <Route path="subscriptions" element={<SubscriptionsPage />} />
+          <Route path="net-worth-history" element={<NetWorthHistoryPage />} />
+          <Route path="bills" element={<ManageBillsPage />} />
+          <Route path="income" element={<ManageIncomePage />} />
+          <Route path="loans" element={<ManageLoansPage />} />
+          <Route path="insurance" element={<ManageInsurancePage />} />
+          <Route path="budget-rules" element={<ManageBudgetRulesPage />} />
+          <Route path="savings-goals" element={<SavingsGoalsPage />} />
+          <Route path="investments" element={<InvestmentsPage />} />
+          <Route path="visualize" element={<VisualizePage />} />
+          <Route path="export" element={<ExportPage />} />
+          <Route path="household" element={<ManageHouseholdPage />} />
+          <Route path="accept-invite" element={<AcceptInvitePage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       </Routes>
     </Suspense>
   );
@@ -93,17 +93,17 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200">
-        {" "}
-        Checking session...{" "}
+        
+        Checking session...
       </div>
     );
   }
   return (
     <ThemeProvider>
       <HashRouter>
-        {" "}
+        
         <Routes>
-          {" "}
+          
           <Route
             path="/login"
             element={
@@ -113,7 +113,7 @@ function App() {
                 <LoginPage onAuthenticated={() => setIsAuthenticated(true)} />
               )
             }
-          />{" "}
+          />
           <Route
             path="*"
             element={
@@ -123,8 +123,8 @@ function App() {
                 <Navigate to="/login" replace />
               )
             }
-          />{" "}
-        </Routes>{" "}
+          />
+        </Routes>
       </HashRouter>
     </ThemeProvider>
   );

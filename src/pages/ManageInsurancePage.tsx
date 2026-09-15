@@ -94,28 +94,28 @@ export default function ManageInsurancePage() {
   };
   return (
     <div className="space-y-6">
-      {" "}
+      
       <div className="flex items-center justify-between">
-        {" "}
+        
         <div>
-          {" "}
+          
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {" "}
-            Manage Insurance{" "}
-          </h1>{" "}
+            
+            Manage Insurance
+          </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {" "}
-            Track health, life, and vehicle policies with premium due dates.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Track health, life, and vehicle policies with premium due dates.
+          </p>
+        </div>
         <button
           onClick={openAddModal}
           className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
-          {" "}
-          <Plus className="w-4 h-4" /> Add Policy{" "}
-        </button>{" "}
-      </div>{" "}
+          
+          <Plus className="w-4 h-4" /> Add Policy
+        </button>
+      </div>
       <input
         type="search"
         value={search}
@@ -126,15 +126,15 @@ export default function ManageInsurancePage() {
         placeholder="Search policies, providers, or policy numbers"
         aria-label="Search insurance policies"
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      />{" "}
+      />
       {!policies || policies.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/40 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
-          {" "}
-          No insurance policies added yet.{" "}
+          
+          No insurance policies added yet.
         </div>
       ) : (
         <div className="space-y-4">
-          {" "}
+          
           {filteredPolicies.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-400">
               No insurance policies match your search.
@@ -147,109 +147,109 @@ export default function ManageInsurancePage() {
                   key={policy.id}
                   className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5"
                 >
-                  {" "}
+                  
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    {" "}
+                    
                     <div className="space-y-1">
-                      {" "}
+                      
                       <div className="flex items-center gap-2">
-                        {" "}
+                        
                         {(() => {
                           const Icon = INSURANCE_TYPE_ICONS[policy.type] ?? ShieldCheck;
                           return <Icon className="h-4 w-4 text-sky-400" aria-hidden="true" />;
-                        })()}{" "}
+                        })()}
                         <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                          {" "}
-                          {policy.policyName}{" "}
-                        </h3>{" "}
+                          
+                          {policy.policyName}
+                        </h3>
                         <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                          {" "}
-                          {TYPE_LABELS[policy.type]}{" "}
-                        </span>{" "}
+                          
+                          {TYPE_LABELS[policy.type]}
+                        </span>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[11px] uppercase tracking-wide ${STATUS_STYLES[summary.status]}`}
                         >
-                          {" "}
-                          {summary.status}{" "}
-                        </span>{" "}
-                      </div>{" "}
+                          
+                          {summary.status}
+                        </span>
+                      </div>
                       <div className="text-sm text-slate-600 dark:text-slate-400">
-                        {" "}
-                        {policy.provider} {policy.policyNumber ? ` · #${policy.policyNumber}` : ""}{" "}
-                        · Sum assured{" "}
+                        
+                        {policy.provider} {policy.policyNumber ? ` · #${policy.policyNumber}` : ""}
+                        · Sum assured
                         {formatMoney(
                           convertCurrency(policy.sumAssured, policy.currency, displayCurrency),
                           displayCurrency,
-                        )}{" "}
-                      </div>{" "}
-                    </div>{" "}
+                        )}
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
-                      {" "}
+                      
                       <button
                         onClick={() => openPaymentModal(policy)}
                         className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white"
                       >
-                        {" "}
-                        Record Premium Paid{" "}
-                      </button>{" "}
+                        
+                        Record Premium Paid
+                      </button>
                       <button
                         onClick={() => openEditModal(policy)}
                         className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         title="Edit policy"
                       >
-                        {" "}
-                        <Pencil className="h-4 w-4" />{" "}
-                      </button>{" "}
+                        
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleDelete(policy)}
                         className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                         title="Delete policy"
                       >
-                        {" "}
-                        <Trash2 className="h-4 w-4" />{" "}
-                      </button>{" "}
-                    </div>{" "}
-                  </div>{" "}
+                        
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {" "}
+                    
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3">
-                      {" "}
-                      <div className="text-sm text-slate-600 dark:text-slate-400">Premium</div>{" "}
+                      
+                      <div className="text-sm text-slate-600 dark:text-slate-400">Premium</div>
                       <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {" "}
+                        
                         {formatMoney(
                           convertCurrency(policy.premiumAmount, policy.currency, displayCurrency),
                           displayCurrency,
-                        )}{" "}
-                        / {policy.premiumFrequency}{" "}
-                      </div>{" "}
-                    </div>{" "}
+                        )}
+                        / {policy.premiumFrequency}
+                      </div>
+                    </div>
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3">
-                      {" "}
+                      
                       <div className="text-sm text-slate-600 dark:text-slate-400">Next Due</div>
                       <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {" "}
-                        {formatDateOnly(summary.nextDueDate)}{" "}
-                      </div>{" "}
-                    </div>{" "}
+                        
+                        {formatDateOnly(summary.nextDueDate)}
+                      </div>
+                    </div>
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3">
-                      {" "}
+                      
                       <div className="text-sm text-slate-600 dark:text-slate-400">Total Paid</div>
                       <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {" "}
+                        
                         {formatMoney(
                           convertCurrency(summary.totalPaid, policy.currency, displayCurrency),
                           displayCurrency,
-                        )}{" "}
-                      </div>{" "}
-                    </div>{" "}
-                  </div>{" "}
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   {policy.note && (
                     <div className="mt-3 text-sm text-slate-700 dark:text-slate-400">
-                      {" "}
-                      {policy.note}{" "}
+                      
+                      {policy.note}
                     </div>
-                  )}{" "}
+                  )}
                   {(policy.premiumPayments?.length ?? 0) > 0 && (
                     <details className="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
                       <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -289,13 +289,13 @@ export default function ManageInsurancePage() {
                           })}
                       </div>
                     </details>
-                  )}{" "}
+                  )}
                 </div>
               );
             })
-          )}{" "}
+          )}
         </div>
-      )}{" "}
+      )}
       <PaginationControls
         page={page}
         totalItems={filteredPolicies.length}
@@ -306,7 +306,7 @@ export default function ManageInsurancePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialPolicy={policyToEdit}
-      />{" "}
+      />
       {policyToPay && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-md shadow-2xl relative p-6">
@@ -321,7 +321,7 @@ export default function ManageInsurancePage() {
               Record premium payment
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              {policyToPay.policyName} ·{" "}
+              {policyToPay.policyName} ·
               {formatMoney(
                 convertCurrency(policyToPay.premiumAmount, policyToPay.currency, displayCurrency),
                 displayCurrency,
@@ -397,7 +397,7 @@ export default function ManageInsurancePage() {
             </div>
           </div>
         </div>
-      )}{" "}
+      )}
     </div>
   );
 }

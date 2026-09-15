@@ -85,7 +85,7 @@ export default function MonthlySummary({ className }: { className?: string }) {
         <div className="col-span-1 text-right">
           <div className="text-sm text-slate-600 dark:text-slate-400">Net</div>
           <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {formatMoney(net, displayCurrency)}{" "}
+            {formatMoney(net, displayCurrency)}
           </div>
         </div>
       </div>

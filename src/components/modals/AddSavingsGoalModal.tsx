@@ -70,35 +70,35 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
   };
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      {" "}
+      
       <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        {" "}
+        
         <button
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
-          {" "}
-          <X className="w-5 h-5" />{" "}
-        </button>{" "}
+          
+          <X className="w-5 h-5" />
+        </button>
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-          {" "}
+          
           <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-            {" "}
-            {initialGoal ? "Edit Savings Goal" : "Create Savings Goal"}{" "}
-          </h2>{" "}
-        </div>{" "}
+            
+            {initialGoal ? "Edit Savings Goal" : "Create Savings Goal"}
+          </h2>
+        </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {" "}
+          
           <div>
-            {" "}
+            
             <label
               htmlFor="goal-name"
               className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
             >
-              {" "}
-              Goal Name{" "}
-            </label>{" "}
+              
+              Goal Name
+            </label>
             <input
               id="goal-name"
               required
@@ -107,19 +107,19 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               value={formData.title}
               onChange={handleChange}
               className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {" "}
+            
             <div>
-              {" "}
+              
               <label
                 htmlFor="target-amount"
                 className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                {" "}
-                Target Amount{" "}
-              </label>{" "}
+                
+                Target Amount
+              </label>
               <div className="flex gap-2">
                 <input
                   id="target-amount"
@@ -130,23 +130,23 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
                   value={formData.targetAmount}
                   onChange={handleChange}
                   className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-                />{" "}
+                />
                 <CurrencySelect
                   value={formData.currency}
                   onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
                   className="bg-white border border-slate-300 rounded-lg px-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 text-sm"
                 />
-              </div>{" "}
-            </div>{" "}
+              </div>
+            </div>
             <div>
-              {" "}
+              
               <label
                 htmlFor="target-date"
                 className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
               >
-                {" "}
-                Target Date{" "}
-              </label>{" "}
+                
+                Target Date
+              </label>
               <input
                 id="target-date"
                 required
@@ -155,18 +155,18 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
                 value={formData.targetDate}
                 onChange={handleChange}
                 className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-              />{" "}
-            </div>{" "}
-          </div>{" "}
+              />
+            </div>
+          </div>
           <div>
-            {" "}
+            
             <label
               htmlFor="current-amount"
               className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
             >
-              {" "}
-              Current Progress{" "}
-            </label>{" "}
+              
+              Current Progress
+            </label>
             <input
               id="current-amount"
               type="number"
@@ -175,17 +175,17 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               value={formData.currentAmount}
               onChange={handleChange}
               className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div>
-            {" "}
+            
             <label
               htmlFor="notes"
               className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
             >
-              {" "}
-              Notes{" "}
-            </label>{" "}
+              
+              Notes
+            </label>
             <textarea
               id="notes"
               name="note"
@@ -193,20 +193,20 @@ export default function AddSavingsGoalModal({ isOpen, onClose, initialGoal }: Re
               onChange={handleChange}
               rows={3}
               className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div className="pt-2">
-            {" "}
+            
             <button
               type="submit"
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              {" "}
-              {initialGoal ? "Update Goal" : "Save Goal"}{" "}
-            </button>{" "}
-          </div>{" "}
-        </form>{" "}
-      </div>{" "}
+              
+              {initialGoal ? "Update Goal" : "Save Goal"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

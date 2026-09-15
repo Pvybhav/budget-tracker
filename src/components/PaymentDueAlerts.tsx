@@ -76,7 +76,7 @@ export default function PaymentDueAlerts({ days = 7 }: { days?: number }) {
                 {card.title}
               </div>
               <div className="text-xs text-slate-600 dark:text-slate-400">
-                Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} •{" "}
+                Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} •
                 {formatMoney(
                   convertCurrency(metrics.amountToPayNext, card.currency, displayCurrency),
                   displayCurrency,

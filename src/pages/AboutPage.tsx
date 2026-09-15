@@ -92,7 +92,7 @@ export default function AboutPage() {
             Philosophy
           </p>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Built on a simple principle:{" "}
+            Built on a simple principle:
             <span className="bg-gradient-to-r from-emerald-600 dark:from-emerald-400 to-teal-600 dark:to-teal-400 bg-clip-text text-transparent">
               your data stays yours.
             </span>

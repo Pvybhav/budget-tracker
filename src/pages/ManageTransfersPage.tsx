@@ -55,29 +55,29 @@ export default function ManageTransfersPage() {
   };
   return (
     <div className="space-y-6">
-      {" "}
+      
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        {" "}
+        
         <div>
-          {" "}
+          
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {" "}
-            Account Transfers{" "}
-          </h1>{" "}
+            
+            Account Transfers
+          </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {" "}
-            Move money between accounts without affecting your spending totals.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Move money between accounts without affecting your spending totals.
+          </p>
+        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           disabled={!cards || cards.length < 2}
           className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {" "}
-          <Plus className="h-4 w-4" /> Add Transfer{" "}
-        </button>{" "}
-      </div>{" "}
+          
+          <Plus className="h-4 w-4" /> Add Transfer
+        </button>
+      </div>
       <input
         type="search"
         value={search}
@@ -88,82 +88,82 @@ export default function ManageTransfersPage() {
         placeholder="Search accounts, recipients, or dates"
         aria-label="Search transfers"
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      />{" "}
+      />
       <div className="overflow-hidden overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        {" "}
+        
         <table className="w-full min-w-[640px] text-left text-slate-700 dark:text-slate-300">
-          {" "}
+          
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-            {" "}
+            
             <tr>
-              {" "}
+              
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                 Date
-              </th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">From</th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100"></th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">To</th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>{" "}
+              </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">From</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100"></th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">To</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               <th className="px-6 py-4 text-right font-medium text-slate-900 dark:text-slate-100">
                 Actions
-              </th>{" "}
-            </tr>{" "}
-          </thead>{" "}
+              </th>
+            </tr>
+          </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
-            {" "}
+            
             {visibleTransfers.map((transfer) => (
               <tr key={transfer.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20">
-                {" "}
-                <td className="px-6 py-4"> {formatDateOnly(transfer.date)} </td>{" "}
-                <td className="px-6 py-4"> {accountName(transfer.fromAccountId)} </td>{" "}
+                
+                <td className="px-6 py-4"> {formatDateOnly(transfer.date)} </td>
+                <td className="px-6 py-4"> {accountName(transfer.fromAccountId)} </td>
                 <td className="px-6 py-4 text-emerald-600 dark:text-emerald-400">
-                  {" "}
-                  <ArrowRightLeft className="h-4 w-4" />{" "}
-                </td>{" "}
-                <td className="px-6 py-4"> {destinationName(transfer)} </td>{" "}
+                  
+                  <ArrowRightLeft className="h-4 w-4" />
+                </td>
+                <td className="px-6 py-4"> {destinationName(transfer)} </td>
                 <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">
-                  {" "}
+                  
                   {formatMoney(
                     convertCurrency(transfer.amount, transfer.currency, displayCurrency),
                     displayCurrency,
-                  )}{" "}
-                </td>{" "}
+                  )}
+                </td>
                 <td className="px-6 py-4 text-right">
-                  {" "}
+                  
                   <button
                     onClick={() => handleDelete(transfer)}
                     className="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
                     title="Delete transfer"
                   >
-                    {" "}
-                    <Trash2 className="ml-auto h-4 w-4" />{" "}
-                  </button>{" "}
-                </td>{" "}
+                    
+                    <Trash2 className="ml-auto h-4 w-4" />
+                  </button>
+                </td>
               </tr>
-            ))}{" "}
+            ))}
             {filteredTransfers.length === 0 && (
               <tr>
-                {" "}
+                
                 <td
                   colSpan={6}
                   className="px-6 py-12 text-center text-slate-600 dark:text-slate-500"
                 >
-                  {" "}
+                  
                   {transfers?.length
                     ? "No transfers match your search."
-                    : "No transfers recorded."}{" "}
-                </td>{" "}
+                    : "No transfers recorded."}
+                </td>
               </tr>
-            )}{" "}
-          </tbody>{" "}
-        </table>{" "}
-      </div>{" "}
+            )}
+          </tbody>
+        </table>
+      </div>
       <PaginationControls
         page={page}
         totalItems={filteredTransfers.length}
         pageSize={pageSize}
         onPageChange={setPage}
-      />{" "}
+      />
       {beneficiaries && beneficiaries.length > 0 && (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-3">
@@ -206,7 +206,7 @@ export default function ManageTransfersPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         cards={cards ?? []}
-      />{" "}
+      />
     </div>
   );
 }

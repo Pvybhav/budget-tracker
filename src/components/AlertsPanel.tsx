@@ -113,20 +113,20 @@ export default function AlertsPanel() {
   const visibleAlerts = showAll ? alerts : alerts.slice(0, 3);
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/60 p-4">
-      {" "}
+      
       <div className="flex items-center justify-between mb-3">
-        {" "}
+        
         <div>
-          {" "}
+          
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-            {" "}
-            Alerts{" "}
-          </div>{" "}
+            
+            Alerts
+          </div>
           <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            {" "}
-            Overspend and low-balance warnings{" "}
-          </div>{" "}
-        </div>{" "}
+            
+            Overspend and low-balance warnings
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {alerts.length > 0 && (
             <span className="rounded-full border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
@@ -143,69 +143,69 @@ export default function AlertsPanel() {
             {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </button>
         </div>
-      </div>{" "}
+      </div>
       {!isCollapsed && (
         <div className="space-y-3">
-          {" "}
+          
           {alerts.length === 0 && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-300">
-              {" "}
-              Everything looks healthy right now.{" "}
+              
+              Everything looks healthy right now.
             </div>
-          )}{" "}
+          )}
           {visibleAlerts.map((alert) => (
             <div
               key={alert.id}
               className={`rounded-xl border px-3 py-3 ${alert.severity === "danger" ? "border-red-500/30 bg-red-500/10" : "border-amber-500/30 bg-amber-500/10"}`}
             >
-              {" "}
+              
               <div className="flex items-start gap-2">
-                {" "}
+                
                 <div
                   className={`mt-0.5 rounded-full p-1 ${alert.severity === "danger" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"}`}
                 >
-                  {" "}
+                  
                   {alert.severity === "danger" ? (
                     <AlertTriangle className="w-3.5 h-3.5" />
                   ) : (
                     <TrendingDown className="w-3.5 h-3.5" />
-                  )}{" "}
-                </div>{" "}
+                  )}
+                </div>
                 <div className="flex-1">
-                  {" "}
+                  
                   <div className="flex items-center justify-between gap-2">
-                    {" "}
+                    
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {" "}
-                      {alert.title}{" "}
-                    </p>{" "}
+                      
+                      {alert.title}
+                    </p>
                     <div className="flex items-center gap-2">
-                      {" "}
+                      
                       <span
                         className={`text-[10px] font-semibold uppercase tracking-wide ${alert.severity === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}
                       >
-                        {" "}
-                        {alert.severity === "danger" ? "Urgent" : "Watch"}{" "}
-                      </span>{" "}
+                        
+                        {alert.severity === "danger" ? "Urgent" : "Watch"}
+                      </span>
                       <button
                         type="button"
                         onClick={() => setDismissedIds((prev) => [...prev, alert.id])}
                         className="rounded-full p-1 text-slate-400 transition hover:bg-slate-800 hover:text-white"
                         aria-label={`Dismiss ${alert.title} alert`}
                       >
-                        {" "}
-                        <X className="w-3.5 h-3.5" />{" "}
-                      </button>{" "}
-                    </div>{" "}
-                  </div>{" "}
-                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{alert.message}</p>{" "}
+                        
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{alert.message}</p>
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
                     {alert.detail}
-                  </p>{" "}
-                </div>{" "}
-              </div>{" "}
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}{" "}
+          ))}
           {alerts.length > 3 && (
             <button
               type="button"

@@ -57,27 +57,27 @@ export default function Layout({ logout }: LayoutProps) {
   ];
   return (
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {" "}
-      {/* Mobile Topbar */}{" "}
+      
+      {/* Mobile Topbar */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0">
-        {" "}
+        
         <div className="flex items-center gap-4">
-          {" "}
+          
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
-            {" "}
-            Budget Tracker{" "}
-          </h1>{" "}
+            
+            Budget Tracker
+          </h1>
           {location.pathname !== "/" && (
             <Link
               to="/"
               className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors border border-slate-300 dark:border-slate-700"
               title="Go to Dashboard"
             >
-              {" "}
-              <LayoutDashboard className="w-5 h-5" />{" "}
+              
+              <LayoutDashboard className="w-5 h-5" />
             </Link>
-          )}{" "}
-        </div>{" "}
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <ThemeSwitcher />
           <button
@@ -85,12 +85,12 @@ export default function Layout({ logout }: LayoutProps) {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white focus:outline-none"
           >
-            {" "}
-            {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}{" "}
-          </button>{" "}
+            
+            {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
-      </div>{" "}
-      {/* Overlay for mobile sidebar */}{" "}
+      </div>
+      {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (
         <button
           type="button"
@@ -98,25 +98,25 @@ export default function Layout({ logout }: LayoutProps) {
           className="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
-      )}{" "}
-      {/* Sidebar */}{" "}
+      )}
+      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transform transition-transform duration-300 md:relative md:translate-x-0 shrink-0 shadow-lg dark:shadow-xl",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {" "}
+        
         <div className="p-6 hidden md:flex items-center justify-between">
-          {" "}
+          
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
-            {" "}
-            Budget Tracker{" "}
-          </h1>{" "}
+            
+            Budget Tracker
+          </h1>
           <ThemeSwitcher />
-        </div>{" "}
+        </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4 md:mt-2">
-          {" "}
+          
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -131,15 +131,15 @@ export default function Layout({ logout }: LayoutProps) {
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
                 )}
               >
-                {" "}
-                <Icon className="w-5 h-5 flex-shrink-0" />{" "}
-                <span className="text-sm">{item.name}</span>{" "}
+                
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{item.name}</span>
               </Link>
             );
-          })}{" "}
-          {/* Manage Expenses Accordion */}{" "}
+          })}
+          {/* Manage Expenses Accordion */}
           <div>
-            {" "}
+            
             <button
               type="button"
               onClick={() => setIsExpensesOpen(!isExpensesOpen)}
@@ -150,21 +150,21 @@ export default function Layout({ logout }: LayoutProps) {
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
               )}
             >
-              {" "}
+              
               <div className="flex items-center gap-3">
-                {" "}
-                <Receipt className="w-5 h-5 flex-shrink-0" />{" "}
-                <span className="text-sm">Manage Expenses</span>{" "}
-              </div>{" "}
+                
+                <Receipt className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">Manage Expenses</span>
+              </div>
               {isExpensesOpen ? (
                 <ChevronUp className="w-4 h-4" />
               ) : (
                 <ChevronDown className="w-4 h-4" />
-              )}{" "}
-            </button>{" "}
+              )}
+            </button>
             {isExpensesOpen && (
               <div className="mt-1 ml-8 space-y-1">
-                {" "}
+                
                 <Link
                   to="/expenses/monthly"
                   className={cn(
@@ -174,9 +174,9 @@ export default function Layout({ logout }: LayoutProps) {
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
                   )}
                 >
-                  {" "}
-                  Monthly Manage{" "}
-                </Link>{" "}
+                  
+                  Monthly Manage
+                </Link>
                 <Link
                   to="/expenses/yearly"
                   className={cn(
@@ -186,9 +186,9 @@ export default function Layout({ logout }: LayoutProps) {
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
                   )}
                 >
-                  {" "}
-                  Yearly Manage{" "}
-                </Link>{" "}
+                  
+                  Yearly Manage
+                </Link>
                 <Link
                   to="/expenses/emi"
                   className={cn(
@@ -198,12 +198,12 @@ export default function Layout({ logout }: LayoutProps) {
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
                   )}
                 >
-                  {" "}
-                  EMI Payments{" "}
-                </Link>{" "}
+                  
+                  EMI Payments
+                </Link>
               </div>
-            )}{" "}
-          </div>{" "}
+            )}
+          </div>
           <Link
             to="/categories"
             className={cn(
@@ -213,10 +213,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <Tags className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Manage Categories</span>{" "}
-          </Link>{" "}
+            
+            <Tags className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Manage Categories</span>
+          </Link>
           <Link
             to="/income"
             className={cn(
@@ -226,10 +226,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <Banknote className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Manage Income</span>{" "}
-          </Link>{" "}
+            
+            <Banknote className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Manage Income</span>
+          </Link>
           <Link
             to="/payments"
             className={cn(
@@ -239,10 +239,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <HandCoins className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Manage Payments</span>{" "}
-          </Link>{" "}
+            
+            <HandCoins className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Manage Payments</span>
+          </Link>
           <Link
             to="/transfers"
             className={cn(
@@ -252,10 +252,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <ArrowRightLeft className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Account Transfers</span>{" "}
-          </Link>{" "}
+            
+            <ArrowRightLeft className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Account Transfers</span>
+          </Link>
           <Link
             to="/import"
             className={cn(
@@ -265,10 +265,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <FileUp className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Import Transactions</span>{" "}
-          </Link>{" "}
+            
+            <FileUp className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Import Transactions</span>
+          </Link>
           <Link
             to="/reconciliation"
             className={cn(
@@ -278,10 +278,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Reconciliation</span>{" "}
-          </Link>{" "}
+            
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Reconciliation</span>
+          </Link>
           <Link
             to="/calendar"
             className={cn(
@@ -291,10 +291,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <CalendarDays className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Financial Calendar</span>{" "}
-          </Link>{" "}
+            
+            <CalendarDays className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Financial Calendar</span>
+          </Link>
           <Link
             to="/subscriptions"
             className={cn(
@@ -304,10 +304,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <RefreshCw className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Subscriptions</span>{" "}
-          </Link>{" "}
+            
+            <RefreshCw className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Subscriptions</span>
+          </Link>
           <Link
             to="/net-worth-history"
             className={cn(
@@ -317,10 +317,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <LineChart className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Net Worth History</span>{" "}
-          </Link>{" "}
+            
+            <LineChart className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Net Worth History</span>
+          </Link>
           <Link
             to="/bills"
             className={cn(
@@ -330,10 +330,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <ReceiptText className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Manage Bills</span>{" "}
-          </Link>{" "}
+            
+            <ReceiptText className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Manage Bills</span>
+          </Link>
           <Link
             to="/savings-goals"
             className={cn(
@@ -343,10 +343,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <PiggyBank className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Savings Goals</span>{" "}
-          </Link>{" "}
+            
+            <PiggyBank className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Savings Goals</span>
+          </Link>
           <Link
             to="/investments"
             className={cn(
@@ -356,10 +356,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <TrendingUp className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Investments</span>{" "}
-          </Link>{" "}
+            
+            <TrendingUp className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Investments</span>
+          </Link>
           <Link
             to="/budget-rules"
             className={cn(
@@ -369,10 +369,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <ListChecks className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Budget Rules</span>{" "}
-          </Link>{" "}
+            
+            <ListChecks className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Budget Rules</span>
+          </Link>
           <Link
             to="/visualize"
             className={cn(
@@ -382,10 +382,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <ChartPie className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Visualize</span>{" "}
-          </Link>{" "}
+            
+            <ChartPie className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Visualize</span>
+          </Link>
           <Link
             to="/export"
             className={cn(
@@ -395,10 +395,10 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <FileSpreadsheet className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Export Data</span>{" "}
-          </Link>{" "}
+            
+            <FileSpreadsheet className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Export Data</span>
+          </Link>
           <Link
             to="/household"
             className={cn(
@@ -408,19 +408,19 @@ export default function Layout({ logout }: LayoutProps) {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
             )}
           >
-            {" "}
-            <Users className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Household</span>{" "}
-          </Link>{" "}
-        </nav>{" "}
+            
+            <Users className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Household</span>
+          </Link>
+        </nav>
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 mt-auto space-y-3">
-          {" "}
+          
           <label
             htmlFor="display-currency"
             className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400"
           >
-            {" "}
-            <span>Display Currency</span>{" "}
+            
+            <span>Display Currency</span>
             <select
               id="display-currency"
               value={displayCurrency}
@@ -433,14 +433,14 @@ export default function Layout({ logout }: LayoutProps) {
                 </option>
               ))}
             </select>
-          </label>{" "}
+          </label>
           <Link
             to="/about"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50"
           >
-            {" "}
-            <Info className="w-5 h-5 flex-shrink-0" /> <span className="text-sm">About</span>{" "}
-          </Link>{" "}
+            
+            <Info className="w-5 h-5 flex-shrink-0" /> <span className="text-sm">About</span>
+          </Link>
           <button
             type="button"
             onClick={async () => {
@@ -453,20 +453,20 @@ export default function Layout({ logout }: LayoutProps) {
             }}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-red-100 dark:hover:bg-slate-800/50"
           >
-            {" "}
-            <LogOut className="w-5 h-5 flex-shrink-0" />{" "}
-            <span className="text-sm">Log out</span>{" "}
-          </button>{" "}
-        </div>{" "}
-      </aside>{" "}
-      {/* Main Content */}{" "}
+            
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Log out</span>
+          </button>
+        </div>
+      </aside>
+      {/* Main Content */}
       <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 transition-colors duration-300">
-        {" "}
+        
         <div className="max-w-6xl mx-auto">
-          {" "}
-          <Outlet />{" "}
-        </div>{" "}
-      </main>{" "}
+          
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }

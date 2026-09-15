@@ -322,7 +322,7 @@ export default function ManageCategoriesPage() {
                       </button>
                       {lastExpenseMap.get(category.id!) && (
                         <div>
-                          ·{" "}
+                          ·
                           {new Date(lastExpenseMap.get(category.id!)!).toLocaleString("default", {
                             month: "short",
                             day: "numeric",
@@ -346,7 +346,7 @@ export default function ManageCategoriesPage() {
                         </button>
                         {lastExpenseMap.get(category.id!) && (
                           <div>
-                            ·{" "}
+                            ·
                             {new Date(lastExpenseMap.get(category.id!)!).toLocaleString("default", {
                               month: "short",
                               day: "numeric",

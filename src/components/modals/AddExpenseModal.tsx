@@ -427,7 +427,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       ? "Yearly (≈monthly)"
                       : selectedCategory.budgetMode === "quarterly"
                         ? "Quarterly (≈monthly)"
-                        : "Monthly"}{" "}
+                        : "Monthly"}
                     Budget · {selectedCategory.title}
                   </p>
                   <span

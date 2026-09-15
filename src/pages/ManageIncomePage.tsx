@@ -67,28 +67,28 @@ export default function ManageIncomePage() {
   }, [sorted, displayCurrency]);
   return (
     <div className="space-y-6">
-      {" "}
+      
       <div className="flex items-center justify-between">
-        {" "}
+        
         <div>
-          {" "}
+          
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {" "}
-            Manage Income{" "}
-          </h1>{" "}
+            
+            Manage Income
+          </h1>
           <p className="mt-1 text-sm text-slate-400">
-            {" "}
-            Track salary and every other rupee coming in.{" "}
-          </p>{" "}
-        </div>{" "}
+            
+            Track salary and every other rupee coming in.
+          </p>
+        </div>
         <button
           onClick={openAddModal}
           className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
-          {" "}
-          <Plus className="w-4 h-4" /> Add Income{" "}
-        </button>{" "}
-      </div>{" "}
+          
+          <Plus className="w-4 h-4" /> Add Income
+        </button>
+      </div>
       <input
         type="search"
         value={search}
@@ -99,68 +99,68 @@ export default function ManageIncomePage() {
         placeholder="Search sources, categories, or accounts"
         aria-label="Search income"
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      />{" "}
+      />
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
-        {" "}
+        
         <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-          {" "}
-          This month{" "}
-        </div>{" "}
+          
+          This month
+        </div>
         <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-          {" "}
-          {formatMoney(totalThisMonth, displayCurrency)}{" "}
-        </div>{" "}
-      </div>{" "}
+          
+          {formatMoney(totalThisMonth, displayCurrency)}
+        </div>
+      </div>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-        {" "}
+        
         <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
-          {" "}
+          
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-            {" "}
+            
             <tr>
-              {" "}
+              
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                 Date
-              </th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Source</th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>{" "}
+              </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Source</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                 Credited To
-              </th>{" "}
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>{" "}
+              </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
-              </th>{" "}
-            </tr>{" "}
-          </thead>{" "}
+              </th>
+            </tr>
+          </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
-            {" "}
+            
             {visibleIncome.map((item) => (
               <tr
                 key={item.id}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors"
               >
-                {" "}
-                <td className="px-6 py-4"> {formatDateOnly(item.date)} </td>{" "}
-                <td className="px-6 py-4">{item.source}</td>{" "}
-                <td className="px-6 py-4"> {CATEGORY_LABELS[item.category ?? "other"]} </td>{" "}
-                <td className="px-6 py-4">{cardTitleFor(item.accountId)}</td>{" "}
+                
+                <td className="px-6 py-4"> {formatDateOnly(item.date)} </td>
+                <td className="px-6 py-4">{item.source}</td>
+                <td className="px-6 py-4"> {CATEGORY_LABELS[item.category ?? "other"]} </td>
+                <td className="px-6 py-4">{cardTitleFor(item.accountId)}</td>
                 <td className="px-6 py-4 text-emerald-400">
-                  {" "}
+                  
                   {formatMoney(
                     convertCurrency(item.amount, item.currency, displayCurrency),
                     displayCurrency,
-                  )}{" "}
-                </td>{" "}
+                  )}
+                </td>
                 <td className="px-6 py-4 text-right">
-                  {" "}
+                  
                   <button
                     onClick={() => openEditModal(item)}
                     className="text-blue-400 hover:text-blue-300 mr-3"
                   >
-                    {" "}
-                    <Pencil className="w-4 h-4 inline" />{" "}
-                  </button>{" "}
+                    
+                    <Pencil className="w-4 h-4 inline" />
+                  </button>
                   <button
                     onClick={async () => {
                       if (!item.id) return;
@@ -172,37 +172,37 @@ export default function ManageIncomePage() {
                     }}
                     className="text-red-400 hover:text-red-300"
                   >
-                    {" "}
-                    <Trash2 className="w-4 h-4 inline" />{" "}
-                  </button>{" "}
-                </td>{" "}
+                    
+                    <Trash2 className="w-4 h-4 inline" />
+                  </button>
+                </td>
               </tr>
-            ))}{" "}
+            ))}
             {filteredIncome.length === 0 && (
               <tr>
-                {" "}
+                
                 <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                  {" "}
+                  
                   {income?.length
                     ? "No income matches your search."
-                    : "No income recorded yet."}{" "}
-                </td>{" "}
+                    : "No income recorded yet."}
+                </td>
               </tr>
-            )}{" "}
-          </tbody>{" "}
-        </table>{" "}
-      </div>{" "}
+            )}
+          </tbody>
+        </table>
+      </div>
       <PaginationControls
         page={page}
         totalItems={filteredIncome.length}
         pageSize={pageSize}
         onPageChange={setPage}
-      />{" "}
+      />
       <AddIncomeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialIncome={incomeToEdit}
-      />{" "}
+      />
     </div>
   );
 }

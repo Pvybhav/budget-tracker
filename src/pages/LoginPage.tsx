@@ -38,44 +38,44 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
   };
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 text-slate-900 dark:text-slate-200">
-      {" "}
+      
       <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-2xl">
-        {" "}
+        
         <div className="mb-6 text-center">
-          {" "}
-          <p className="text-sm uppercase tracking-[0.24em] text-blue-400">Budget Tracker</p>{" "}
-          <h1 className="mt-3 text-3xl font-bold text-white">
-            {" "}
-            {mode === "login" ? "Sign in" : "Create account"}{" "}
-          </h1>{" "}
-        </div>{" "}
+          
+          <p className="text-sm uppercase tracking-[0.24em] text-blue-400">Budget Tracker</p>
+          <h1 className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">
+            
+            {mode === "login" ? "Sign in" : "Create account"}
+          </h1>
+        </div>
         <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 p-1">
-          {" "}
+          
           <button
             type="button"
             onClick={() => setMode("login")}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "login" ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"}`}
           >
-            {" "}
-            Login{" "}
-          </button>{" "}
+            
+            Login
+          </button>
           <button
             type="button"
             onClick={() => setMode("signup")}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition ${mode === "signup" ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"}`}
           >
-            {" "}
-            Sign up{" "}
-          </button>{" "}
-        </div>{" "}
+            
+            Sign up
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {" "}
+          
           {mode === "signup" && (
             <label className="block">
-              {" "}
+              
               <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
                 Full name
-              </span>{" "}
+              </span>
               <input
                 type="text"
                 value={fullName}
@@ -83,14 +83,14 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
                 className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
                 placeholder="Jane Doe"
                 autoComplete="name"
-              />{" "}
+              />
             </label>
-          )}{" "}
+          )}
           <label className="block">
-            {" "}
+            
             <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
               Username
-            </span>{" "}
+            </span>
             <input
               type="text"
               value={username}
@@ -98,13 +98,13 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
               placeholder="user@example.com"
               autoComplete="username"
-            />{" "}
-          </label>{" "}
+            />
+          </label>
           <label className="block">
-            {" "}
+            
             <span className="mb-2 block text-sm text-slate-700 dark:text-slate-300">
               Password
-            </span>{" "}
+            </span>
             <input
               type="password"
               value={password}
@@ -112,42 +112,30 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-slate-900 dark:text-white outline-none transition focus:border-blue-500 dark:focus:border-blue-500"
               placeholder="••••••••"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
-            />{" "}
-          </label>{" "}
+            />
+          </label>
           {error && (
             <div className="rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-200">
-              {" "}
-              {error}{" "}
+              
+              {error}
             </div>
-          )}{" "}
+          )}
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {" "}
+            
             {isSubmitting
               ? mode === "login"
                 ? "Signing in..."
                 : "Creating account..."
               : mode === "login"
                 ? "Sign in"
-                : "Create account"}{" "}
-          </button>{" "}
-        </form>{" "}
-        <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-3 text-sm text-slate-600 dark:text-slate-400">
-          {" "}
-          {mode === "login" ? (
-            <>
-              {" "}
-              <span className="font-medium">Demo account:</span> Use any username and password
-              (minimum 8 characters){" "}
-            </>
-          ) : (
-            <> Passwords must be at least 8 characters long. </>
-          )}{" "}
-        </div>{" "}
-      </div>{" "}
+                : "Create account"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

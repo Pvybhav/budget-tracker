@@ -259,7 +259,7 @@ export default function ManageCardsPage() {
                                 displayCurrency,
                               ),
                               displayCurrency,
-                            )}{" "}
+                            )}
                             available
                           </span>
                         </div>
