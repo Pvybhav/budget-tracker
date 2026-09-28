@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Bill } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchBills } from "../services/backend.service";
@@ -17,6 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { showNetworkToast } from "../services/network.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 const TYPE_LABELS: Record<string, string> = {
@@ -38,6 +39,7 @@ function getStatus(bill: Bill) {
 export default function ManageBillsPage() {
   const displayCurrency = useDisplayCurrency();
   const bills = useBackendResource(() => fetchBills(), []);
+  const hasCheckedCurrentMonth = useRef(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [billToEdit, setBillToEdit] = useState<Bill | undefined>();
   const [billToPay, setBillToPay] = useState<Bill | undefined>();
@@ -50,6 +52,29 @@ export default function ManageBillsPage() {
   const [typeFilter, setTypeFilter] = useState<Bill["type"] | "all">("all");
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  useEffect(() => {
+    if (!bills || hasCheckedCurrentMonth.current) return;
+    hasCheckedCurrentMonth.current = true;
+
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    if (month !== currentMonth) return;
+
+    const currentMonthBills = bills.filter((bill) => bill.dueDate.slice(0, 7) === currentMonth);
+    if (currentMonthBills.length === 0 || !currentMonthBills.every((bill) => bill.paid)) return;
+
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonth = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, "0")}`;
+    const formatMonth = (date: Date) =>
+      new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(date);
+
+    setMonth(nextMonth);
+    setPage(1);
+    showNetworkToast(
+      `All bills for ${formatMonth(now)} are already paid. Showing unpaid bills for ${formatMonth(nextMonthDate)}.`,
+      "info",
+    );
+  }, [bills, month]);
   const filteredBills = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (bills ?? []).filter((bill) => {
