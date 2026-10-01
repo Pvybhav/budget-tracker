@@ -100,30 +100,24 @@ export default function HomePage() {
       displayCurrency,
     );
   }, [categories, expenses, displayCurrency]);
+  const showBudgetForecastAlerts = false;
   const showFullDescription = !cards || cards.length === 0 || isDescriptionVisible;
   return (
     <div className="space-y-8">
-      
       {/* Header row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-          Dashboard
-        </h1>
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Dashboard</h1>
         <div className="flex gap-2 sm:gap-3">
-          
           <button
             onClick={() => setIsExpenseModalOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex-1 sm:flex-none"
           >
-            
             Add Expense
           </button>
           <button
             onClick={() => setIsCardModalOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex-1 sm:flex-none"
           >
-            
             Add New Card
           </button>
         </div>
@@ -131,7 +125,6 @@ export default function HomePage() {
       {/* Description toggle icon (only if cards exist) */}
       {cards && cards.length > 0 && (
         <div className="flex justify-center -mb-4">
-          
           <button
             onClick={() => setIsDescriptionVisible(!isDescriptionVisible)}
             className={cn(
@@ -142,25 +135,22 @@ export default function HomePage() {
             )}
             title={isDescriptionVisible ? "Hide info" : "Show info"}
           >
-            
             <Sparkles className="w-5 h-5" />
           </button>
         </div>
       )}
       {/* Hero section */} {/* Summary & alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <div className="lg:col-span-2 space-y-6">
-          
           <MonthlySummary /> <IncomeExpenseSummary />
         </div>
         <div className="space-y-4">
-          
           <PaymentDueAlerts /> <AlertsPanel />
         </div>
       </div>
       <DashboardSummary />
-      <NetWorthSummary /> <BudgetForecastPanel forecasts={budgetForecasts} />
+      <NetWorthSummary />
+      {showBudgetForecastAlerts && <BudgetForecastPanel forecasts={budgetForecasts} />}
       {recommendations.length > 0 && (
         <SmartBudgetRecommendationsPanel recommendations={recommendations} />
       )}
@@ -169,24 +159,18 @@ export default function HomePage() {
       <CustomBudgetPeriodsDisplay selectedStartDate={1} />
       {showFullDescription && (
         <div className="rounded-2xl border border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-top-4">
-          
           {/* Top banner */}
           <div className="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-            
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-2">
-              
               How Budget Tracker works
             </p>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 leading-snug">
-              
               Your money, your data,
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                
                 your rules.
               </span>
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              
               Most finance apps quietly help themselves to your data in exchange for convenience.
               Budget Tracker takes the opposite bet — every insight lives entirely on your device,
               powered only by what you choose to log.
@@ -194,24 +178,19 @@ export default function HomePage() {
           </div>
           {/* Three pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800">
-            
             {HERO_POINTS.map(({ icon: Icon, color, bg, title, body }) => (
               <div key={title} className="p-5 flex flex-col gap-3">
-                
                 <span
                   className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${bg}`}
                 >
-                  
                   <Icon
                     className={`w-4.5 h-4.5 ${color}`}
                     style={{ width: "1.125rem", height: "1.125rem" }}
                   />
                 </span>
                 <div>
-                  
                   <p className={`text-sm font-semibold mb-1 ${color}`}> {title} </p>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    
                     {body}
                   </p>
                 </div>
@@ -222,22 +201,17 @@ export default function HomePage() {
       )}
       <SavingsGoalsSection /> {/* Cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
         {cards?.map((card) => (
           <CardThumbnail key={card.id} card={card} />
         ))}
         {cards?.length === 0 && (
           <div className="col-span-full py-12 text-center text-slate-400">
-            
             No cards added yet. Click "Add New Card" to get started.
           </div>
         )}
       </div>
       <AddCardModal isOpen={isCardModalOpen} onClose={() => setIsCardModalOpen(false)} />
-      <AddExpenseModal
-        isOpen={isExpenseModalOpen}
-        onClose={() => setIsExpenseModalOpen(false)}
-      />
+      <AddExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} />
     </div>
   );
 }

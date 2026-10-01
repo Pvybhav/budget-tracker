@@ -67,6 +67,7 @@ export default function ManageCategoriesPage() {
     if (!categories || !expenses) return [];
     return forecastAllCategoryBudgets(categories, expenses, displayCurrency);
   }, [categories, expenses, displayCurrency]);
+  const showBudgetForecastAlerts = false;
   const recommendations = useMemo(() => {
     if (!categories || !expenses) return [];
     return getSmartBudgetRecommendations(categories, expenses, 6, displayCurrency);
@@ -413,9 +414,10 @@ export default function ManageCategoriesPage() {
         pageSize={pageSize}
         onPageChange={setPage}
       />
-      {categories && categories.length > 0 && budgetForecasts.length > 0 && (
-        <BudgetForecastPanel forecasts={budgetForecasts} />
-      )}
+      {showBudgetForecastAlerts &&
+        categories &&
+        categories.length > 0 &&
+        budgetForecasts.length > 0 && <BudgetForecastPanel forecasts={budgetForecasts} />}
 
       {recommendations.length > 0 && (
         <SmartBudgetRecommendationsPanel recommendations={recommendations} />

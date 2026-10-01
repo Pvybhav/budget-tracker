@@ -36,45 +36,35 @@ export default function IncomeExpenseSummary({ className }: { className?: string
     <div
       className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5 ${className || ""}`}
     >
-      
       <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-        
         Income vs Expense
       </div>
       <div className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
         This month's cash flow
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        
         <div>
-          
           <div className="text-sm text-slate-600 dark:text-slate-400">Income</div>
           <div className="text-base font-semibold text-emerald-600 dark:text-emerald-400 sm:text-xl">
-            
             {formatMoney(incomeThis, displayCurrency)}
           </div>
         </div>
         <div>
-          
           <div className="text-sm text-slate-600 dark:text-slate-400">Expense</div>
           <div className="text-base font-semibold text-rose-600 dark:text-rose-400 sm:text-xl">
-            
             {formatMoney(expenseThis, displayCurrency)}
           </div>
         </div>
         <div className="sm:text-right">
-          
           <div className="text-sm text-slate-600 dark:text-slate-400">Net Savings</div>
           <div
             className={`text-base font-semibold sm:text-xl ${netSavings >= 0 ? "text-slate-900 dark:text-slate-100" : "text-rose-600 dark:text-rose-400"}`}
           >
-            
             {formatMoney(netSavings, displayCurrency)}
           </div>
         </div>
       </div>
       <div className="mt-4 text-xs text-slate-600 dark:text-slate-400">
-        
         {incomeThis > 0
           ? `Saving ${savingsRate}% of income this month`
           : "No income recorded yet this month"}
