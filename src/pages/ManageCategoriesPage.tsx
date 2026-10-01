@@ -16,6 +16,7 @@ import { getSmartBudgetRecommendations } from "../services/budget-recommendation
 import { calculateCategoryCarryovers } from "../services/budget-carryover.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
+import { getCategoryAccent } from "../utils/categoryTheme";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
@@ -28,42 +29,6 @@ const BUDGET_MODE_COLORS: Record<string, string> = {
   quarterly: "text-amber-400 bg-amber-400/10 border-amber-400/30",
   yearly: "text-sky-400 bg-sky-400/10 border-sky-400/30",
 };
-
-const CATEGORY_ACCENTS = [
-  {
-    border: "border-l-emerald-500",
-    icon: "bg-emerald-500/15 border-emerald-500/35 text-emerald-700 dark:text-emerald-300",
-  },
-  {
-    border: "border-l-sky-500",
-    icon: "bg-sky-500/15 border-sky-500/35 text-sky-700 dark:text-sky-300",
-  },
-  {
-    border: "border-l-amber-500",
-    icon: "bg-amber-500/15 border-amber-500/35 text-amber-700 dark:text-amber-300",
-  },
-  {
-    border: "border-l-rose-500",
-    icon: "bg-rose-500/15 border-rose-500/35 text-rose-700 dark:text-rose-300",
-  },
-  {
-    border: "border-l-violet-500",
-    icon: "bg-violet-500/15 border-violet-500/35 text-violet-700 dark:text-violet-300",
-  },
-  {
-    border: "border-l-cyan-500",
-    icon: "bg-cyan-500/15 border-cyan-500/35 text-cyan-700 dark:text-cyan-300",
-  },
-] as const;
-
-function getCategoryAccent(category: Category) {
-  const key = `${category.id ?? ""}-${category.title}`;
-  const hash = Array.from(key).reduce(
-    (total, character) => total + (character.codePointAt(0) ?? 0),
-    0,
-  );
-  return CATEGORY_ACCENTS[hash % CATEGORY_ACCENTS.length];
-}
 
 function fmtPreview(n: number, currency: string) {
   if (n >= 1000)

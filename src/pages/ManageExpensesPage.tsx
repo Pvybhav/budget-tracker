@@ -10,10 +10,47 @@ import { fetchCards, fetchExpenses, fetchCategories } from "../services/backend.
 import showConfirm from "../components/Confirm";
 import { deleteExpense } from "../services/backendSync";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { formatDateOnly } from "../utils/date";
+import { formatDateInput, formatDateOnly } from "../utils/date";
+import { getCategoryAccent } from "../utils/categoryTheme";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
+}
+
+function getEmiProgress(expense: Expense) {
+  const months = Math.max(1, expense.emiMonths ?? 1);
+  const start = new Date(expense.date);
+  start.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + months - 1);
+  end.setHours(0, 0, 0, 0);
+
+  const monthlyEmi =
+    calcMonthlyEmi(expense.amount, expense.emiInterestRate ?? 0, months) +
+    (expense.emiProcessingFee ?? 0) / months +
+    (expense.emiGst ?? 0) / months;
+
+  const paidInstallments = Math.min(
+    months,
+    Math.max(
+      0,
+      (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth()) + 1,
+    ),
+  );
+  const pendingInstallments = Math.max(0, months - paidInstallments);
+
+  return {
+    end,
+    monthlyEmi,
+    paidInstallments,
+    pendingInstallments,
+    paidAmount: monthlyEmi * paidInstallments,
+    pendingAmount: monthlyEmi * pendingInstallments,
+  };
 }
 
 export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearly" | "emi" }) {
@@ -24,6 +61,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
+  const [selectedEmiExpense, setSelectedEmiExpense] = useState<Expense | null>(null);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -159,6 +197,28 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     if (!max || expense.amount > max.amount) return expense;
     return max;
   }, undefined);
+  const emiSummary = useMemo(
+    () =>
+      (filteredExpenses ?? []).reduce(
+        (summary, expense) => {
+          const progress = getEmiProgress(expense);
+          return {
+            plans: summary.plans + 1,
+            monthly:
+              summary.monthly +
+              convertCurrency(progress.monthlyEmi, expense.currency, displayCurrency),
+            paid:
+              summary.paid +
+              convertCurrency(progress.paidAmount, expense.currency, displayCurrency),
+            pending:
+              summary.pending +
+              convertCurrency(progress.pendingAmount, expense.currency, displayCurrency),
+          };
+        },
+        { plans: 0, monthly: 0, paid: 0, pending: 0 },
+      ),
+    [filteredExpenses, displayCurrency],
+  );
 
   const monthlyBreakdown =
     mode === "yearly"
@@ -360,55 +420,84 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
-            {mode === "monthly"
-              ? "Month Total"
-              : mode === "yearly"
-                ? "Year Total"
-                : "Visible Total"}
-          </p>
-          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-            {formatMoney(totalAmount, displayCurrency)}
-          </p>
+      {mode === "emi" ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-4">
+            <div className="text-sm text-slate-600 dark:text-slate-400">EMI plans</div>
+            <div className="mt-1 text-2xl font-semibold text-cyan-700 dark:text-cyan-200">
+              {emiSummary.plans}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Monthly commitment</div>
+            <div className="mt-1 text-2xl font-semibold text-amber-700 dark:text-amber-200">
+              {formatMoney(emiSummary.monthly, displayCurrency)}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Paid to date</div>
+            <div className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">
+              {formatMoney(emiSummary.paid, displayCurrency)}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Pending balance</div>
+            <div className="mt-1 text-2xl font-semibold text-rose-700 dark:text-rose-200">
+              {formatMoney(emiSummary.pending, displayCurrency)}
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              {mode === "monthly"
+                ? "Month Total"
+                : mode === "yearly"
+                  ? "Year Total"
+                  : "Visible Total"}
+            </p>
+            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+              {formatMoney(totalAmount, displayCurrency)}
+            </p>
+          </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
-            Transactions
-          </p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
-        </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              Transactions
+            </p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
+          </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
-            EMI Count
-          </p>
-          <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
-        </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              EMI Count
+            </p>
+            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
+          </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
-          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
-            Largest Spend
-          </p>
-          <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">
-            {formatMoney(
-              convertCurrency(
-                biggestExpense?.amount ?? 0,
-                biggestExpense?.currency,
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+            <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
+              Largest Spend
+            </p>
+            <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">
+              {formatMoney(
+                convertCurrency(
+                  biggestExpense?.amount ?? 0,
+                  biggestExpense?.currency,
+                  displayCurrency,
+                ),
                 displayCurrency,
-              ),
-              displayCurrency,
-            )}
-          </p>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-500 truncate">
-            {biggestExpense?.details || "No expense yet"}
-          </p>
+              )}
+            </p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-500 truncate">
+              {biggestExpense?.details || "No expense yet"}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
-      {mode && (
+      {mode && mode !== "emi" && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
@@ -458,7 +547,18 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               {mode === "emi" && (
-                <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
+                <>
+                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                    End date
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Paid</th>
+                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                    Pending
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                    Status
+                  </th>
+                </>
               )}
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
@@ -475,6 +575,9 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                   (expense.emiProcessingFee ?? 0) / emiMonths +
                   (expense.emiGst ?? 0) / emiMonths
                 : 0;
+              const emiProgress = isEmi ? getEmiProgress(expense) : null;
+              const emiStatus = isEmi ? getEmiExpenseStatus(expense) : null;
+
               return (
                 <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
                   <td className="px-6 py-4">{formatDateOnly(expense.date)}</td>
@@ -520,7 +623,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     {category ? (
                       <button
                         onClick={() => openCategoryModal(category)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-medium hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors cursor-pointer"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer",
+                          getCategoryAccent(category).badge,
+                        )}
                         title={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
                       >
                         {category.title}
@@ -543,33 +649,76 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       {isEmi && <span className="text-xs text-slate-500">principal</span>}
                     </div>
                   </td>
-                  {mode === "emi" && (
-                    <td className="px-6 py-4">
-                      {isEmi ? (
+                  {mode === "emi" && emiProgress && (
+                    <>
+                      <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                        {formatDateOnly(formatDateInput(emiProgress.end))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-900 dark:text-slate-100">
+                            {emiProgress.paidInstallments}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            {formatMoney(
+                              convertCurrency(
+                                emiProgress.paidAmount,
+                                expense.currency,
+                                displayCurrency,
+                              ),
+                              displayCurrency,
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-900 dark:text-slate-100">
+                            {emiProgress.pendingInstallments}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            {formatMoney(
+                              convertCurrency(
+                                emiProgress.pendingAmount,
+                                expense.currency,
+                                displayCurrency,
+                              ),
+                              displayCurrency,
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
-                            const status = getEmiExpenseStatus(expense);
-                            if (status === "completed") {
+                            if (emiStatus === "completed") {
                               return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
                             }
-                            if (status === "current") {
+                            if (emiStatus === "current") {
                               return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
                             }
                             return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
                           })()}`}
                         >
-                          {getEmiExpenseStatus(expense) === "completed"
+                          {emiStatus === "completed"
                             ? "Completed"
-                            : getEmiExpenseStatus(expense) === "current"
+                            : emiStatus === "current"
                               ? "Ongoing"
                               : "Upcoming"}
                         </span>
-                      ) : (
-                        <span className="text-slate-500 text-xs">—</span>
-                      )}
-                    </td>
+                      </td>
+                    </>
                   )}
                   <td className="px-6 py-4 text-right">
+                    {mode === "emi" && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEmiExpense(expense)}
+                        className="mr-3 text-cyan-700 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300"
+                      >
+                        View details
+                      </button>
+                    )}
                     <button
                       onClick={() => openEditModal(expense)}
                       className="text-blue-400 hover:text-blue-300 mr-3"
@@ -589,7 +738,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             {filteredExpenses.length === 0 && (
               <tr>
                 <td
-                  colSpan={mode === "emi" ? 7 : 6}
+                  colSpan={mode === "emi" ? 10 : 6}
                   className="px-6 py-12 text-center text-slate-500"
                 >
                   No expenses found for the selected filters.
@@ -635,6 +784,116 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         onClose={() => setIsModalOpen(false)}
         initialExpense={expenseToEdit}
       />
+
+      {selectedEmiExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <dialog
+            open
+            aria-labelledby="emi-details-title"
+            className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          >
+            {(() => {
+              const progress = getEmiProgress(selectedEmiExpense);
+              const money = (amount: number) =>
+                formatMoney(
+                  convertCurrency(amount, selectedEmiExpense.currency, displayCurrency),
+                  displayCurrency,
+                );
+              return (
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2
+                        id="emi-details-title"
+                        className="text-xl font-semibold text-slate-900 dark:text-slate-100"
+                      >
+                        EMI details
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {selectedEmiExpense.details || "Expense"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEmiExpense(null)}
+                      className="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
+                    <div>
+                      <dt className="text-slate-500">Principal</dt>
+                      <dd className="mt-1 font-medium">{money(selectedEmiExpense.amount)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Monthly payment</dt>
+                      <dd className="mt-1 font-medium">{money(progress.monthlyEmi)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Term</dt>
+                      <dd className="mt-1 font-medium">
+                        {selectedEmiExpense.emiMonths ?? 1} months
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Interest rate</dt>
+                      <dd className="mt-1 font-medium">
+                        {selectedEmiExpense.emiInterestRate ?? 0}% p.a.
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Processing fee</dt>
+                      <dd className="mt-1 font-medium">
+                        {money(selectedEmiExpense.emiProcessingFee ?? 0)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">GST</dt>
+                      <dd className="mt-1 font-medium">{money(selectedEmiExpense.emiGst ?? 0)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Started</dt>
+                      <dd className="mt-1 font-medium">
+                        {formatDateOnly(selectedEmiExpense.date)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Ends</dt>
+                      <dd className="mt-1 font-medium">
+                        {formatDateOnly(formatDateInput(progress.end))}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Installments</dt>
+                      <dd className="mt-1 font-medium">
+                        {progress.paidInstallments} paid · {progress.pendingInstallments} pending
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Paid amount</dt>
+                      <dd className="mt-1 font-medium">{money(progress.paidAmount)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Pending amount</dt>
+                      <dd className="mt-1 font-medium">{money(progress.pendingAmount)}</dd>
+                    </div>
+                  </dl>
+                  <progress
+                    className="mt-5 h-2 w-full accent-emerald-500"
+                    aria-label="EMI repayment progress"
+                    max={100}
+                    value={Math.round(
+                      (progress.paidInstallments / Math.max(1, selectedEmiExpense.emiMonths ?? 1)) *
+                        100,
+                    )}
+                  />
+                </>
+              );
+            })()}
+          </dialog>
+        </div>
+      )}
 
       {categoryModal.category && (
         <CategoryExpensesModal

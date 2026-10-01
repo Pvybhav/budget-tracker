@@ -11,6 +11,7 @@ import AddInvestmentModal from "./modals/AddInvestmentModal";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { INVESTMENT_TYPE_ICONS } from "../utils/typeIcons";
 import { inferFundClassification } from "../utils/fundClassification";
+import { formatDateOnly } from "../utils/date";
 const typeLabels: Record<Investment["type"], string> = {
   equity: "Equity",
   "mutual-fund": "Mutual Fund",
@@ -169,21 +170,15 @@ export default function InvestmentsSection() {
   };
   return (
     <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
-      
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        
         <div>
-          
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-            
             Investments
           </div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            
             Equity, mutual funds, and more
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            
             Track holdings across Zerodha, 5Paisa, and other platforms.
           </p>
         </div>
@@ -192,7 +187,6 @@ export default function InvestmentsSection() {
           onClick={openCreateModal}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-700"
         >
-          
           <Plus className="h-4 w-4" /> Add investment
         </button>
       </div>
@@ -256,27 +250,20 @@ export default function InvestmentsSection() {
         </select>
       </div>
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          
           <div className="text-sm text-slate-600 dark:text-slate-400">Invested</div>
           <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            
             {formatMoney(totals.invested, displayCurrency)}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          
           <div className="text-sm text-slate-600 dark:text-slate-400">Current value</div>
           <div className="mt-1 text-lg font-semibold text-cyan-600 dark:text-cyan-400">
-            
             {formatMoney(totals.current, displayCurrency)}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 p-3">
-          
           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            
             {totals.gain >= 0 ? (
               <TrendingUp className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
             ) : (
@@ -287,7 +274,6 @@ export default function InvestmentsSection() {
           <div
             className={`mt-1 text-lg font-semibold ${totals.gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
           >
-            
             {formatMoney(totals.gain, displayCurrency)}
           </div>
         </div>
@@ -384,13 +370,9 @@ export default function InvestmentsSection() {
       </div>
       {filteredInvestments.length > 0 ? (
         <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          
           <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
-            
             <thead className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-              
               <tr>
-                
                 <th className="px-4 py-3 font-medium">Investment</th>
                 <th className="px-4 py-3 font-medium">Platform</th>
                 <th className="px-4 py-3 font-medium">Type</th>
@@ -401,7 +383,6 @@ export default function InvestmentsSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              
               {visibleInvestments.map((investment) => {
                 const investedConverted = convertCurrency(
                   investment.investedAmount,
@@ -416,11 +397,8 @@ export default function InvestmentsSection() {
                 const gain = currentConverted - investedConverted;
                 return (
                   <tr key={investment.id} className="hover:bg-slate-100 dark:hover:bg-slate-800/20">
-                    
                     <td className="px-4 py-3">
-                      
                       <div className="font-medium text-slate-900 dark:text-slate-100">
-                        
                         {investment.name}
                       </div>
                       {investment.note && (
@@ -454,15 +432,12 @@ export default function InvestmentsSection() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      
                       {investment.subtype === "pf"
                         ? "-"
                         : investment.quantity.toLocaleString("en-IN")}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      
                       <div className="font-medium text-slate-900 dark:text-slate-100">
-                        
                         {formatMoney(currentConverted, displayCurrency)}
                       </div>
                       <div
@@ -472,7 +447,6 @@ export default function InvestmentsSection() {
                             : "text-xs text-rose-600 dark:text-rose-400"
                         }
                       >
-                        
                         {gain >= 0 ? "+" : ""} {formatMoney(gain, displayCurrency)}
                         <div className="text-xs text-slate-500">
                           {investedConverted !== 0
@@ -481,7 +455,7 @@ export default function InvestmentsSection() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">{investment.purchaseDate}</td>
+                    <td className="px-4 py-3">{formatDateOnly(investment.purchaseDate)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <button

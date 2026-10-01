@@ -4,6 +4,7 @@ import { type Category } from "../../db/db";
 import { fetchExpenses, fetchCards } from "../../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../../services/currency.service";
 import { formatDateOnly } from "../../utils/date";
+import { getCategoryAccent } from "../../utils/categoryTheme";
 
 interface Props {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export default function CategoryExpensesModal({
   }, [category.id, currentYear, currentMonth, isYearly, isQuarterly, currentQuarterIndex]);
 
   const cards = useBackendResource(() => fetchCards(), []);
+  const accent = getCategoryAccent(category);
 
   if (!isOpen) return null;
 
@@ -94,8 +96,10 @@ export default function CategoryExpensesModal({
 
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3 mb-1">
-            <span className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
-              <Tags className="w-4 h-4 text-violet-400" />
+            <span
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${accent.icon}`}
+            >
+              <Tags className="w-4 h-4" />
             </span>
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               {category.title}

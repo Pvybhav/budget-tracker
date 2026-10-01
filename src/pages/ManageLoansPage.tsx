@@ -27,6 +27,23 @@ function getLoanStatus(loan: Loan): EmiScheduleStatus {
   return "upcoming";
 }
 
+function getLoanProgress(loan: Loan) {
+  const totalMonths = Math.max(0, loan.termMonths);
+  const paidMonths = Math.min(
+    totalMonths,
+    new Set(
+      (loan.repayments ?? [])
+        .filter((repayment) => repayment.paid)
+        .map((repayment) => repayment.paymentNumber),
+    ).size,
+  );
+  return {
+    paidMonths,
+    remainingMonths: totalMonths - paidMonths,
+    percent: totalMonths ? Math.round((paidMonths / totalMonths) * 100) : 0,
+  };
+}
+
 export default function ManageLoansPage() {
   const displayCurrency = useDisplayCurrency();
   const loans = useBackendResource(() => fetchLoans(), []);
@@ -46,6 +63,7 @@ export default function ManageLoansPage() {
   const [paidPaymentReference, setPaidPaymentReference] = useState("");
   const [paidPaymentSource, setPaidPaymentSource] = useState("");
   const [search, setSearch] = useState("");
+  const [loanSort, setLoanSort] = useState<"months-asc" | "months-desc">("months-asc");
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const filteredLoans = useMemo(() => {
@@ -57,7 +75,16 @@ export default function ManageLoansPage() {
         loan.note?.toLowerCase().includes(query),
     );
   }, [loans, search]);
-  const visibleLoans = filteredLoans.slice((page - 1) * pageSize, page * pageSize);
+  const sortedLoans = useMemo(
+    () =>
+      [...filteredLoans].sort((left, right) => {
+        const difference =
+          getLoanProgress(left).remainingMonths - getLoanProgress(right).remainingMonths;
+        return loanSort === "months-asc" ? difference : -difference;
+      }),
+    [filteredLoans, loanSort],
+  );
+  const visibleLoans = sortedLoans.slice((page - 1) * pageSize, page * pageSize);
   const loanSummary = useMemo(() => {
     const loanList = loans ?? [];
     return {
@@ -302,6 +329,20 @@ export default function ManageLoansPage() {
         aria-label="Search loans"
         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
       />
+      <label className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+        <span>Sort by months remaining</span>
+        <select
+          value={loanSort}
+          onChange={(event) => {
+            setLoanSort(event.target.value as typeof loanSort);
+            setPage(1);
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+        >
+          <option value="months-asc">Ascending</option>
+          <option value="months-desc">Descending</option>
+        </select>
+      </label>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
         <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
@@ -325,6 +366,10 @@ export default function ManageLoansPage() {
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                 Remaining Balance
               </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+                Months left
+              </th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Progress</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Note</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
@@ -340,6 +385,7 @@ export default function ManageLoansPage() {
                 loan.termMonths,
               );
               const totalCost = monthlyEmi * loan.termMonths;
+              const progress = getLoanProgress(loan);
 
               return (
                 <>
@@ -392,6 +438,20 @@ export default function ManageLoansPage() {
                         displayCurrency,
                       )}
                     </td>
+                    <td className="px-6 py-4">{progress.remainingMonths} mo</td>
+                    <td className="px-6 py-4 min-w-40">
+                      <div className="flex items-center gap-2">
+                        <progress
+                          className="h-2 w-24 accent-emerald-500"
+                          aria-label={`${loan.lender} repayment progress`}
+                          max={100}
+                          value={progress.percent}
+                        />
+                        <span className="text-xs text-slate-500">
+                          {progress.paidMonths}/{loan.termMonths}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 max-w-xs truncate">{loan.note || "—"}</td>
                     <td className="px-6 py-4">
                       {selectedLoan?.id === loan.id && (
@@ -438,7 +498,7 @@ export default function ManageLoansPage() {
                     className={selectedLoan?.id === loan.id ? "" : "hidden"}
                     aria-hidden={selectedLoan?.id !== loan.id}
                   >
-                    <td colSpan={11} className="p-0">
+                    <td colSpan={13} className="p-0">
                       <div id={`loan-schedule-${loan.id}`} />
                     </td>
                   </tr>
@@ -447,7 +507,7 @@ export default function ManageLoansPage() {
             })}
             {filteredLoans.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-6 py-12 text-center text-slate-500">
+                <td colSpan={13} className="px-6 py-12 text-center text-slate-500">
                   {loans?.length ? "No loans match your search." : "No loans found."}
                 </td>
               </tr>
