@@ -69,22 +69,22 @@ export default function MonthlySummary({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="col-span-1">
           <div className="text-sm text-slate-600 dark:text-slate-400">Spent</div>
-          <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          <div className="text-base font-semibold text-rose-600 dark:text-rose-400 sm:text-xl">
             {formatMoney(spentThis, displayCurrency)}
           </div>
         </div>
         <div className="col-span-1">
           <div className="text-sm text-slate-600 dark:text-slate-400">Paid</div>
-          <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="text-base font-semibold text-emerald-600 dark:text-emerald-400 sm:text-xl">
             {formatMoney(paidThis, displayCurrency)}
           </div>
         </div>
-        <div className="col-span-1 text-right">
+        <div className="col-span-1 sm:text-right">
           <div className="text-sm text-slate-600 dark:text-slate-400">Net</div>
-          <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-xl">
             {formatMoney(net, displayCurrency)}
           </div>
         </div>

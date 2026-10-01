@@ -56,7 +56,7 @@ export default function Layout({ logout }: LayoutProps) {
     { name: "Manage Insurance", path: "/insurance", icon: ShieldCheck },
   ];
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="flex flex-col md:flex-row h-dvh min-h-0 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       
       {/* Mobile Topbar */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0">
@@ -460,7 +460,7 @@ export default function Layout({ logout }: LayoutProps) {
         </div>
       </aside>
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 transition-colors duration-300">
+      <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 p-3 sm:p-5 lg:p-8 transition-colors duration-300">
         
         <div className="max-w-6xl mx-auto">
           

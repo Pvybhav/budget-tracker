@@ -44,12 +44,12 @@ export default function IncomeExpenseSummary({ className }: { className?: string
       <div className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
         This month's cash flow
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         
         <div>
           
           <div className="text-sm text-slate-600 dark:text-slate-400">Income</div>
-          <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="text-base font-semibold text-emerald-600 dark:text-emerald-400 sm:text-xl">
             
             {formatMoney(incomeThis, displayCurrency)}
           </div>
@@ -57,16 +57,16 @@ export default function IncomeExpenseSummary({ className }: { className?: string
         <div>
           
           <div className="text-sm text-slate-600 dark:text-slate-400">Expense</div>
-          <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          <div className="text-base font-semibold text-rose-600 dark:text-rose-400 sm:text-xl">
             
             {formatMoney(expenseThis, displayCurrency)}
           </div>
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           
           <div className="text-sm text-slate-600 dark:text-slate-400">Net Savings</div>
           <div
-            className={`text-xl font-semibold ${netSavings >= 0 ? "text-slate-900 dark:text-slate-100" : "text-rose-600 dark:text-rose-400"}`}
+            className={`text-base font-semibold sm:text-xl ${netSavings >= 0 ? "text-slate-900 dark:text-slate-100" : "text-rose-600 dark:text-rose-400"}`}
           >
             
             {formatMoney(netSavings, displayCurrency)}

@@ -35,7 +35,7 @@ export default function MonthlyComparisonPanel({
         </div>
       </div>
       {/* Overall spending comparison */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-3">
         
         <div className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-lg">
           

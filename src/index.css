@@ -8,6 +8,13 @@
     min-width: 0;
   }
 
+  main .overflow-x-auto {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
   body {
     @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300;
   }
