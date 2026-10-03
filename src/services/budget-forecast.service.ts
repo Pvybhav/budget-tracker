@@ -24,6 +24,51 @@ export interface BudgetForecast {
 export function getCurrentMonthDays(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
+
+function isLeapYear(year: number): boolean {
+  return (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0)) && year > 0;
+}
+
+function getDaysInYear(year: number): number {
+  return isLeapYear(year) ? 366 : 365;
+}
+
+function getPeriodBounds(year: number, month: number, mode: BudgetMode): {
+  periodStart: Date;
+  periodEnd: Date;
+  totalDays: number;
+} {
+  if (mode === "monthly") {
+    const periodStart = new Date(year, month, 1);
+    const periodEnd = new Date(year, month + 1, 0);
+    return {
+      periodStart,
+      periodEnd,
+      totalDays: getCurrentMonthDays(year, month + 1),
+    };
+  }
+
+  if (mode === "quarterly") {
+    const quarter = Math.floor(month / 3);
+    const periodStart = new Date(year, quarter * 3, 1);
+    const periodEnd = new Date(year, (quarter + 1) * 3, 0);
+    return {
+      periodStart,
+      periodEnd,
+      totalDays:
+        Math.floor((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+    };
+  }
+
+  const periodStart = new Date(year, 0, 1);
+  const periodEnd = new Date(year, 11, 31);
+  return {
+    periodStart,
+    periodEnd,
+    totalDays: getDaysInYear(year),
+  };
+}
+
 export function getSpendingInCurrentPeriod(
   expenses: Expense[],
   categoryId?: string,
@@ -62,29 +107,17 @@ export function calculateDailySpendingPace(
   mode: BudgetMode = "monthly",
 ): DailySpendingPace {
   const now = new Date();
-  let periodStart: Date;
-  let totalDays: number;
-  if (mode === "monthly") {
-    periodStart = new Date(year, month, 1);
-    totalDays = getCurrentMonthDays(year, month + 1);
-  } else if (mode === "quarterly") {
-    const quarter = Math.floor(month / 3);
-    periodStart = new Date(year, quarter * 3, 1);
-    const endDate = new Date(year, (quarter + 1) * 3, 0);
-    totalDays = Math.floor((endDate.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  } else {
-    // yearly
-    periodStart = new Date(year, 0, 1);
-    totalDays = 365;
-  }
-  const today = now;
+  const { periodStart, periodEnd, totalDays } = getPeriodBounds(year, month, mode);
+  const today = new Date(
+    Math.min(Math.max(now.getTime(), periodStart.getTime()), periodEnd.getTime()),
+  );
   const daysElapsed =
-    Math.floor((today.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    Math.max(0, Math.floor((today.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   const daysRemaining = Math.max(0, totalDays - daysElapsed);
   const averageDaily = daysElapsed > 0 ? spending / daysElapsed : 0;
   return {
     dailySpent: spending,
-    daysElapsed: Math.max(1, daysElapsed),
+    daysElapsed,
     daysRemaining,
     averageDaily,
   };
@@ -122,7 +155,7 @@ export function forecastCategoryBudget(
               new Date(currentYear, Math.floor(currentMonth / 3) * 3, 1).getTime()) /
               (1000 * 60 * 60 * 24),
           ) + 1
-        : 365;
+        : getDaysInYear(currentYear);
   const projectedSpent = dailyPace.averageDaily * periodDays;
   const projectedRemaining = effectiveBudget - projectedSpent;
   const willExceed = projectedRemaining < 0;
