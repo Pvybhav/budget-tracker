@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Expense } from "../../db/db";
+import type { Expense, ExpenseStatus } from "../../db/db";
 import { useBackendResource } from "../../services/backendHooks";
 import { fetchCards, fetchCategories, fetchExpenses } from "../../services/backend.service";
 import { X, TrendingUp, TrendingDown, Tags, AlertTriangle, Info } from "lucide-react";
@@ -39,11 +39,22 @@ const INTEREST_PRESETS = [
   { label: "Custom", value: -1 },
 ];
 
+type SplitRow = {
+  categoryId: string;
+  amount: string;
+  note: string;
+};
+
 export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Props) {
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
   const [continueAdding, setContinueAdding] = useState(false);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [status, setStatus] = useState<ExpenseStatus>("pending");
+  const [splitRows, setSplitRows] = useState<SplitRow[]>([
+    { categoryId: "", amount: "", note: "" },
+  ]);
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -137,6 +148,23 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     if (initialExpense) {
       const interestRate = initialExpense.emiInterestRate ?? 0;
       const presetExists = INTEREST_PRESETS.some((p) => p.value === interestRate && p.value !== -1);
+      setStatus(initialExpense.status ?? "pending");
+      setSplitEnabled(Boolean(initialExpense.splitItems?.length));
+      setSplitRows(
+        initialExpense.splitItems?.length
+          ? initialExpense.splitItems.map((item) => ({
+              categoryId: item.categoryId ?? "",
+              amount: String(item.amount ?? 0),
+              note: item.note ?? "",
+            }))
+          : [
+              {
+                categoryId: initialExpense.categoryId ?? "",
+                amount: String(initialExpense.amount),
+                note: initialExpense.details ?? "",
+              },
+            ],
+      );
       setFormData({
         cardId: initialExpense.cardId.toString(),
         categoryId: initialExpense.categoryId?.toString() ?? "",
@@ -159,6 +187,9 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       });
     } else {
       setContinueAdding(false);
+      setStatus("pending");
+      setSplitEnabled(false);
+      setSplitRows([{ categoryId: "", amount: "", note: "" }]);
       setFormData({
         cardId: "",
         categoryId: "",
@@ -273,17 +304,82 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       await showAlert("Please select a card");
       return;
     }
-    if (!formData.categoryId) {
+    if (!formData.categoryId && !splitEnabled) {
       await showAlert("Please select a category");
+      return;
+    }
+
+    const parsedDate = new Date(formData.date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      await showAlert("Please enter a valid date");
+      return;
+    }
+
+    if (principal <= 0) {
+      await showAlert("Expense amount must be greater than zero");
+      return;
+    }
+
+    if (formData.isRecurring && formData.recurringEndDate) {
+      const endDate = new Date(formData.recurringEndDate);
+      if (endDate < parsedDate) {
+        await showAlert("Recurring end date must be after the expense date");
+        return;
+      }
+    }
+
+    const splitRowsToUse = splitEnabled
+      ? splitRows
+          .map((row) => ({
+            categoryId: row.categoryId || formData.categoryId || undefined,
+            amount: Number(row.amount || 0),
+            note: row.note.trim() || undefined,
+            currency: formData.currency,
+          }))
+          .filter((row) => row.amount > 0)
+      : [];
+
+    if (splitEnabled) {
+      const splitTotal = splitRowsToUse.reduce((sum, row) => sum + row.amount, 0);
+      if (Math.abs(splitTotal - principal) > 0.01) {
+        await showAlert("Split amounts must total the full expense amount");
+        return;
+      }
+    }
+
+    const existingExpenses = await fetchExpenses();
+    const hasDuplicate = existingExpenses.some((expense) => {
+      if (expense.id === initialExpense?.id || expense.cardId !== formData.cardId) return false;
+      if (Math.abs(expense.amount - principal) > 0.01) return false;
+      const sameDate = Math.abs(new Date(expense.date).getTime() - parsedDate.getTime()) < 60000;
+      const sameExpense =
+        sameDate &&
+        expense.categoryId === (formData.categoryId || splitRowsToUse[0]?.categoryId) &&
+        (expense.details ?? "").trim() === formData.details.trim();
+      const sameRecurringTemplate =
+        formData.isRecurring &&
+        !expense.isRecurringInstance &&
+        expense.recurringFrequency === formData.recurringFrequency &&
+        (expense.recurringInterval ?? 1) === formData.recurringInterval &&
+        expense.categoryId === (formData.categoryId || splitRowsToUse[0]?.categoryId) &&
+        (expense.details ?? "").trim() === formData.details.trim();
+      return sameExpense || sameRecurringTemplate;
+    });
+
+    if (hasDuplicate) {
+      await showAlert("This expense looks like a duplicate of an existing record");
       return;
     }
 
     const payload: Omit<Expense, "id"> = {
       cardId: formData.cardId,
-      categoryId: formData.categoryId,
+      categoryId: formData.categoryId || splitRowsToUse[0]?.categoryId,
       details: formData.details.trim() || undefined,
       amount: principal,
       date: dateTimeInputToUTC(formData.date),
+      status,
+      splitItems: splitEnabled && splitRowsToUse.length > 0 ? splitRowsToUse : undefined,
+      reconciled: initialExpense?.reconciled ?? false,
       isEmi: formData.isEmi || undefined,
       emiMonths: formData.isEmi ? months : undefined,
       emiInterestRate: formData.isEmi ? effectiveInterestRate : undefined,
@@ -547,6 +643,137 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                 className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />
             </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-100 p-4 dark:border-slate-700 dark:bg-slate-800/30">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Expense status
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Mark whether this entry is still pending or already paid.
+                </p>
+              </div>
+              <select
+                value={status}
+                onChange={(event) => setStatus(event.target.value as ExpenseStatus)}
+                className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+              >
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-100 p-4 dark:border-slate-700 dark:bg-slate-800/30">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Split expense
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Divide this transaction across categories and notes.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={splitEnabled}
+                onChange={(event) => {
+                  setSplitEnabled(event.target.checked);
+                  if (event.target.checked && splitRows.length === 0) {
+                    setSplitRows([
+                      {
+                        categoryId: formData.categoryId || "",
+                        amount: formData.amount || "",
+                        note: formData.details || "",
+                      },
+                    ]);
+                  }
+                }}
+                className="w-4 h-4 accent-emerald-500"
+              />
+            </div>
+
+            {splitEnabled && (
+              <div className="mt-4 space-y-3">
+                {splitRows.map((row, index) => (
+                  <div
+                    key={`${index}-${row.categoryId}`}
+                    className="grid grid-cols-[1.2fr_0.8fr_1.2fr_auto] gap-2 items-center"
+                  >
+                    <select
+                      value={row.categoryId}
+                      onChange={(event) => {
+                        const next = [...splitRows];
+                        next[index] = { ...next[index], categoryId: event.target.value };
+                        setSplitRows(next);
+                      }}
+                      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="">Select category</option>
+                      {categories?.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.title}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={row.amount}
+                      onChange={(event) => {
+                        const next = [...splitRows];
+                        next[index] = { ...next[index], amount: event.target.value };
+                        setSplitRows(next);
+                      }}
+                      placeholder="Amount"
+                      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                    />
+                    <input
+                      type="text"
+                      value={row.note}
+                      onChange={(event) => {
+                        const next = [...splitRows];
+                        next[index] = { ...next[index], note: event.target.value };
+                        setSplitRows(next);
+                      }}
+                      placeholder="Note"
+                      className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (splitRows.length === 1) {
+                          setSplitRows([
+                            {
+                              categoryId: formData.categoryId || "",
+                              amount: formData.amount || "",
+                              note: formData.details || "",
+                            },
+                          ]);
+                          return;
+                        }
+                        setSplitRows(splitRows.filter((_, rowIndex) => rowIndex !== index));
+                      }}
+                      className="text-red-400 hover:text-red-300 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSplitRows([...splitRows, { categoryId: "", amount: "", note: "" }])
+                  }
+                  className="mt-2 text-sm font-medium text-emerald-600 hover:text-emerald-500"
+                >
+                  + Add split row
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── EMI SECTION ── */}

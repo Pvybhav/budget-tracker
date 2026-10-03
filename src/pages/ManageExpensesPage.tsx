@@ -8,7 +8,8 @@ import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
 import { fetchCards, fetchExpenses, fetchCategories } from "../services/backend.service";
 import showConfirm from "../components/Confirm";
-import { deleteExpense } from "../services/backendSync";
+import { deleteExpense, updateExpense } from "../services/backendSync";
+import { getNextRecurringExpenseDue, syncRecurringExpenses } from "../services/recurring.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
@@ -249,6 +250,17 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     });
     if (ok) {
       await deleteExpense(expense.id!);
+    }
+  };
+
+  const handleMarkPaid = async (expense: Expense) => {
+    if (expense.id) await updateExpense(expense.id, { status: "paid" });
+  };
+
+  const handleSkipNext = async (expense: Expense) => {
+    if (expense.id) {
+      await updateExpense(expense.id, { skipNextDue: !expense.skipNextDue });
+      if (!expense.skipNextDue) await syncRecurringExpenses();
     }
   };
 
@@ -545,6 +557,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
               </th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
+              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               {mode === "emi" && (
                 <>
@@ -596,10 +609,22 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                             </span>
                           )}
                           {expense.recurringFrequency && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
-                              {expense.recurringFrequency.charAt(0).toUpperCase() +
-                                expense.recurringFrequency.slice(1)}
-                            </span>
+                            <>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+                                {expense.recurringFrequency.charAt(0).toUpperCase() +
+                                  expense.recurringFrequency.slice(1)}
+                              </span>
+                              {!expense.isRecurringInstance && expenses && (
+                                <span className="text-xs text-slate-500">
+                                  Next due:{" "}
+                                  {(() => {
+                                    const due = getNextRecurringExpenseDue(expense, expenses);
+                                    return due ? formatDateOnly(formatDateInput(due)) : "Ended";
+                                  })()}
+                                  {expense.skipNextDue ? " (skip queued)" : ""}
+                                </span>
+                              )}
+                            </>
                           )}
                           {(expense.emiInterestRate ?? 0) === 0 ? (
                             <span className="text-xs text-slate-500">No Cost</span>
@@ -639,6 +664,18 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     {cards?.find((card) => card.id === expense.cardId)?.title ?? "Unknown card"}
                   </td>
                   <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${
+                        (expense.status ?? "pending") === "paid"
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                          : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                      }`}
+                    >
+                      {(expense.status ?? "pending").charAt(0).toUpperCase() +
+                        (expense.status ?? "pending").slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span>
                         {formatMoney(
@@ -647,6 +684,11 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         )}
                       </span>
                       {isEmi && <span className="text-xs text-slate-500">principal</span>}
+                      {expense.splitItems?.length ? (
+                        <span className="text-xs text-slate-500">
+                          split: {expense.splitItems.length} items
+                        </span>
+                      ) : null}
                     </div>
                   </td>
                   {mode === "emi" && emiProgress && (
@@ -725,6 +767,24 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     >
                       Edit
                     </button>
+                    {(expense.status ?? "pending") !== "paid" && (
+                      <button
+                        type="button"
+                        onClick={() => void handleMarkPaid(expense)}
+                        className="text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300 mr-3"
+                      >
+                        Mark paid
+                      </button>
+                    )}
+                    {expense.recurringFrequency && !expense.isRecurringInstance && (
+                      <button
+                        type="button"
+                        onClick={() => void handleSkipNext(expense)}
+                        className="text-amber-700 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 mr-3"
+                      >
+                        {expense.skipNextDue ? "Undo skip" : "Skip next"}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(expense)}
                       className="text-red-400 hover:text-red-300"

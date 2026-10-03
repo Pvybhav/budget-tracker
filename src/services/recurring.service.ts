@@ -7,6 +7,7 @@ import {
   fetchIncomes,
   fetchSavingsContributions,
   fetchSavingsGoals,
+  updateExpense,
 } from "./backend.service";
 import { dateTimeInputToUTC } from "../utils/date";
 
@@ -31,18 +32,48 @@ function parseLocalDate(value: string) {
   return new Date(year, month - 1, day);
 }
 
-function addInterval(date: Date, frequency: RecurringFrequency, interval: number) {
+function addInterval(
+  date: Date,
+  frequency: RecurringFrequency,
+  interval: number,
+  anchorDay = date.getDate(),
+) {
   const amount = Math.max(1, interval || 1);
 
   switch (frequency) {
     case "weekly":
       return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 7 * amount);
     case "yearly":
-      return new Date(date.getFullYear() + amount, date.getMonth(), date.getDate());
-    case "monthly":
+    case "monthly": {
+      const targetMonth =
+        date.getFullYear() * 12 + date.getMonth() + amount * (frequency === "yearly" ? 12 : 1);
+      const year = Math.floor(targetMonth / 12);
+      const month = targetMonth % 12;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return new Date(year, month, Math.min(anchorDay, lastDay));
+    }
     default:
-      return new Date(date.getFullYear(), date.getMonth() + amount, date.getDate());
+      return date;
   }
+}
+
+export function getNextRecurringExpenseDue(template: Expense, expenses: Expense[]) {
+  if (!template.recurringFrequency) return null;
+  const instances = expenses.filter((expense) => expense.recurringTemplateId === template.id);
+  const latest = instances.reduce(
+    (date, expense) => {
+      const occurrence = new Date(expense.date);
+      return occurrence > date ? occurrence : date;
+    },
+    new Date(template.date),
+  );
+  const frequency = template.recurringFrequency;
+  const interval = template.recurringInterval ?? 1;
+  const anchorDay = new Date(template.date).getDate();
+  let next = addInterval(latest, frequency, interval, anchorDay);
+  if (template.skipNextDue) next = addInterval(next, frequency, interval, anchorDay);
+  if (template.recurringEndDate && next > parseLocalDate(template.recurringEndDate)) return null;
+  return next;
 }
 
 function addContributionInterval(
@@ -64,6 +95,7 @@ export async function syncRecurringExpenses(now = new Date()) {
 
     const frequency = template.recurringFrequency ?? "monthly";
     const interval = template.recurringInterval ?? 1;
+    const anchorDay = new Date(template.date).getDate();
     const endDate = template.recurringEndDate ? parseLocalDate(template.recurringEndDate) : null;
 
     const instances = expenses.filter(
@@ -78,8 +110,9 @@ export async function syncRecurringExpenses(now = new Date()) {
       }
     }
 
-    let nextOccurrenceDate = addInterval(latestOccurrenceDate, frequency, interval);
+    let nextOccurrenceDate = addInterval(latestOccurrenceDate, frequency, interval, anchorDay);
     let createdCount = 0;
+    let skipNextDue = Boolean(template.skipNextDue);
 
     while (createdCount < 6) {
       if (endDate && nextOccurrenceDate > endDate) {
@@ -88,6 +121,14 @@ export async function syncRecurringExpenses(now = new Date()) {
 
       if (nextOccurrenceDate > now) {
         break;
+      }
+
+      if (skipNextDue) {
+        skipNextDue = false;
+        await updateExpense(template.id, { skipNextDue: false });
+        latestOccurrenceDate = nextOccurrenceDate;
+        nextOccurrenceDate = addInterval(nextOccurrenceDate, frequency, interval, anchorDay);
+        continue;
       }
 
       const nextOccurrenceValue = dateTimeInputToUTC(toDateTimeLocalValue(nextOccurrenceDate));
@@ -118,7 +159,7 @@ export async function syncRecurringExpenses(now = new Date()) {
       }
 
       latestOccurrenceDate = nextOccurrenceDate;
-      nextOccurrenceDate = addInterval(nextOccurrenceDate, frequency, interval);
+      nextOccurrenceDate = addInterval(nextOccurrenceDate, frequency, interval, anchorDay);
     }
   }
 }

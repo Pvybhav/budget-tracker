@@ -53,6 +53,16 @@ export interface Category {
   maxCarryoverLimit?: number;
   customBudgetStartDay?: number;
 }
+export type ExpenseStatus = "pending" | "paid";
+
+export interface ExpenseSplitItem {
+  id?: string;
+  categoryId?: string;
+  amount: number;
+  note?: string;
+  currency?: string;
+}
+
 export interface Expense {
   id?: string;
   cardId: string;
@@ -62,6 +72,9 @@ export interface Expense {
   amount: number;
   date: string;
   reconciled?: boolean;
+  status?: ExpenseStatus;
+  splitItems?: ExpenseSplitItem[];
+  skipNextDue?: boolean;
   isEmi?: boolean;
   emiMonths?: number;
   emiInterestRate?: number;

@@ -132,6 +132,16 @@ const expenseSchema = new Schema(
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
     dateTimezoneVersion: { type: Number, default: 2, select: false },
     reconciled: { type: Boolean, default: false },
+    status: { type: String, enum: ["pending", "paid"], default: "pending" },
+    splitItems: [
+      {
+        categoryId: { type: ObjectId, ref: "Category" },
+        amount: { type: Decimal128, set: toMoney },
+        note: String,
+        currency: currencyField,
+      },
+    ],
+    skipNextDue: { type: Boolean, default: false },
     isEmi: Boolean,
     emiMonths: Number,
     emiInterestRate: Number,
