@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
 import { inferFundClassification } from "../../utils/fundClassification";
+import Tooltip from "../Tooltip";
 import { dateOnly, todayDateInput } from "../../utils/date";
 interface Props {
   isOpen: boolean;
@@ -150,35 +151,27 @@ export default function AddInvestmentModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      
       <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl max-h-[90vh] overflow-y-auto">
-        
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-          title="Close"
-        >
-          
-          <X className="h-5 w-5" />
-        </button>
+        <Tooltip content="Close">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </Tooltip>
         <div className="border-b border-slate-200 dark:border-slate-800 p-6">
-          
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            
             {initialInvestment ? "Edit Investment" : "Add Investment"}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            
             Record the latest value from your investment platform.
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Investment name
               <input
                 required
@@ -190,7 +183,6 @@ export default function AddInvestmentModal({
               />
             </label>
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Platform / broker
               <select
                 required
@@ -212,9 +204,7 @@ export default function AddInvestmentModal({
             </label>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Instrument type
               <select
                 name="type"
@@ -222,7 +212,6 @@ export default function AddInvestmentModal({
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               >
-                
                 <option value="equity">Equity</option>
                 <option value="mutual-fund">Mutual Fund</option> <option value="etf">ETF</option>
                 <option value="bond">Bond</option> <option value="other">Other</option>
@@ -271,7 +260,6 @@ export default function AddInvestmentModal({
             )}
             {formData.subtype !== "pf" && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
-                
                 Quantity / units
                 <input
                   required
@@ -287,9 +275,7 @@ export default function AddInvestmentModal({
             )}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               {formData.subtype === "pf" ? "Newly invested amount" : "Invested amount"}
               <input
                 required
@@ -304,7 +290,6 @@ export default function AddInvestmentModal({
             </label>
             {formData.subtype !== "pf" && (
               <label className="text-sm text-slate-500 dark:text-slate-400">
-                
                 Current value
                 <input
                   required
@@ -319,7 +304,6 @@ export default function AddInvestmentModal({
               </label>
             )}
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Currency
               <CurrencySelect
                 value={formData.currency}
@@ -329,9 +313,7 @@ export default function AddInvestmentModal({
             </label>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Purchase date
               <input
                 required
@@ -343,7 +325,6 @@ export default function AddInvestmentModal({
               />
             </label>
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              
               Note
               <input
                 name="note"
@@ -359,7 +340,6 @@ export default function AddInvestmentModal({
             disabled={isSubmitting}
             className="w-full rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            
             {isSubmitting
               ? "Saving..."
               : initialInvestment

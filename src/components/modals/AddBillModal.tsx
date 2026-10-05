@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
 import { dateOnly, todayDateInput } from "../../utils/date";
+import Tooltip from "../Tooltip";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -114,34 +115,27 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
-        
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-          title="Close"
-        >
-          
-          <X className="h-5 w-5" />
-        </button>
+        <Tooltip content="Close">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </Tooltip>
         <div className="border-b border-slate-200 dark:border-slate-800 p-6">
-          
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            
             {initialBill ? "Edit Bill" : "Add Bill"}
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
-          
           <div>
-            
             <label
               htmlFor="bill-name"
               className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
             >
-              
               Bill Name
             </label>
             <input
@@ -155,9 +149,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             />
           </div>
           <div className="space-y-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 dark:bg-slate-950/50">
-            
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              
               <input
                 type="checkbox"
                 name="isSubscription"
@@ -169,7 +161,6 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             </label>
             {formData.isSubscription && (
               <label className="block text-sm text-slate-500 dark:text-slate-400">
-                
                 Renewal frequency
                 <select
                   name="subscriptionFrequency"
@@ -177,7 +168,6 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100"
                 >
-                  
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
                   <option value="yearly">Yearly</option>
@@ -186,14 +176,11 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             )}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <div>
-              
               <label
                 htmlFor="bill-type"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                
                 Bill Type
               </label>
               <select
@@ -203,22 +190,18 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
               >
-                
                 {TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    
                     {option.label}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              
               <label
                 htmlFor="bill-provider"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                
                 Provider (optional)
               </label>
               <input
@@ -232,14 +215,11 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            
             <div>
-              
               <label
                 htmlFor="bill-amount"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                
                 Amount
               </label>
               <input
@@ -255,9 +235,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               />
             </div>
             <div>
-              
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
-                
                 Currency
               </label>
               <CurrencySelect
@@ -267,12 +245,10 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               />
             </div>
             <div>
-              
               <label
                 htmlFor="bill-due-date"
                 className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
               >
-                
                 Due Date
               </label>
               <input
@@ -287,9 +263,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             </div>
           </div>
           <div>
-            
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              
               <input
                 type="checkbox"
                 name="paid"
@@ -301,12 +275,10 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             </label>
           </div>
           <div>
-            
             <label
               htmlFor="bill-note"
               className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
             >
-              
               Note (optional)
             </label>
             <textarea
@@ -323,7 +295,6 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
             disabled={isSubmitting}
             className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition-colors hover:bg-emerald-700"
           >
-            
             {submitLabel}
           </button>
         </form>

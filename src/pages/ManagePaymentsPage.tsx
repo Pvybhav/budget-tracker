@@ -8,6 +8,7 @@ import { fetchCards, fetchPayments } from "../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly } from "../utils/date";
+import Tooltip from "../components/Tooltip";
 
 export default function ManagePaymentsPage() {
   const displayCurrency = useDisplayCurrency();
@@ -98,9 +99,9 @@ export default function ManagePaymentsPage() {
                     displayCurrency,
                   )}
                 </td>
-                <td className="px-6 py-4 max-w-xs truncate" title={payment.note ?? ""}>
-                  {payment.note || "-"}
-                </td>
+                <Tooltip content={payment.note ?? ""}>
+                  <td className="px-6 py-4 max-w-xs truncate">{payment.note || "-"}</td>
+                </Tooltip>
                 <td className="px-6 py-4 text-right">
                   <button
                     onClick={() => openEditModal(payment)}

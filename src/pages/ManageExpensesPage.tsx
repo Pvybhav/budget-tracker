@@ -13,6 +13,7 @@ import { getNextRecurringExpenseDue, syncRecurringExpenses } from "../services/r
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
+import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
 import { Check, CheckCircle2, Clock3, Pencil, Trash2 } from "lucide-react";
 
@@ -659,20 +660,23 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                   </td>
                   <td className="px-6 py-4">
                     {category ? (
-                      <button
-                        onClick={() => openCategoryModal(category)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer",
-                          getCategoryAccent(category).badge,
-                        )}
-                        title={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
+                      <Tooltip
+                        content={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
                       >
-                        {(() => {
-                          const Icon = getCategoryIcon(category.title);
-                          return <Icon className="h-3.5 w-3.5" aria-hidden="true" />;
-                        })()}
-                        {category.title}
-                      </button>
+                        <button
+                          onClick={() => openCategoryModal(category)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors cursor-pointer",
+                            getCategoryAccent(category).badge,
+                          )}
+                        >
+                          {(() => {
+                            const Icon = getCategoryIcon(category.title);
+                            return <Icon className="h-3.5 w-3.5" aria-hidden="true" />;
+                          })()}
+                          {category.title}
+                        </button>
+                      </Tooltip>
                     ) : (
                       <span className="text-slate-600 text-sm italic">—</span>
                     )}
@@ -763,25 +767,27 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         View details
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(expense)}
-                      className="mr-3 rounded p-1.5 text-blue-500 hover:text-blue-400"
-                      aria-label="Edit expense"
-                      title="Edit expense"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    {(expense.status ?? "pending") !== "paid" && (
+                    <Tooltip content="Edit expense">
                       <button
                         type="button"
-                        onClick={() => void handleMarkPaid(expense)}
-                        className="mr-3 rounded p-1.5 text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
-                        aria-label="Mark expense paid"
-                        title="Mark paid"
+                        onClick={() => openEditModal(expense)}
+                        className="mr-3 rounded p-1.5 text-blue-500 hover:text-blue-400"
+                        aria-label="Edit expense"
                       >
-                        <Check className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </button>
+                    </Tooltip>
+                    {(expense.status ?? "pending") !== "paid" && (
+                      <Tooltip content="Mark paid">
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkPaid(expense)}
+                          className="mr-3 rounded p-1.5 text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
+                          aria-label="Mark expense paid"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
                     )}
                     {expense.recurringFrequency && !expense.isRecurringInstance && (
                       <button
@@ -792,15 +798,16 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         {expense.skipNextDue ? "Undo skip" : "Skip next"}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(expense)}
-                      className="rounded p-1.5 text-red-500 hover:text-red-400"
-                      aria-label="Delete expense"
-                      title="Delete expense"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <Tooltip content="Delete expense">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(expense)}
+                        className="rounded p-1.5 text-red-500 hover:text-red-400"
+                        aria-label="Delete expense"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
                   </td>
                 </tr>
               );

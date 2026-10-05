@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Tooltip from "../components/Tooltip";
 import type { AutoCategorizeRule, BudgetRule } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import {
@@ -139,23 +140,25 @@ export default function ManageBudgetRulesPage() {
                     >
                       {rule.enabled ? "Disable" : "Enable"}
                     </button>
-                    <button
-                      onClick={() => {
-                        setRuleToEdit(rule);
-                        setIsRuleModalOpen(true);
-                      }}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      title="Edit rule"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteRule(rule)}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
-                      title="Delete rule"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <Tooltip content="Edit rule">
+                      <button
+                        onClick={() => {
+                          setRuleToEdit(rule);
+                          setIsRuleModalOpen(true);
+                        }}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete rule">
+                      <button
+                        onClick={() => handleDeleteRule(rule)}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}
@@ -224,23 +227,25 @@ export default function ManageBudgetRulesPage() {
                     >
                       {rule.enabled ? "Disable" : "Enable"}
                     </button>
-                    <button
-                      onClick={() => {
-                        setAutoRuleToEdit(rule);
-                        setIsAutoModalOpen(true);
-                      }}
-                      className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-white"
-                      title="Edit rule"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAutoRule(rule)}
-                      className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-rose-400"
-                      title="Delete rule"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <Tooltip content="Edit rule">
+                      <button
+                        onClick={() => {
+                          setAutoRuleToEdit(rule);
+                          setIsAutoModalOpen(true);
+                        }}
+                        className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-white"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete rule">
+                      <button
+                        onClick={() => handleDeleteAutoRule(rule)}
+                        className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-rose-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}

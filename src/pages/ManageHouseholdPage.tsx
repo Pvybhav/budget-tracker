@@ -9,6 +9,7 @@ import {
 } from "../services/backendSync";
 import showConfirm, { showAlert } from "../components/Confirm";
 import PaginationControls from "../components/PaginationControls";
+import Tooltip from "../components/Tooltip";
 
 export default function ManageHouseholdPage() {
   const status = useBackendResource(() => fetchHousehold(), []);
@@ -145,13 +146,14 @@ export default function ManageHouseholdPage() {
                       {member.status}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleRemove(member.email)}
-                    className="p-1.5 text-slate-500 hover:text-rose-400"
-                    title="Remove member"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <Tooltip content="Remove member">
+                    <button
+                      onClick={() => handleRemove(member.email)}
+                      className="p-1.5 text-slate-500 hover:text-rose-400"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </Tooltip>
                 </div>
               ))}
             </div>

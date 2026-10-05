@@ -7,6 +7,7 @@ import { fetchSavingsContributions } from "../services/backend.service";
 import showConfirm from "./Confirm";
 import { convertCurrency, formatMoney, getDisplayCurrency } from "../services/currency.service";
 import { todayDateInput } from "../utils/date";
+import Tooltip from "./Tooltip";
 
 interface Props {
   goal: SavingsGoal;
@@ -115,14 +116,15 @@ export default function SavingsContributionPanel({ goal }: Props) {
                     displayCurrency,
                   )}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(contribution)}
-                  className="text-slate-500 hover:text-rose-500"
-                  title="Delete contribution"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <Tooltip content="Delete contribution">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(contribution)}
+                    className="text-slate-500 hover:text-rose-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           ))}
@@ -141,14 +143,11 @@ export default function SavingsContributionPanel({ goal }: Props) {
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">{goal.title}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="text-slate-500"
-                title="Close"
-              >
-                Close
-              </button>
+              <Tooltip content="Close">
+                <button type="button" onClick={() => setIsOpen(false)} className="text-slate-500">
+                  Close
+                </button>
+              </Tooltip>
             </div>
             <label className="block text-sm text-slate-600 dark:text-slate-400">
               Amount

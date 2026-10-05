@@ -13,6 +13,7 @@ import { fetchCategories, fetchExpenses } from "../services/backend.service";
 import SmartBudgetRecommendationsPanel from "../components/SmartBudgetRecommendationsPanel";
 import BudgetCarryoverPanel from "../components/BudgetCarryoverPanel";
 import { getSmartBudgetRecommendations } from "../services/budget-recommendations.service";
+import Tooltip from "../components/Tooltip";
 import { calculateCategoryCarryovers } from "../services/budget-carryover.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
@@ -212,13 +213,14 @@ export default function ManageCategoriesPage() {
             Add Category
           </button>
 
-          <button
-            onClick={() => setCompactMode((c) => !c)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border ${compactMode ? "bg-blue-100 dark:bg-slate-800 text-blue-900 dark:text-slate-100 border-blue-300 dark:border-slate-700" : "bg-transparent text-slate-700 dark:text-slate-300 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"}`}
-            title="Toggle compact mode"
-          >
-            <span className="text-sm font-medium">{compactMode ? "Compact" : "Expanded"}</span>
-          </button>
+          <Tooltip content="Toggle compact mode">
+            <button
+              onClick={() => setCompactMode((c) => !c)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border ${compactMode ? "bg-blue-100 dark:bg-slate-800 text-blue-900 dark:text-slate-100 border-blue-300 dark:border-slate-700" : "bg-transparent text-slate-700 dark:text-slate-300 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+            >
+              <span className="text-sm font-medium">{compactMode ? "Compact" : "Expanded"}</span>
+            </button>
+          </Tooltip>
         </div>
       </div>
       {categories && categories.length === 0 && (
@@ -264,20 +266,22 @@ export default function ManageCategoriesPage() {
                     </h3>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => openEditModal(category)}
-                      className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-800"
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category)}
-                      className="p-1.5 text-slate-500 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <Tooltip content="Edit">
+                      <button
+                        onClick={() => openEditModal(category)}
+                        className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-800"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete">
+                      <button
+                        onClick={() => handleDelete(category)}
+                        className="p-1.5 text-slate-500 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 

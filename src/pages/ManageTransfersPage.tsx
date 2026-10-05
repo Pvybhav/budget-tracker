@@ -10,6 +10,7 @@ import showConfirm from "../components/Confirm";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly } from "../utils/date";
+import Tooltip from "../components/Tooltip";
 export default function ManageTransfersPage() {
   const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
@@ -113,13 +114,14 @@ export default function ManageTransfersPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleDelete(transfer)}
-                    className="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
-                    title="Delete transfer"
-                  >
-                    <Trash2 className="ml-auto h-4 w-4" />
-                  </button>
+                  <Tooltip content="Delete transfer">
+                    <button
+                      onClick={() => handleDelete(transfer)}
+                      className="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                    >
+                      <Trash2 className="ml-auto h-4 w-4" />
+                    </button>
+                  </Tooltip>
                 </td>
               </tr>
             ))}

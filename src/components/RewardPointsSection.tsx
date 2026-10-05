@@ -9,6 +9,7 @@ import type { Card, RewardPointsEntry } from "../db/db";
 import AddRewardPointsModal from "./modals/AddRewardPointsModal";
 import { formatConverted, useDisplayCurrency } from "../services/currency.service";
 import { formatDateOnly } from "../utils/date";
+import Tooltip from "./Tooltip";
 export default function RewardPointsSection() {
   const displayCurrency = useDisplayCurrency();
   const cards = useBackendResource(() => fetchCards(), []);
@@ -35,48 +36,35 @@ export default function RewardPointsSection() {
   };
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
-      
       <div className="flex items-start justify-between gap-3 mb-5">
-        
         <div>
-          
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-            
             Reward Points
           </div>
           <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            
             Track points earned, redeemed, and their value
           </div>
         </div>
       </div>
       {cardsWithPoints.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/40 p-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          
           Add a card first to start tracking reward points.
         </div>
       ) : (
         <div className="space-y-3">
-          
           {cardsWithPoints.map(({ card, entries: cardEntries, summary }) => (
             <div
               key={card.id}
               className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-4"
             >
-              
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                
                 <div className="flex items-center gap-2">
-                  
                   <Gift className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                   <div>
-                    
                     <div className="font-semibold text-slate-900 dark:text-slate-100">
-                      
                       {card.title}
                     </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
-                      
                       {summary.balance.toLocaleString("en-IN")} pts ·
                       {formatConverted(summary.totalValue, card.currency, displayCurrency)} value
                       {summary.nextExpiry
@@ -86,7 +74,6 @@ export default function RewardPointsSection() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  
                   <button
                     type="button"
                     onClick={() =>
@@ -94,7 +81,6 @@ export default function RewardPointsSection() {
                     }
                     className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   >
-                    
                     {expandedCardId === card.id ? "Hide" : "History"}
                   </button>
                   <button
@@ -102,17 +88,14 @@ export default function RewardPointsSection() {
                     onClick={() => openAddModal(card)}
                     className="flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
                   >
-                    
                     <Plus className="h-3.5 w-3.5" /> Add
                   </button>
                 </div>
               </div>
               {expandedCardId === card.id && (
                 <div className="mt-3 space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3\">
-                  
                   {cardEntries.length === 0 ? (
                     <div className="text-sm text-slate-600 dark:text-slate-500">
-                      
                       No entries yet.
                     </div>
                   ) : (
@@ -121,23 +104,21 @@ export default function RewardPointsSection() {
                         key={entry.id}
                         className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300"
                       >
-                        
                         <div>
-                          
                           <span className="capitalize">{entry.type}</span>
                           {entry.points.toLocaleString("en-IN")} pts on {formatDateOnly(entry.date)}
                           {entry.expiryDate ? ` (expires ${formatDateOnly(entry.expiryDate)})` : ""}
                           {entry.note ? ` — ${entry.note}` : ""}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(card, entry)}
-                          className="text-slate-500 hover:text-amber-400"
-                          title="Edit reward points entry"
-                        >
-                          
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
+                        <Tooltip content="Edit reward points entry">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(card, entry)}
+                            className="text-slate-500 hover:text-amber-400"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        </Tooltip>
                         <button
                           type="button"
                           onClick={async () => {
@@ -150,7 +131,6 @@ export default function RewardPointsSection() {
                           }}
                           className="text-slate-500 hover:text-rose-400"
                         >
-                          
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>

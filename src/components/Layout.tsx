@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import Tooltip from "./Tooltip";
 import {
   CreditCard,
   Receipt,
@@ -64,13 +65,14 @@ export default function Layout({ logout }: LayoutProps) {
             Budget Tracker
           </h1>
           {location.pathname !== "/" && (
-            <Link
-              to="/"
-              className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors border border-slate-300 dark:border-slate-700"
-              title="Go to Dashboard"
-            >
-              <LayoutDashboard className="w-5 h-5" />
-            </Link>
+            <Tooltip content="Go to Dashboard">
+              <Link
+                to="/"
+                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors border border-slate-300 dark:border-slate-700"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+              </Link>
+            </Tooltip>
           )}
         </div>
         <div className="flex items-center gap-2">

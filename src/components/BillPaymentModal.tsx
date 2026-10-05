@@ -5,6 +5,7 @@ import { updateBill } from "../services/backendSync";
 import { useBackendResource } from "../services/backendHooks";
 import { X } from "lucide-react";
 import { todayDateInput } from "../utils/date";
+import Tooltip from "./Tooltip";
 
 interface Props {
   bill: Bill;
@@ -61,14 +62,11 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-slate-500"
-          title="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <Tooltip content="Close">
+          <button type="button" onClick={onClose} className="absolute right-4 top-4 text-slate-500">
+            <X className="h-5 w-5" />
+          </button>
+        </Tooltip>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           Payment details
         </h2>

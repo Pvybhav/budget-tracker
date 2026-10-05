@@ -20,6 +20,7 @@ import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/cu
 import { showNetworkToast } from "../services/network.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
 import { formatDateOnly, todayDateInput } from "../utils/date";
+import Tooltip from "../components/Tooltip";
 const TYPE_LABELS: Record<string, string> = {
   mobile: "Mobile",
   internet: "Internet",
@@ -310,27 +311,30 @@ export default function ManageBillsPage() {
                       </td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => markPaid(bill)}
-                            className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors"
-                            title={bill.paid ? "Mark unpaid" : "Mark paid"}
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(bill)}
-                            className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            title="Edit bill"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(bill)}
-                            className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                            title="Delete bill"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <Tooltip content={bill.paid ? "Mark unpaid" : "Mark paid"}>
+                            <button
+                              onClick={() => markPaid(bill)}
+                              className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Edit bill">
+                            <button
+                              onClick={() => openEditModal(bill)}
+                              className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Delete bill">
+                            <button
+                              onClick={() => handleDelete(bill)}
+                              className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

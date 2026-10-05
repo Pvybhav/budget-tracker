@@ -10,6 +10,7 @@ import showConfirm from "./Confirm";
 import AddInvestmentModal from "./modals/AddInvestmentModal";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { INVESTMENT_TYPE_ICONS } from "../utils/typeIcons";
+import AppTooltip from "./Tooltip";
 import { inferFundClassification } from "../utils/fundClassification";
 import { formatDateOnly } from "../utils/date";
 const typeLabels: Record<Investment["type"], string> = {
@@ -458,22 +459,24 @@ export default function InvestmentsSection() {
                     <td className="px-4 py-3">{formatDateOnly(investment.purchaseDate)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(investment)}
-                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white"
-                          title="Edit investment"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(investment)}
-                          className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-rose-500 dark:border-slate-700 dark:text-slate-400 dark:hover:text-rose-400"
-                          title="Delete investment"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <AppTooltip content="Edit investment">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(investment)}
+                            className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </AppTooltip>
+                        <AppTooltip content="Delete investment">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(investment)}
+                            className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:text-rose-500 dark:border-slate-700 dark:text-slate-400 dark:hover:text-rose-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </AppTooltip>
                       </div>
                     </td>
                   </tr>

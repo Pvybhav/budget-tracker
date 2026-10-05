@@ -28,6 +28,7 @@ import SmartBudgetRecommendationsPanel from "../components/SmartBudgetRecommenda
 import MonthlyComparisonPanel from "../components/MonthlyComparisonPanel";
 import BudgetCarryoverPanel from "../components/BudgetCarryoverPanel";
 import CustomBudgetPeriodsDisplay from "../components/CustomBudgetPeriodsDisplay";
+import Tooltip from "../components/Tooltip";
 const HERO_POINTS = [
   {
     icon: ShieldCheck,
@@ -126,18 +127,19 @@ export default function HomePage() {
       {/* Description toggle icon (only if cards exist) */}
       {cards && cards.length > 0 && (
         <div className="flex justify-center -mb-4">
-          <button
-            onClick={() => setIsDescriptionVisible(!isDescriptionVisible)}
-            className={cn(
-              "p-2 rounded-full transition-all duration-500 group",
-              isDescriptionVisible
-                ? "bg-slate-200 text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 rotate-180"
-                : "bg-slate-200 text-slate-600 hover:text-emerald-600 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-emerald-400 glow-pulse",
-            )}
-            title={isDescriptionVisible ? "Hide info" : "Show info"}
-          >
-            <Sparkles className="w-5 h-5" />
-          </button>
+          <Tooltip content={isDescriptionVisible ? "Hide info" : "Show info"}>
+            <button
+              onClick={() => setIsDescriptionVisible(!isDescriptionVisible)}
+              className={cn(
+                "p-2 rounded-full transition-all duration-500 group",
+                isDescriptionVisible
+                  ? "bg-slate-200 text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 rotate-180"
+                  : "bg-slate-200 text-slate-600 hover:text-emerald-600 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-emerald-400 glow-pulse",
+              )}
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+          </Tooltip>
         </div>
       )}
       {/* Hero section */} {/* Summary & alerts */}

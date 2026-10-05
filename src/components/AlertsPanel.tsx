@@ -10,6 +10,7 @@ import {
   fetchPayments,
 } from "../services/backend.service";
 import { getCategoryBudgetAlert } from "../services/budget.service";
+import Tooltip from "./Tooltip";
 import { evaluateBudgetRule } from "../services/budget-rules.service";
 import { getAccountAlertStatus, getCardMetrics } from "../services/card.service";
 import { getInsurancePolicySummary } from "../services/insurance.service";
@@ -128,15 +129,20 @@ export default function AlertsPanel() {
               {alerts.length} active
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => setIsCollapsed((previous) => !previous)}
-            className="rounded-full p-1 text-slate-500 transition hover:bg-slate-800 hover:text-white"
-            aria-label={isCollapsed ? "Expand alerts" : "Minimize alerts"}
-            title={isCollapsed ? "Expand alerts" : "Minimize alerts"}
-          >
-            {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </button>
+          <Tooltip content={isCollapsed ? "Expand alerts" : "Minimize alerts"}>
+            <button
+              type="button"
+              onClick={() => setIsCollapsed((previous) => !previous)}
+              className="rounded-full p-1 text-slate-500 transition hover:bg-slate-800 hover:text-white"
+              aria-label={isCollapsed ? "Expand alerts" : "Minimize alerts"}
+            >
+              {isCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </button>
+          </Tooltip>
         </div>
       </div>
       {!isCollapsed && (

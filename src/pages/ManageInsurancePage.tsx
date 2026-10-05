@@ -12,6 +12,7 @@ import { INSURANCE_TYPE_ICONS } from "../utils/typeIcons";
 import PaginationControls from "../components/PaginationControls";
 import { todayDateInput } from "../utils/date";
 import { formatDateOnly } from "../utils/date";
+import Tooltip from "../components/Tooltip";
 const TYPE_LABELS: Record<string, string> = {
   health: "Health",
   life: "Life",
@@ -174,20 +175,22 @@ export default function ManageInsurancePage() {
                       >
                         Record Premium Paid
                       </button>
-                      <button
-                        onClick={() => openEditModal(policy)}
-                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                        title="Edit policy"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(policy)}
-                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                        title="Delete policy"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <Tooltip content="Edit policy">
+                        <button
+                          onClick={() => openEditModal(policy)}
+                          className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Delete policy">
+                        <button
+                          onClick={() => handleDelete(policy)}
+                          className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -282,13 +285,14 @@ export default function ManageInsurancePage() {
       {policyToPay && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-md shadow-2xl relative p-6">
-            <button
-              onClick={() => setPolicyToPay(undefined)}
-              className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-              title="Close"
-            >
-              ×
-            </button>
+            <Tooltip content="Close">
+              <button
+                onClick={() => setPolicyToPay(undefined)}
+                className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+              >
+                ×
+              </button>
+            </Tooltip>
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               Record premium payment
             </h2>

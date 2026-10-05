@@ -12,6 +12,7 @@ import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/cu
 import { CheckCircle2, Circle, Clock3, Pencil, Trash2 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly, todayDateInput } from "../utils/date";
+import Tooltip from "../components/Tooltip";
 
 function getLoanStatus(loan: Loan): EmiScheduleStatus {
   const start = new Date(loan.startDate);
@@ -461,26 +462,28 @@ export default function ManageLoansPage() {
                       className="px-6 py-4 text-right space-x-3"
                       onClick={(event) => event.stopPropagation()}
                     >
-                      <button
-                        onClick={() => {
-                          setSelectedLoan(null);
-                          setIsModalOpen(true);
-                          setEditingLoan(loan);
-                        }}
-                        className="rounded p-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                        aria-label={`Edit ${loan.lender}`}
-                        title="Edit loan"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(loan)}
-                        className="rounded p-1.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
-                        aria-label={`Delete ${loan.lender}`}
-                        title="Delete loan"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <Tooltip content="Edit loan">
+                        <button
+                          onClick={() => {
+                            setSelectedLoan(null);
+                            setIsModalOpen(true);
+                            setEditingLoan(loan);
+                          }}
+                          className="rounded p-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                          aria-label={`Edit ${loan.lender}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Delete loan">
+                        <button
+                          onClick={() => handleDelete(loan)}
+                          className="rounded p-1.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                          aria-label={`Delete ${loan.lender}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
                     </td>
                   </tr>
                   <tr

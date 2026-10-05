@@ -10,6 +10,7 @@ import AddSavingsGoalModal from "./modals/AddSavingsGoalModal";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "./PaginationControls";
 import SavingsContributionPanel from "./SavingsContributionPanel";
+import Tooltip from "./Tooltip";
 
 type GoalFilter = "all" | "active" | "completed" | "overdue";
 
@@ -194,20 +195,22 @@ export default function SavingsGoalsSection() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openEditModal(goal)}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                      title="Edit goal"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteGoal(goal.id)}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                      title="Delete goal"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <Tooltip content="Edit goal">
+                      <button
+                        onClick={() => openEditModal(goal)}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete goal">
+                      <button
+                        onClick={() => deleteGoal(goal.id)}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 

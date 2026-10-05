@@ -7,6 +7,7 @@ import { createInvestmentTransaction, deleteInvestmentTransaction } from "../ser
 import showConfirm from "../components/Confirm";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { formatDateOnly, todayDateInput } from "../utils/date";
+import Tooltip from "./Tooltip";
 export default function InvestmentTransactionsSection() {
   const displayCurrency = useDisplayCurrency();
   const investments = useBackendResource(() => fetchInvestments(), []);
@@ -47,31 +48,24 @@ export default function InvestmentTransactionsSection() {
     investments?.find((investment) => investment.id === investmentId)?.currency;
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-      
       <div>
-        
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-          
           Investment transactions
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          
           Record buys, sells, dividends, and fees alongside your portfolio snapshots.
         </p>
       </div>
       <form onSubmit={submit} className="grid gap-3 md:grid-cols-3">
-        
         <select
           required
           value={investmentId}
           onChange={(event) => setInvestmentId(event.target.value)}
           className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         >
-          
           <option value="">Investment</option>
           {investments?.map((investment) => (
             <option key={investment.id} value={investment.id}>
-              
               {investment.name}
             </option>
           ))}
@@ -81,7 +75,6 @@ export default function InvestmentTransactionsSection() {
           onChange={(event) => setType(event.target.value as InvestmentTransactionType)}
           className="rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-white"
         >
-          
           <option value="buy">Buy</option> <option value="sell">Sell</option>
           <option value="dividend">Dividend</option> <option value="fee">Fee</option>
         </select>
@@ -121,34 +114,26 @@ export default function InvestmentTransactionsSection() {
           type="submit"
           className="flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white hover:bg-cyan-700 md:col-span-3"
         >
-          
           <Plus className="h-4 w-4" /> Add transaction
         </button>
       </form>
       <div className="overflow-x-auto">
-        
         <table className="w-full min-w-[620px] text-left text-sm text-slate-700 dark:text-slate-300">
-          
           <thead className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-500\">
-            
             <tr>
-              
               <th className="px-3 py-3">Date</th> <th className="px-3 py-3">Investment</th>
               <th className="px-3 py-3">Type</th> <th className="px-3 py-3">Quantity</th>
               <th className="px-3 py-3">Amount</th> <th className="px-3 py-3 text-right"> </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            
             {transactions?.map((transaction) => (
               <tr key={transaction.id}>
-                
                 <td className="px-3 py-3"> {formatDateOnly(transaction.date)} </td>
                 <td className="px-3 py-3">{name(transaction.investmentId)}</td>
                 <td className="px-3 py-3 capitalize">{transaction.type}</td>
                 <td className="px-3 py-3">{transaction.quantity ?? "-"}</td>
                 <td className="px-3 py-3">
-                  
                   {formatMoney(
                     convertCurrency(
                       transaction.amount,
@@ -159,16 +144,15 @@ export default function InvestmentTransactionsSection() {
                   )}
                 </td>
                 <td className="px-3 py-3 text-right">
-                  
-                  <button
-                    type="button"
-                    onClick={() => remove(transaction)}
-                    className="text-rose-400 hover:text-rose-300"
-                    title="Delete transaction"
-                  >
-                    
-                    <Trash2 className="ml-auto h-4 w-4" />
-                  </button>
+                  <Tooltip content="Delete transaction">
+                    <button
+                      type="button"
+                      onClick={() => remove(transaction)}
+                      className="text-rose-400 hover:text-rose-300"
+                    >
+                      <Trash2 className="ml-auto h-4 w-4" />
+                    </button>
+                  </Tooltip>
                 </td>
               </tr>
             ))}
