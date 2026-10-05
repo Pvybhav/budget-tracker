@@ -29,6 +29,7 @@ import {
   LogOut,
   Users,
   Gift,
+  WalletCards,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "../utils/cn";
@@ -124,12 +125,20 @@ export default function Layout({ logout }: LayoutProps) {
         )}
       >
         <div className="p-6 hidden md:flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
-            Budget Tracker
-          </h1>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400">
+              <WalletCards className="h-5 w-5" />
+            </span>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
+              Budget Tracker
+            </h1>
+          </div>
           <ThemeSwitcher />
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4 md:mt-2">
+          <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Overview
+          </p>
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -151,6 +160,9 @@ export default function Layout({ logout }: LayoutProps) {
           })}
           {/* Management routes */}
           <div>
+            <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              Organize
+            </p>
             <button
               type="button"
               aria-expanded={isManageOpen}
@@ -199,6 +211,9 @@ export default function Layout({ logout }: LayoutProps) {
               </div>
             )}
           </div>
+          <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Tools
+          </p>
           <Link
             to="/import"
             className={cn(
@@ -351,7 +366,7 @@ export default function Layout({ logout }: LayoutProps) {
         </div>
       </aside>
       {/* Main Content */}
-      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 p-3 sm:p-4 lg:p-5 transition-colors duration-300">
+      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-50/60 via-slate-50 to-slate-50 dark:from-emerald-950/20 dark:via-slate-950 dark:to-slate-950 p-3 sm:p-4 lg:p-5 transition-colors duration-300">
         <div className="w-full">
           <Outlet />
         </div>

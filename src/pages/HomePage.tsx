@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useBackendResource } from "../services/backendHooks";
-import { ShieldCheck, PenLine, Sparkles } from "lucide-react";
+import { CalendarDays, Plus, ShieldCheck, PenLine, Sparkles } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { fetchCards, fetchCategories, fetchExpenses } from "../services/backend.service";
@@ -104,45 +104,61 @@ export default function HomePage() {
   }, [categories, expenses, displayCurrency]);
   const showBudgetForecastAlerts = false;
   const showFullDescription = !cards || cards.length === 0 || isDescriptionVisible;
+  const currentMonth = new Intl.DateTimeFormat(undefined, {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
   return (
     <div className="space-y-8">
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Dashboard</h1>
-        <div className="flex gap-2 sm:gap-3">
+      <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5 dark:border-slate-800/80 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+            Personal finance
+          </p>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Dashboard</h1>
+          <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <CalendarDays className="h-4 w-4" />
+            <span>{currentMonth} overview</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {cards && cards.length > 0 && (
+            <Tooltip content={isDescriptionVisible ? "Hide information" : "Show information"}>
+              <button
+                type="button"
+                aria-label={isDescriptionVisible ? "Hide information" : "Show information"}
+                aria-pressed={isDescriptionVisible}
+                onClick={() => setIsDescriptionVisible(!isDescriptionVisible)}
+                className={cn(
+                  "rounded-lg border p-2.5 transition-colors",
+                  isDescriptionVisible
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : "border-slate-200 bg-white text-slate-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-emerald-300",
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+              </button>
+            </Tooltip>
+          )}
           <button
             onClick={() => setIsExpenseModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex-1 sm:flex-none"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800 sm:flex-none sm:px-4"
           >
-            Add Expense
+            <Plus className="h-4 w-4" />
+            Add expense
           </button>
           <button
             onClick={() => setIsCardModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex-1 sm:flex-none"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:flex-none sm:px-4"
           >
-            Add New Card
+            <Plus className="h-4 w-4" />
+            Add card
           </button>
         </div>
       </div>
-      {/* Description toggle icon (only if cards exist) */}
-      {cards && cards.length > 0 && (
-        <div className="flex justify-center -mb-4">
-          <Tooltip content={isDescriptionVisible ? "Hide info" : "Show info"}>
-            <button
-              onClick={() => setIsDescriptionVisible(!isDescriptionVisible)}
-              className={cn(
-                "p-2 rounded-full transition-all duration-500 group",
-                isDescriptionVisible
-                  ? "bg-slate-200 text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 rotate-180"
-                  : "bg-slate-200 text-slate-600 hover:text-emerald-600 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-emerald-400 glow-pulse",
-              )}
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-          </Tooltip>
-        </div>
-      )}
-      {/* Hero section */} {/* Summary & alerts */}
+      <DashboardSummary />
+      {/* Monthly cash flow and alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <MonthlySummary /> <IncomeExpenseSummary />
@@ -151,16 +167,35 @@ export default function HomePage() {
           <PaymentDueAlerts /> <AlertsPanel />
         </div>
       </div>
-      <DashboardSummary />
-      <UpcomingExpensesPanel />
-      <NetWorthSummary />
-      {showBudgetForecastAlerts && <BudgetForecastPanel forecasts={budgetForecasts} />}
-      {recommendations.length > 0 && (
-        <SmartBudgetRecommendationsPanel recommendations={recommendations} />
-      )}
-      {monthlyComparison && <MonthlyComparisonPanel comparison={monthlyComparison} />}
-      {carryovers.length > 0 && <BudgetCarryoverPanel carryovers={carryovers} />}
-      <CustomBudgetPeriodsDisplay selectedStartDate={1} />
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            Looking ahead
+          </p>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Coming up</h2>
+        </div>
+        <div className="space-y-6">
+          <UpcomingExpensesPanel />
+          <NetWorthSummary />
+        </div>
+      </section>
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            Make your plan
+          </p>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Budget planning
+          </h2>
+        </div>
+        {showBudgetForecastAlerts && <BudgetForecastPanel forecasts={budgetForecasts} />}
+        {recommendations.length > 0 && (
+          <SmartBudgetRecommendationsPanel recommendations={recommendations} />
+        )}
+        {monthlyComparison && <MonthlyComparisonPanel comparison={monthlyComparison} />}
+        {carryovers.length > 0 && <BudgetCarryoverPanel carryovers={carryovers} />}
+        <CustomBudgetPeriodsDisplay selectedStartDate={1} />
+      </section>
       {showFullDescription && (
         <div className="rounded-2xl border border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-top-4">
           {/* Top banner */}
@@ -203,17 +238,38 @@ export default function HomePage() {
           </div>
         </div>
       )}
-      <SavingsGoalsSection /> {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards?.map((card) => (
-          <CardThumbnail key={card.id} card={card} />
-        ))}
-        {cards?.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-400">
-            No cards added yet. Click "Add New Card" to get started.
-          </div>
-        )}
-      </div>
+      <SavingsGoalsSection />
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            Your accounts
+          </p>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Payment cards
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cards?.map((card) => (
+            <CardThumbnail key={card.id} card={card} />
+          ))}
+          {cards?.length === 0 && (
+            <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white/50 px-5 py-8 text-center dark:border-slate-700 dark:bg-slate-900/30">
+              <p className="font-medium text-slate-700 dark:text-slate-200">No cards added yet</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Add a card to keep payment details close to your monthly overview.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsCardModalOpen(true)}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              >
+                <Plus className="h-4 w-4" />
+                Add a card
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
       <AddCardModal isOpen={isCardModalOpen} onClose={() => setIsCardModalOpen(false)} />
       <AddExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} />
     </div>
