@@ -39,22 +39,43 @@ import {
   useDisplayCurrency,
 } from "../services/currency.service";
 type LayoutProps = { logout?: () => void };
+const manageNavItems = [
+  { name: "Manage Loans", path: "/loans", icon: DollarSign },
+  { name: "Manage Insurance", path: "/insurance", icon: ShieldCheck },
+  { name: "Manage Expenses (Yearly)", path: "/expenses/yearly", icon: Receipt },
+  { name: "EMI Payments", path: "/expenses/emi", icon: Receipt },
+  { name: "Manage Categories", path: "/categories", icon: Tags },
+  { name: "Manage Income", path: "/income", icon: Banknote },
+  { name: "Account Transfers", path: "/transfers", icon: ArrowRightLeft },
+  { name: "Budget Rules", path: "/budget-rules", icon: ListChecks },
+  { name: "Household", path: "/household", icon: Users },
+];
 export default function Layout({ logout }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isExpensesOpen, setIsExpensesOpen] = useState(location.pathname.includes("/expenses"));
+  const [isManageOpen, setIsManageOpen] = useState(() =>
+    manageNavItems.some(
+      ({ path }) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+    ),
+  );
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const displayCurrency = useDisplayCurrency();
   useEffect(() => {
-    setIsExpensesOpen(location.pathname.includes("/expenses"));
+    setIsManageOpen(
+      manageNavItems.some(
+        ({ path }) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+      ),
+    );
     setIsSidebarOpen(false);
   }, [location.pathname]);
   const navItems = [
     { name: "Dashboard", path: "/", icon: CreditCard },
-    { name: "Manage Cards", path: "/cards", icon: CreditCard },
+    { name: "Expenses", path: "/expenses/monthly", icon: Receipt },
+    { name: "Bills", path: "/bills", icon: ReceiptText },
+    { name: "Payments", path: "/payments", icon: HandCoins },
+    { name: "Cards", path: "/cards", icon: CreditCard },
+    { name: "Savings Goals", path: "/savings-goals", icon: PiggyBank },
     { name: "Rewards", path: "/rewards", icon: Gift },
-    { name: "Manage Loans", path: "/loans", icon: DollarSign },
-    { name: "Manage Insurance", path: "/insurance", icon: ShieldCheck },
   ];
   return (
     <div className="flex flex-col md:flex-row h-dvh min-h-0 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -128,114 +149,56 @@ export default function Layout({ logout }: LayoutProps) {
               </Link>
             );
           })}
-          {/* Manage Expenses Accordion */}
+          {/* Management routes */}
           <div>
             <button
               type="button"
-              onClick={() => setIsExpensesOpen(!isExpensesOpen)}
+              aria-expanded={isManageOpen}
+              onClick={() => setIsManageOpen(!isManageOpen)}
               className={cn(
                 "w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200",
-                location.pathname.includes("/expenses")
+                manageNavItems.some(
+                  ({ path }) =>
+                    location.pathname === path || location.pathname.startsWith(`${path}/`),
+                )
                   ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
               )}
             >
               <div className="flex items-center gap-3">
-                <Receipt className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">Manage Expenses</span>
+                <ListChecks className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">Manage</span>
               </div>
-              {isExpensesOpen ? (
+              {isManageOpen ? (
                 <ChevronUp className="w-4 h-4" />
               ) : (
                 <ChevronDown className="w-4 h-4" />
               )}
             </button>
-            {isExpensesOpen && (
+            {isManageOpen && (
               <div className="mt-1 ml-8 space-y-1">
-                <Link
-                  to="/expenses/monthly"
-                  className={cn(
-                    "block px-3 py-2 text-sm rounded-lg transition-all duration-200",
-                    location.pathname === "/expenses/monthly"
-                      ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-                  )}
-                >
-                  Monthly Manage
-                </Link>
-                <Link
-                  to="/expenses/yearly"
-                  className={cn(
-                    "block px-3 py-2 text-sm rounded-lg transition-all duration-200",
-                    location.pathname === "/expenses/yearly"
-                      ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-                  )}
-                >
-                  Yearly Manage
-                </Link>
-                <Link
-                  to="/expenses/emi"
-                  className={cn(
-                    "block px-3 py-2 text-sm rounded-lg transition-all duration-200",
-                    location.pathname === "/expenses/emi"
-                      ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-                  )}
-                >
-                  EMI Payments
-                </Link>
+                {manageNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all duration-200",
+                        isActive
+                          ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
+                      )}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
-          <Link
-            to="/categories"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/categories"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <Tags className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Manage Categories</span>
-          </Link>
-          <Link
-            to="/income"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/income"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <Banknote className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Manage Income</span>
-          </Link>
-          <Link
-            to="/payments"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/payments"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <HandCoins className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Manage Payments</span>
-          </Link>
-          <Link
-            to="/transfers"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/transfers"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <ArrowRightLeft className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Account Transfers</span>
-          </Link>
           <Link
             to="/import"
             className={cn(
@@ -297,18 +260,6 @@ export default function Layout({ logout }: LayoutProps) {
             <span className="text-sm">Net Worth History</span>
           </Link>
           <Link
-            to="/bills"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/bills"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <ReceiptText className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Manage Bills</span>
-          </Link>
-          <Link
             to="/savings-goals"
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
@@ -333,18 +284,6 @@ export default function Layout({ logout }: LayoutProps) {
             <span className="text-sm">Investments</span>
           </Link>
           <Link
-            to="/budget-rules"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/budget-rules"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <ListChecks className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Budget Rules</span>
-          </Link>
-          <Link
             to="/visualize"
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
@@ -367,18 +306,6 @@ export default function Layout({ logout }: LayoutProps) {
           >
             <FileSpreadsheet className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm">Export Data</span>
-          </Link>
-          <Link
-            to="/household"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              location.pathname === "/household"
-                ? "bg-blue-100 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50",
-            )}
-          >
-            <Users className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">Household</span>
           </Link>
         </nav>
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 mt-auto space-y-3">

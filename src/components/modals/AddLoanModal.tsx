@@ -189,7 +189,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Principal Amount <span className="text-red-400">*</span>
               </label>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 gap-2">
                 <input
                   type="number"
                   min="0"
@@ -197,12 +197,13 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                   name="principal"
                   value={formData.principal}
                   onChange={handleChange}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
+                  className="min-w-0 flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-cyan-500"
                   placeholder="₹0.00"
                 />
                 <CurrencySelect
                   value={formData.currency}
                   onChange={(currency) => setFormData({ ...formData, currency })}
+                  className="w-36 shrink-0 px-2 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
