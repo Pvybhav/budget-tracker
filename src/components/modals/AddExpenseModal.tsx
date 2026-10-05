@@ -58,7 +58,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   const autoCategorizeRules = useBackendResource(() => fetchAutoCategorizeRules(), []);
   const [continueAdding, setContinueAdding] = useState(false);
   const [splitEnabled, setSplitEnabled] = useState(false);
-  const [status, setStatus] = useState<ExpenseStatus>("pending");
+  const [status, setStatus] = useState<ExpenseStatus>("paid");
   const [splitRows, setSplitRows] = useState<SplitRow[]>([
     { categoryId: "", amount: "", note: "" },
   ]);
@@ -194,7 +194,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       });
     } else {
       setContinueAdding(false);
-      setStatus("pending");
+      setStatus("paid");
       setSplitEnabled(false);
       setSplitRows([{ categoryId: "", amount: "", note: "" }]);
       setFormData({
