@@ -80,9 +80,9 @@ export default function Layout({ logout }: LayoutProps) {
   return (
     <div className="flex flex-col md:flex-row h-dvh min-h-0 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Mobile Topbar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
+      <div className="md:hidden flex items-center justify-between gap-2 px-3 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-lg font-bold bg-gradient-to-r from-blue-600 dark:from-blue-400 to-emerald-600 dark:to-emerald-400 bg-clip-text text-transparent">
             Budget Tracker
           </h1>
           {location.pathname !== "/" && (
@@ -119,7 +119,7 @@ export default function Layout({ logout }: LayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transform transition-transform duration-300 md:relative md:translate-x-0 shrink-0 shadow-lg dark:shadow-xl",
+          "fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-60 xl:w-64 shrink-0 shadow-lg dark:shadow-xl",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -351,8 +351,8 @@ export default function Layout({ logout }: LayoutProps) {
         </div>
       </aside>
       {/* Main Content */}
-      <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 p-3 sm:p-5 lg:p-8 transition-colors duration-300">
-        <div className="max-w-6xl mx-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 p-3 sm:p-4 lg:p-5 transition-colors duration-300">
+        <div className="w-full">
           <Outlet />
         </div>
       </main>
