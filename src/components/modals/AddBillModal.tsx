@@ -18,6 +18,7 @@ const TYPE_OPTIONS: { value: BillType; label: string }[] = [
   { value: "electricity", label: "Electricity" },
   { value: "water", label: "Water" },
   { value: "gas", label: "Gas" },
+  { value: "rent", label: "Rent" },
   { value: "other", label: "Other" },
 ];
 const today = todayDateInput;

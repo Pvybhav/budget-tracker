@@ -31,6 +31,7 @@ export const BILL_TYPE_ICONS: Record<BillType, LucideIcon> = {
   electricity: Lightbulb,
   water: Droplets,
   gas: Flame,
+  rent: Building2,
   other: Receipt,
 };
 

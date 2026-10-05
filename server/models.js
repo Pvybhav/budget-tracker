@@ -204,7 +204,7 @@ const billSchema = new Schema(
     name: { type: String, required: true },
     type: {
       type: String,
-      enum: ["mobile", "internet", "postpaid", "electricity", "water", "gas", "other"],
+      enum: ["mobile", "internet", "postpaid", "electricity", "water", "gas", "rent", "other"],
       default: "other",
     },
     provider: String,

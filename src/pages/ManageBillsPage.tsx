@@ -27,6 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
   electricity: "Electricity",
   water: "Water",
   gas: "Gas",
+  rent: "Rent",
   other: "Other",
 };
 function getStatus(bill: Bill) {

@@ -96,7 +96,7 @@ export interface Payment {
   currency?: string;
 }
 export type BillType =
-  "mobile" | "internet" | "postpaid" | "electricity" | "water" | "gas" | "other";
+  "mobile" | "internet" | "postpaid" | "electricity" | "water" | "gas" | "rent" | "other";
 export interface Bill {
   id?: string;
   name: string;
