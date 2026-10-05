@@ -3,30 +3,16 @@ import { createPortal } from "react-dom";
 import { useBackendResource } from "../services/backendHooks";
 import { type Loan, type LoanRepayment } from "../db/db";
 import AddLoanModal from "../components/modals/AddLoanModal";
-import { calcMonthlyEmi, getEmiSchedule, type EmiScheduleStatus } from "../services/card.service";
+import { calcMonthlyEmi, getEmiSchedule } from "../services/card.service";
 import { deleteLoan, updateLoan } from "../services/backendSync";
 import { fetchCards, fetchLoans } from "../services/backend.service";
 import showConfirm, { showAlert } from "../components/Confirm";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { CheckCircle2, Circle, Clock3, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock3, Pencil, Search, Trash2 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 import Tooltip from "../components/Tooltip";
-
-function getLoanStatus(loan: Loan): EmiScheduleStatus {
-  const start = new Date(loan.startDate);
-  const end = new Date(start);
-  end.setMonth(end.getMonth() + loan.termMonths - 1);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (end < today) return "completed";
-  if (end.getFullYear() === today.getFullYear() && end.getMonth() === today.getMonth()) {
-    return "due";
-  }
-  return "upcoming";
-}
 
 function getLoanProgress(loan: Loan) {
   const totalMonths = Math.max(0, loan.termMonths);
@@ -319,193 +305,185 @@ export default function ManageLoansPage() {
         </div>
       </div>
 
-      <input
-        type="search"
-        value={search}
-        onChange={(event) => {
-          setSearch(event.target.value);
-          setPage(1);
-        }}
-        placeholder="Search lenders or notes"
-        aria-label="Search loans"
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-      />
-      <label className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-        <span>Sort by months remaining</span>
-        <select
-          value={loanSort}
-          onChange={(event) => {
-            setLoanSort(event.target.value as typeof loanSort);
-            setPage(1);
-          }}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-        >
-          <option value="months-asc">Ascending</option>
-          <option value="months-desc">Descending</option>
-        </select>
-      </label>
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+        <label className="relative block w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Search loans"
+            aria-label="Search loans"
+            className="w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <span className="whitespace-nowrap">Months remaining</span>
+          <select
+            value={loanSort}
+            onChange={(event) => {
+              setLoanSort(event.target.value as typeof loanSort);
+              setPage(1);
+            }}
+            className="min-w-36 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+          >
+            <option value="months-asc">Fewest first</option>
+            <option value="months-desc">Most first</option>
+          </select>
+        </label>
+      </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
-          <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Lender</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Start Date
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Principal
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Interest</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Term</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Monthly EMI
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Total Cost
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Remaining Balance
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Months left
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Note</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
-              <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
-            {visibleLoans.map((loan) => {
-              const monthlyEmi = calcMonthlyEmi(
-                loan.principal,
-                loan.annualInterestRate,
-                loan.termMonths,
-              );
-              const totalCost = monthlyEmi * loan.termMonths;
-              const progress = getLoanProgress(loan);
-              return (
-                <>
-                  <tr
-                    key={loan.id}
-                    onClick={() =>
-                      setSelectedLoan((currentLoan) => (currentLoan?.id === loan.id ? null : loan))
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">Loan</th>
+                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
+                  Principal
+                </th>
+                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
+                  Monthly payment
+                </th>
+                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
+                  Outstanding
+                </th>
+                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
+                  Repayment progress
+                </th>
+                <th className="px-5 py-3 text-right font-medium text-slate-600 dark:text-slate-300">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
+              {visibleLoans.map((loan) => {
+                const monthlyEmi = calcMonthlyEmi(
+                  loan.principal,
+                  loan.annualInterestRate,
+                  loan.termMonths,
+                );
+                const progress = getLoanProgress(loan);
+                return (
+                  <>
+                    <tr
+                      key={loan.id}
+                      onClick={() =>
                         setSelectedLoan((currentLoan) =>
                           currentLoan?.id === loan.id ? null : loan,
-                        );
+                        )
                       }
-                    }}
-                    tabIndex={0}
-                    aria-expanded={selectedLoan?.id === loan.id}
-                    className="cursor-pointer hover:bg-slate-800/20 transition-colors"
-                  >
-                    <td className="px-6 py-4">{loan.lender}</td>
-                    <td className="px-6 py-4">{formatDateOnly(loan.startDate)}</td>
-                    <td className="px-6 py-4">
-                      {formatMoney(
-                        convertCurrency(loan.principal, loan.currency, displayCurrency),
-                        displayCurrency,
-                      )}
-                    </td>
-                    <td className="px-6 py-4">{loan.annualInterestRate}%</td>
-                    <td className="px-6 py-4">{loan.termMonths} mo</td>
-                    <td className="px-6 py-4">
-                      {formatMoney(
-                        convertCurrency(monthlyEmi, loan.currency, displayCurrency),
-                        displayCurrency,
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {formatMoney(
-                        convertCurrency(totalCost, loan.currency, displayCurrency),
-                        displayCurrency,
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {formatMoney(
-                        convertCurrency(
-                          getLoanRemainingBalance(loan),
-                          loan.currency,
-                          displayCurrency,
-                        ),
-                        displayCurrency,
-                      )}
-                    </td>
-                    <td className="px-6 py-4">{progress.remainingMonths} mo</td>
-                    <td className="px-6 py-4 max-w-xs truncate">{loan.note || "—"}</td>
-                    <td className="px-6 py-4">
-                      {selectedLoan?.id === loan.id && (
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                            getLoanStatus(loan) === "completed"
-                              ? "bg-emerald-500/15 text-emerald-300"
-                              : getLoanStatus(loan) === "due"
-                                ? "bg-amber-500/15 text-amber-300"
-                                : "bg-sky-500/15 text-sky-300"
-                          }`}
-                        >
-                          {getLoanStatus(loan) === "completed"
-                            ? "Completed"
-                            : getLoanStatus(loan) === "due"
-                              ? "Due this month"
-                              : "Upcoming"}
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      className="px-6 py-4 text-right space-x-3"
-                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedLoan((currentLoan) =>
+                            currentLoan?.id === loan.id ? null : loan,
+                          );
+                        }
+                      }}
+                      tabIndex={0}
+                      aria-expanded={selectedLoan?.id === loan.id}
+                      className="cursor-pointer transition-colors hover:bg-cyan-50/60 dark:hover:bg-slate-800/60"
                     >
-                      <Tooltip content="Edit loan">
-                        <button
-                          onClick={() => {
-                            setSelectedLoan(null);
-                            setIsModalOpen(true);
-                            setEditingLoan(loan);
-                          }}
-                          className="rounded p-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                          aria-label={`Edit ${loan.lender}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content="Delete loan">
-                        <button
-                          onClick={() => handleDelete(loan)}
-                          className="rounded p-1.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
-                          aria-label={`Delete ${loan.lender}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
-                    </td>
-                  </tr>
-                  <tr
-                    className={selectedLoan?.id === loan.id ? "" : "hidden"}
-                    aria-hidden={selectedLoan?.id !== loan.id}
-                  >
-                    <td colSpan={12} className="p-0">
-                      <div id={`loan-schedule-${loan.id}`} />
-                    </td>
-                  </tr>
-                </>
-              );
-            })}
-            {filteredLoans.length === 0 && (
-              <tr>
-                <td colSpan={12} className="px-6 py-12 text-center text-slate-500">
-                  {loans?.length ? "No loans match your search." : "No loans found."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                      <td className="px-5 py-4">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {loan.lender}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {loan.annualInterestRate}% interest · Started{" "}
+                          {formatDateOnly(loan.startDate)}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-medium text-slate-900 dark:text-slate-100">
+                        {formatMoney(
+                          convertCurrency(loan.principal, loan.currency, displayCurrency),
+                          displayCurrency,
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {formatMoney(
+                          convertCurrency(monthlyEmi, loan.currency, displayCurrency),
+                          displayCurrency,
+                        )}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
+                        {formatMoney(
+                          convertCurrency(
+                            getLoanRemainingBalance(loan),
+                            loan.currency,
+                            displayCurrency,
+                          ),
+                          displayCurrency,
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {progress.paidMonths} of {loan.termMonths} payments
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {progress.remainingMonths} mo left
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                          <div
+                            className="h-full rounded-full bg-cyan-500 transition-all"
+                            style={{ width: `${progress.percent}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td
+                        className="px-5 py-4 text-right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <Tooltip content="Edit loan">
+                          <button
+                            onClick={() => {
+                              setSelectedLoan(null);
+                              setIsModalOpen(true);
+                              setEditingLoan(loan);
+                            }}
+                            className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
+                            aria-label={`Edit ${loan.lender}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Delete loan">
+                          <button
+                            onClick={() => handleDelete(loan)}
+                            className="rounded-md p-2 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                            aria-label={`Delete ${loan.lender}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                      </td>
+                    </tr>
+                    <tr
+                      className={selectedLoan?.id === loan.id ? "" : "hidden"}
+                      aria-hidden={selectedLoan?.id !== loan.id}
+                    >
+                      <td colSpan={6} className="p-0">
+                        <div id={`loan-schedule-${loan.id}`} />
+                      </td>
+                    </tr>
+                  </>
+                );
+              })}
+              {filteredLoans.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    {loans?.length ? "No loans match your search." : "No loans found."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* TODO: use different color for highlighted row and background of schedule card background */}
