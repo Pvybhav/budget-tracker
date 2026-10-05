@@ -9,7 +9,7 @@ import { fetchCards, fetchLoans } from "../services/backend.service";
 import showConfirm, { showAlert } from "../components/Confirm";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { CheckCircle2, Circle, Clock3 } from "lucide-react";
+import { CheckCircle2, Circle, Clock3, Pencil, Trash2 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 
@@ -65,7 +65,7 @@ export default function ManageLoansPage() {
   const [search, setSearch] = useState("");
   const [loanSort, setLoanSort] = useState<"months-asc" | "months-desc">("months-asc");
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 50;
   const filteredLoans = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (loans ?? []).filter(
@@ -369,7 +369,6 @@ export default function ManageLoansPage() {
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                 Months left
               </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Progress</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Note</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
@@ -386,7 +385,6 @@ export default function ManageLoansPage() {
               );
               const totalCost = monthlyEmi * loan.termMonths;
               const progress = getLoanProgress(loan);
-
               return (
                 <>
                   <tr
@@ -439,19 +437,6 @@ export default function ManageLoansPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">{progress.remainingMonths} mo</td>
-                    <td className="px-6 py-4 min-w-40">
-                      <div className="flex items-center gap-2">
-                        <progress
-                          className="h-2 w-24 accent-emerald-500"
-                          aria-label={`${loan.lender} repayment progress`}
-                          max={100}
-                          value={progress.percent}
-                        />
-                        <span className="text-xs text-slate-500">
-                          {progress.paidMonths}/{loan.termMonths}
-                        </span>
-                      </div>
-                    </td>
                     <td className="px-6 py-4 max-w-xs truncate">{loan.note || "—"}</td>
                     <td className="px-6 py-4">
                       {selectedLoan?.id === loan.id && (
@@ -482,15 +467,19 @@ export default function ManageLoansPage() {
                           setIsModalOpen(true);
                           setEditingLoan(loan);
                         }}
-                        className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                        className="rounded p-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                        aria-label={`Edit ${loan.lender}`}
+                        title="Edit loan"
                       >
-                        Edit
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(loan)}
-                        className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                        className="rounded p-1.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                        aria-label={`Delete ${loan.lender}`}
+                        title="Delete loan"
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -498,7 +487,7 @@ export default function ManageLoansPage() {
                     className={selectedLoan?.id === loan.id ? "" : "hidden"}
                     aria-hidden={selectedLoan?.id !== loan.id}
                   >
-                    <td colSpan={13} className="p-0">
+                    <td colSpan={12} className="p-0">
                       <div id={`loan-schedule-${loan.id}`} />
                     </td>
                   </tr>
@@ -507,7 +496,7 @@ export default function ManageLoansPage() {
             })}
             {filteredLoans.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-6 py-12 text-center text-slate-500">
+                <td colSpan={12} className="px-6 py-12 text-center text-slate-500">
                   {loans?.length ? "No loans match your search." : "No loans found."}
                 </td>
               </tr>

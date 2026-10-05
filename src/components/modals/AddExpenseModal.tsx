@@ -300,6 +300,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.details.trim()) {
+      await showAlert("Please enter an expense description");
+      return;
+    }
     if (!formData.cardId) {
       await showAlert("Please select a card");
       return;
@@ -469,6 +473,22 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Description <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              name="details"
+              value={formData.details}
+              onChange={handleChange}
+              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-400 dark:placeholder-slate-500"
+              placeholder="e.g. Amazon Purchase"
+            />
+          </div>
+
           {/* Card */}
           <div>
             <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
@@ -591,21 +611,6 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
               </div>
             </div>
           )}
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-              Description <span className="text-slate-600 text-xs">(optional)</span>
-            </label>
-            <input
-              type="text"
-              name="details"
-              value={formData.details}
-              onChange={handleChange}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-400 dark:placeholder-slate-500"
-              placeholder="e.g. Amazon Purchase"
-            />
-          </div>
 
           {/* Amount + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

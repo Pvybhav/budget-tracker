@@ -112,22 +112,17 @@ export default function AlertsPanel() {
   if (!cards || !categories) return null;
   const visibleAlerts = showAll ? alerts : alerts.slice(0, 3);
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/60 p-4">
-      
-      <div className="flex items-center justify-between mb-3">
-        
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/60 p-3 sm:p-4">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          
-          <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
-            
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500 sm:text-xs sm:tracking-widest">
             Alerts
           </div>
-          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            
+          <div className="text-sm font-bold leading-5 text-slate-900 dark:text-slate-100">
             Overspend and low-balance warnings
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
           {alerts.length > 0 && (
             <span className="rounded-full border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
               {alerts.length} active
@@ -146,10 +141,8 @@ export default function AlertsPanel() {
       </div>
       {!isCollapsed && (
         <div className="space-y-3">
-          
           {alerts.length === 0 && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-300">
-              
               Everything looks healthy right now.
             </div>
           )}
@@ -158,13 +151,10 @@ export default function AlertsPanel() {
               key={alert.id}
               className={`rounded-xl border px-3 py-3 ${alert.severity === "danger" ? "border-red-500/30 bg-red-500/10" : "border-amber-500/30 bg-amber-500/10"}`}
             >
-              
               <div className="flex items-start gap-2">
-                
                 <div
                   className={`mt-0.5 rounded-full p-1 ${alert.severity === "danger" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"}`}
                 >
-                  
                   {alert.severity === "danger" ? (
                     <AlertTriangle className="w-3.5 h-3.5" />
                   ) : (
@@ -172,19 +162,14 @@ export default function AlertsPanel() {
                   )}
                 </div>
                 <div className="flex-1">
-                  
                   <div className="flex items-center justify-between gap-2">
-                    
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      
                       {alert.title}
                     </p>
                     <div className="flex items-center gap-2">
-                      
                       <span
                         className={`text-[10px] font-semibold uppercase tracking-wide ${alert.severity === "danger" ? "text-red-600 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}
                       >
-                        
                         {alert.severity === "danger" ? "Urgent" : "Watch"}
                       </span>
                       <button
@@ -193,15 +178,12 @@ export default function AlertsPanel() {
                         className="rounded-full p-1 text-slate-400 transition hover:bg-slate-800 hover:text-white"
                         aria-label={`Dismiss ${alert.title} alert`}
                       >
-                        
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{alert.message}</p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
-                    {alert.detail}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">{alert.detail}</p>
                 </div>
               </div>
             </div>

@@ -15,7 +15,7 @@ export default function ManageHouseholdPage() {
   const [email, setEmail] = useState("");
   const [lastInvite, setLastInvite] = useState<{ email: string; acceptUrl: string } | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 50;
   const members = status?.household?.members ?? [];
   const visibleMembers = members.slice((page - 1) * pageSize, page * pageSize);
 

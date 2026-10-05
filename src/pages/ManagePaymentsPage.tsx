@@ -17,7 +17,7 @@ export default function ManagePaymentsPage() {
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 50;
   const filteredPayments = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (payments ?? []).filter((payment) => {

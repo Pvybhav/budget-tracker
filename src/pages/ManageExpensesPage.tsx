@@ -13,6 +13,8 @@ import { getNextRecurringExpenseDue, syncRecurringExpenses } from "../services/r
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
+import { getCategoryIcon } from "../utils/categoryIcons";
+import { Check, CheckCircle2, Clock3, Pencil, Trash2 } from "lucide-react";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -74,7 +76,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedCardId, setSelectedCardId] = useState("all");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 50;
 
   useEffect(() => {
     setPage(1);
@@ -556,8 +558,6 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 Description
               </th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Status</th>
               <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
               {mode === "emi" && (
                 <>
@@ -595,53 +595,66 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                 <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
                   <td className="px-6 py-4">{formatDateOnly(expense.date)}</td>
                   <td className="px-6 py-4 max-w-xs">
-                    <div className="flex flex-col gap-1">
-                      {expense.details ? (
-                        <span className="truncate block max-w-[200px]">{expense.details}</span>
+                    <div className="flex items-start gap-2">
+                      {(expense.status ?? "pending") === "paid" ? (
+                        <CheckCircle2
+                          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
+                          aria-label="Paid"
+                        />
                       ) : (
-                        <span className="italic text-slate-600 text-sm">No description</span>
+                        <Clock3
+                          className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
+                          aria-label="Pending"
+                        />
                       )}
-                      {(isEmi || expense.recurringFrequency) && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {isEmi && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
-                              EMI · {expense.emiMonths}mo
-                            </span>
-                          )}
-                          {expense.recurringFrequency && (
-                            <>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
-                                {expense.recurringFrequency.charAt(0).toUpperCase() +
-                                  expense.recurringFrequency.slice(1)}
+                      <div className="flex min-w-0 flex-col gap-1">
+                        {expense.details ? (
+                          <span className="truncate block max-w-[200px]">{expense.details}</span>
+                        ) : (
+                          <span className="italic text-slate-600 text-sm">No description</span>
+                        )}
+                        {(isEmi || expense.recurringFrequency) && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {isEmi && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                                EMI · {expense.emiMonths}mo
                               </span>
-                              {!expense.isRecurringInstance && expenses && (
-                                <span className="text-xs text-slate-500">
-                                  Next due:{" "}
-                                  {(() => {
-                                    const due = getNextRecurringExpenseDue(expense, expenses);
-                                    return due ? formatDateOnly(formatDateInput(due)) : "Ended";
-                                  })()}
-                                  {expense.skipNextDue ? " (skip queued)" : ""}
-                                </span>
-                              )}
-                            </>
-                          )}
-                          {(expense.emiInterestRate ?? 0) === 0 ? (
-                            <span className="text-xs text-slate-500">No Cost</span>
-                          ) : (
-                            <span className="text-xs text-slate-500">
-                              {expense.emiInterestRate}% p.a.
-                            </span>
-                          )}
-                          <span className="text-xs text-emerald-400 font-medium">
-                            {formatMoney(
-                              convertCurrency(monthlyEmi, expense.currency, displayCurrency),
-                              displayCurrency,
                             )}
-                            /mo
-                          </span>
-                        </div>
-                      )}
+                            {expense.recurringFrequency && (
+                              <>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+                                  {expense.recurringFrequency.charAt(0).toUpperCase() +
+                                    expense.recurringFrequency.slice(1)}
+                                </span>
+                                {!expense.isRecurringInstance && expenses && (
+                                  <span className="text-xs text-slate-500">
+                                    Next due:{" "}
+                                    {(() => {
+                                      const due = getNextRecurringExpenseDue(expense, expenses);
+                                      return due ? formatDateOnly(formatDateInput(due)) : "Ended";
+                                    })()}
+                                    {expense.skipNextDue ? " (skip queued)" : ""}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {(expense.emiInterestRate ?? 0) === 0 ? (
+                              <span className="text-xs text-slate-500">No Cost</span>
+                            ) : (
+                              <span className="text-xs text-slate-500">
+                                {expense.emiInterestRate}% p.a.
+                              </span>
+                            )}
+                            <span className="text-xs text-emerald-400 font-medium">
+                              {formatMoney(
+                                convertCurrency(monthlyEmi, expense.currency, displayCurrency),
+                                displayCurrency,
+                              )}
+                              /mo
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -654,26 +667,15 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         )}
                         title={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
                       >
+                        {(() => {
+                          const Icon = getCategoryIcon(category.title);
+                          return <Icon className="h-3.5 w-3.5" aria-hidden="true" />;
+                        })()}
                         {category.title}
                       </button>
                     ) : (
                       <span className="text-slate-600 text-sm italic">—</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {cards?.find((card) => card.id === expense.cardId)?.title ?? "Unknown card"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${
-                        (expense.status ?? "pending") === "paid"
-                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                          : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                      }`}
-                    >
-                      {(expense.status ?? "pending").charAt(0).toUpperCase() +
-                        (expense.status ?? "pending").slice(1)}
-                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
@@ -762,18 +764,23 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => openEditModal(expense)}
-                      className="text-blue-400 hover:text-blue-300 mr-3"
+                      className="mr-3 rounded p-1.5 text-blue-500 hover:text-blue-400"
+                      aria-label="Edit expense"
+                      title="Edit expense"
                     >
-                      Edit
+                      <Pencil className="h-4 w-4" />
                     </button>
                     {(expense.status ?? "pending") !== "paid" && (
                       <button
                         type="button"
                         onClick={() => void handleMarkPaid(expense)}
-                        className="text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300 mr-3"
+                        className="mr-3 rounded p-1.5 text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
+                        aria-label="Mark expense paid"
+                        title="Mark paid"
                       >
-                        Mark paid
+                        <Check className="h-4 w-4" />
                       </button>
                     )}
                     {expense.recurringFrequency && !expense.isRecurringInstance && (
@@ -786,10 +793,13 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleDelete(expense)}
-                      className="text-red-400 hover:text-red-300"
+                      className="rounded p-1.5 text-red-500 hover:text-red-400"
+                      aria-label="Delete expense"
+                      title="Delete expense"
                     >
-                      Delete
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -798,7 +808,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             {filteredExpenses.length === 0 && (
               <tr>
                 <td
-                  colSpan={mode === "emi" ? 10 : 6}
+                  colSpan={mode === "emi" ? 9 : 5}
                   className="px-6 py-12 text-center text-slate-500"
                 >
                   No expenses found for the selected filters.

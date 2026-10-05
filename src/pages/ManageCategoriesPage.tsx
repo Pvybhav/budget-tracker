@@ -17,6 +17,7 @@ import { calculateCategoryCarryovers } from "../services/budget-carryover.servic
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
 import { getCategoryAccent } from "../utils/categoryTheme";
+import { getCategoryIcon } from "../utils/categoryIcons";
 
 const BUDGET_MODE_LABELS: Record<string, string> = {
   monthly: "Monthly",
@@ -60,7 +61,7 @@ export default function ManageCategoriesPage() {
   const [categoryForExpenses, setCategoryForExpenses] = useState<Category | null>(null);
   const [compactMode, setCompactMode] = useState(false);
   const [page, setPage] = useState(1);
-  const pageSize = 9;
+  const pageSize = 50;
   const visibleCategories = (categories ?? []).slice((page - 1) * pageSize, page * pageSize);
 
   const budgetForecasts = useMemo(() => {
@@ -253,7 +254,10 @@ export default function ManageCategoriesPage() {
                     <span
                       className={`flex-shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center ${accent.icon}`}
                     >
-                      <Tags className="w-4 h-4" />
+                      {(() => {
+                        const Icon = getCategoryIcon(category.title);
+                        return <Icon className="w-4 h-4" />;
+                      })()}
                     </span>
                     <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                       {category.title}

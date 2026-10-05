@@ -51,7 +51,7 @@ export default function InvestmentsSection() {
   const [platformFilter, setPlatformFilter] = useState("all");
   const [gainSort, setGainSort] = useState<"none" | "asc" | "desc">("none");
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 50;
   const platforms = useMemo(
     () =>
       [...new Set((investments ?? []).map((investment) => investment.platform.trim()))].sort(

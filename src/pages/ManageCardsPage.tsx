@@ -43,7 +43,7 @@ export default function ManageCardsPage() {
   const [accountView, setAccountView] = useState<"hierarchy" | "flat">("hierarchy");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 50;
   const searchableCards = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (cards ?? []).filter(

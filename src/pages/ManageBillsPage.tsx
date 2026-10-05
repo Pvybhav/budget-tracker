@@ -51,7 +51,7 @@ export default function ManageBillsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid">("unpaid");
   const [typeFilter, setTypeFilter] = useState<Bill["type"] | "all">("all");
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 50;
   useEffect(() => {
     if (!bills || hasCheckedCurrentMonth.current) return;
     hasCheckedCurrentMonth.current = true;
@@ -112,14 +112,19 @@ export default function ManageBillsPage() {
     });
     if (ok && bill.id) await deleteBill(bill.id);
   };
-  const monthBills = (bills ?? []).filter((bill) => bill.dueDate.slice(0, 7) === month);
   const unpaidTotal =
-    monthBills
+    filteredBills
       .filter((bill) => !bill.paid)
       .reduce(
         (total, bill) => total + convertCurrency(bill.amount, bill.currency, displayCurrency),
         0,
       ) ?? 0;
+  const paidTotal = filteredBills
+    .filter((bill) => bill.paid)
+    .reduce(
+      (total, bill) => total + convertCurrency(bill.amount, bill.currency, displayCurrency),
+      0,
+    );
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -138,11 +143,11 @@ export default function ManageBillsPage() {
           <Plus className="h-4 w-4" /> Add Bill
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Bills this month</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Bills shown</div>
           <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {monthBills.length}
+            {filteredBills.length}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4">
@@ -154,7 +159,7 @@ export default function ManageBillsPage() {
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4">
           <div className="text-sm text-slate-600 dark:text-slate-400">Paid</div>
           <div className="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-300">
-            {monthBills.filter((bill) => bill.paid).length} / {monthBills.length}
+            {formatMoney(paidTotal, displayCurrency)}
           </div>
         </div>
       </div>

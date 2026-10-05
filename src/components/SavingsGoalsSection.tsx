@@ -21,7 +21,7 @@ export default function SavingsGoalsSection() {
   const [goalFilter, setGoalFilter] = useState<GoalFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 50;
 
   const goalRows = useMemo(
     () => (goals ?? []).map((goal) => ({ goal, summary: getSavingsGoalSummary(goal) })),
