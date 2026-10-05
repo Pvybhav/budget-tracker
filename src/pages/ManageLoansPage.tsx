@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useBackendResource } from "../services/backendHooks";
 import { type Loan, type LoanRepayment } from "../db/db";
 import AddLoanModal from "../components/modals/AddLoanModal";
@@ -9,7 +8,7 @@ import { fetchCards, fetchLoans } from "../services/backend.service";
 import showConfirm, { showAlert } from "../components/Confirm";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { CheckCircle2, Circle, Clock3, Pencil, Search, Trash2 } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 import Tooltip from "../components/Tooltip";
@@ -247,15 +246,6 @@ export default function ManageLoansPage() {
     }
   };
 
-  const handleViewFullScreen = () => {
-    alert("This feature is not yet implemented. Please check back later.");
-
-    return;
-    // if (selectedLoan) {
-    //   window.open(`/loans/${selectedLoan.id}`, "_blank");
-    // }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -368,110 +358,98 @@ export default function ManageLoansPage() {
                 );
                 const progress = getLoanProgress(loan);
                 return (
-                  <>
-                    <tr
-                      key={loan.id}
-                      onClick={() =>
+                  <tr
+                    key={loan.id}
+                    onClick={() =>
+                      setSelectedLoan((currentLoan) => (currentLoan?.id === loan.id ? null : loan))
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
                         setSelectedLoan((currentLoan) =>
                           currentLoan?.id === loan.id ? null : loan,
-                        )
+                        );
                       }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          setSelectedLoan((currentLoan) =>
-                            currentLoan?.id === loan.id ? null : loan,
-                          );
-                        }
-                      }}
-                      tabIndex={0}
-                      aria-expanded={selectedLoan?.id === loan.id}
-                      className="cursor-pointer transition-colors hover:bg-cyan-50/60 dark:hover:bg-slate-800/60"
+                    }}
+                    tabIndex={0}
+                    aria-expanded={selectedLoan?.id === loan.id}
+                    className="cursor-pointer transition-colors hover:bg-cyan-50/60 dark:hover:bg-slate-800/60"
+                  >
+                    <td className="px-5 py-4">
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">
+                        {loan.lender}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {loan.annualInterestRate}% interest · Started{" "}
+                        {formatDateOnly(loan.startDate)}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 font-medium text-slate-900 dark:text-slate-100">
+                      {formatMoney(
+                        convertCurrency(loan.principal, loan.currency, displayCurrency),
+                        displayCurrency,
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {formatMoney(
+                        convertCurrency(monthlyEmi, loan.currency, displayCurrency),
+                        displayCurrency,
+                      )}
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
+                      {formatMoney(
+                        convertCurrency(
+                          getLoanRemainingBalance(loan),
+                          loan.currency,
+                          displayCurrency,
+                        ),
+                        displayCurrency,
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {progress.paidMonths} of {loan.termMonths} payments
+                        </span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {progress.remainingMonths} mo left
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                        <div
+                          className="h-full rounded-full bg-cyan-500 transition-all"
+                          style={{ width: `${progress.percent}%` }}
+                        />
+                      </div>
+                    </td>
+                    <td
+                      className="px-5 py-4 text-right"
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">
-                          {loan.lender}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {loan.annualInterestRate}% interest · Started{" "}
-                          {formatDateOnly(loan.startDate)}
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 font-medium text-slate-900 dark:text-slate-100">
-                        {formatMoney(
-                          convertCurrency(loan.principal, loan.currency, displayCurrency),
-                          displayCurrency,
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        {formatMoney(
-                          convertCurrency(monthlyEmi, loan.currency, displayCurrency),
-                          displayCurrency,
-                        )}
-                      </td>
-                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
-                        {formatMoney(
-                          convertCurrency(
-                            getLoanRemainingBalance(loan),
-                            loan.currency,
-                            displayCurrency,
-                          ),
-                          displayCurrency,
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-between gap-3 text-xs">
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {progress.paidMonths} of {loan.termMonths} payments
-                          </span>
-                          <span className="text-slate-500 dark:text-slate-400">
-                            {progress.remainingMonths} mo left
-                          </span>
-                        </div>
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                          <div
-                            className="h-full rounded-full bg-cyan-500 transition-all"
-                            style={{ width: `${progress.percent}%` }}
-                          />
-                        </div>
-                      </td>
-                      <td
-                        className="px-5 py-4 text-right"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <Tooltip content="Edit loan">
-                          <button
-                            onClick={() => {
-                              setSelectedLoan(null);
-                              setIsModalOpen(true);
-                              setEditingLoan(loan);
-                            }}
-                            className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
-                            aria-label={`Edit ${loan.lender}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Delete loan">
-                          <button
-                            onClick={() => handleDelete(loan)}
-                            className="rounded-md p-2 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
-                            aria-label={`Delete ${loan.lender}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                    <tr
-                      className={selectedLoan?.id === loan.id ? "" : "hidden"}
-                      aria-hidden={selectedLoan?.id !== loan.id}
-                    >
-                      <td colSpan={6} className="p-0">
-                        <div id={`loan-schedule-${loan.id}`} />
-                      </td>
-                    </tr>
-                  </>
+                      <Tooltip content="Edit loan">
+                        <button
+                          onClick={() => {
+                            setSelectedLoan(null);
+                            setIsModalOpen(true);
+                            setEditingLoan(loan);
+                          }}
+                          className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
+                          aria-label={`Edit ${loan.lender}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Delete loan">
+                        <button
+                          onClick={() => handleDelete(loan)}
+                          className="rounded-md p-2 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                          aria-label={`Delete ${loan.lender}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                    </td>
+                  </tr>
                 );
               })}
               {filteredLoans.length === 0 && (
@@ -484,212 +462,214 @@ export default function ManageLoansPage() {
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          page={page}
+          totalItems={filteredLoans.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
 
-      {/* TODO: use different color for highlighted row and background of schedule card background */}
-      {selectedLoan &&
-        createPortal(
-          <div
-            role="region"
-            aria-label={`Repayment schedule for ${selectedLoan.lender}`}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <PaginationControls
-                  page={page}
-                  totalItems={filteredLoans.length}
-                  pageSize={pageSize}
-                  onPageChange={setPage}
-                />
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  Repayment Schedule for {selectedLoan.lender}
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  {selectedLoan.termMonths} months · {selectedLoan.annualInterestRate}% annual
-                  interest
-                </p>
+      {selectedLoan && (
+        <section
+          role="region"
+          aria-label={`Repayment schedule for ${selectedLoan.lender}`}
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+        >
+          <header className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {selectedLoan.lender} schedule
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {selectedLoan.termMonths} installments · {selectedLoan.annualInterestRate}% annual
+                interest · Started {formatDateOnly(selectedLoan.startDate)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedLoan(null)}
+              className="self-start rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:self-auto"
+            >
+              Close schedule
+            </button>
+          </header>
+
+          <div className="space-y-5 p-4 sm:p-5">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Original principal
+                </div>
+                <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {formatMoney(
+                    convertCurrency(selectedLoan.principal, selectedLoan.currency, displayCurrency),
+                    displayCurrency,
+                  )}
+                </div>
               </div>
-              <button
-                onClick={() => setSelectedLoan(null)}
-                className="w-full sm:w-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 px-4 py-2 rounded-lg transition-colors"
-              >
-                Close schedule
-              </button>
-              {/* View in fullscreen view */}
-              <button
-                onClick={handleViewFullScreen}
-                className="w-full sm:w-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 px-4 py-2 rounded-lg transition-colors"
-              >
-                View in fullscreen
-              </button>
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Monthly payment
+                </div>
+                <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {formatMoney(
+                    convertCurrency(
+                      calcMonthlyEmi(
+                        selectedLoan.principal,
+                        selectedLoan.annualInterestRate,
+                        selectedLoan.termMonths,
+                      ),
+                      selectedLoan.currency,
+                      displayCurrency,
+                    ),
+                    displayCurrency,
+                  )}
+                </div>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Outstanding balance
+                </div>
+                <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {formatMoney(
+                    convertCurrency(
+                      getLoanRemainingBalance(selectedLoan),
+                      selectedLoan.currency,
+                      displayCurrency,
+                    ),
+                    displayCurrency,
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                    Repayment journey
-                  </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {repaymentProgress.paidCount} of {schedule.length} installments paid
-                  </div>
+            <div>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div className="font-medium text-slate-900 dark:text-slate-100">
+                  {repaymentProgress.paidCount} of {schedule.length} installments paid
                 </div>
-                <div className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   {repaymentProgress.nextPayment
-                    ? `Next: installment ${repaymentProgress.nextPayment.paymentNumber} on ${repaymentProgress.nextPayment.dueDate}`
+                    ? `Next payment ${formatDateOnly(repaymentProgress.nextPayment.dueDate)}`
                     : "All installments paid"}
                 </div>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+              <div
+                className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                role="progressbar"
+                aria-label="Repayment progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={repaymentProgress.percent}
+              >
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all"
+                  className="h-full rounded-full bg-cyan-500 transition-all"
                   style={{ width: `${repaymentProgress.percent}%` }}
                 />
               </div>
-              <div className="mt-4 overflow-x-auto pb-1">
-                <div className="flex min-w-max items-start gap-1">
-                  {schedule.map((row) => {
-                    const isPaid = selectedLoan.repayments?.some(
-                      (repayment) =>
-                        repayment.paymentNumber === row.paymentNumber && repayment.paid,
-                    );
-                    const isNext =
-                      repaymentProgress.nextPayment?.paymentNumber === row.paymentNumber;
-                    let Icon = Circle;
-                    if (isPaid) Icon = CheckCircle2;
-                    if (isNext) Icon = Clock3;
-                    let iconColor = "text-slate-400";
-                    if (isPaid) iconColor = "text-emerald-500";
-                    if (isNext) iconColor = "text-amber-500";
-                    return (
-                      <div
-                        key={row.paymentNumber}
-                        className="flex min-w-12 flex-col items-center gap-1"
-                      >
-                        <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
-                        <span
-                          className={`text-[10px] ${isNext ? "font-semibold text-amber-600 dark:text-amber-300" : "text-slate-500"}`}
-                        >
-                          {row.paymentNumber}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
 
-            <div className="overflow-x-auto mt-6 min-w-max bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
-                <thead className="bg-slate-200 dark:bg-slate-800/50 border-b border-slate-300 dark:border-slate-800">
+            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+              <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
+                <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
                   <tr>
-                    <th className="w-12 px-2 py-3 text-center font-medium text-slate-900 dark:text-slate-100">
-                      #
+                    <th className="w-20 px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
+                      Installment
                     </th>
-                    <th className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                      Due Date
+                    <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
+                      Due date
                     </th>
-                    <th className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                    <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
                       Payment
                     </th>
-                    <th className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                      Payment status
+                    <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
+                      Status
                     </th>
-                    <th className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                    <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
-                  {schedule.map((row) =>
-                    (() => {
-                      const repayment = selectedLoan.repayments?.find(
-                        (item) => item.paymentNumber === row.paymentNumber,
-                      );
-                      const isPaid = repayment?.paid ?? false;
-                      const isOverdue = !isPaid && row.dueDate < todayIso;
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                  {schedule.map((row) => {
+                    const repayment = selectedLoan.repayments?.find(
+                      (item) => item.paymentNumber === row.paymentNumber,
+                    );
+                    const isPaid = repayment?.paid ?? false;
+                    const isOverdue = !isPaid && row.dueDate < todayIso;
 
-                      return (
-                        <tr
-                          key={row.paymentNumber}
-                          className={`transition-colors ${
-                            isOverdue
-                              ? "bg-red-500/10"
-                              : row.status === "completed"
-                                ? "bg-emerald-500/10"
-                                : row.status === "due"
-                                  ? "bg-amber-500/10"
-                                  : "bg-sky-500/10"
-                          } hover:bg-slate-100 dark:hover:bg-slate-800/70`}
-                        >
-                          <td className="w-12 px-2 py-3 text-center">{row.paymentNumber}</td>
-                          <td className="px-4 py-3">{row.dueDate}</td>
-                          <td className="px-4 py-3">
-                            {formatMoney(
-                              convertCurrency(
-                                row.paymentAmount,
-                                selectedLoan?.currency,
-                                displayCurrency,
-                              ),
+                    return (
+                      <tr
+                        key={row.paymentNumber}
+                        className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      >
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                          {row.paymentNumber}
+                        </td>
+                        <td className="px-4 py-3">{formatDateOnly(row.dueDate)}</td>
+                        <td className="px-4 py-3 font-medium">
+                          {formatMoney(
+                            convertCurrency(
+                              row.paymentAmount,
+                              selectedLoan.currency,
                               displayCurrency,
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={
-                                isOverdue
-                                  ? "font-semibold text-red-600 dark:text-red-300"
-                                  : isPaid
-                                    ? "text-emerald-600 dark:text-emerald-300"
-                                    : "text-slate-500 dark:text-slate-400"
-                              }
+                            ),
+                            displayCurrency,
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                              isOverdue
+                                ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                                : isPaid
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {isOverdue ? "Overdue" : isPaid ? "Paid" : "Upcoming"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRepaymentNumber(row.paymentNumber)}
+                              className="rounded-md px-2 py-1.5 text-cyan-700 hover:bg-cyan-50 dark:text-cyan-300 dark:hover:bg-slate-700"
                             >
-                              {isOverdue ? "Not paid · overdue" : isPaid ? "Paid" : "Not paid"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 align-middle">
-                            <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
+                              Details
+                            </button>
+                            {!isPaid && (
                               <button
                                 type="button"
-                                onClick={() => setSelectedRepaymentNumber(row.paymentNumber)}
-                                className="inline-flex min-h-9 w-28 shrink-0 items-center px-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300"
+                                onClick={() => openPaidDialog(row.paymentNumber)}
+                                className="rounded-md bg-emerald-600/10 px-2 py-1.5 font-medium text-emerald-700 hover:bg-emerald-600/20 dark:text-emerald-300"
                               >
-                                View details
+                                Mark paid
                               </button>
-                              {!isPaid ? (
-                                <button
-                                  type="button"
-                                  onClick={() => openPaidDialog(row.paymentNumber)}
-                                  className="inline-flex min-h-9 w-28 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-emerald-600/20 px-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/30 hover:text-emerald-800 dark:hover:text-emerald-200"
-                                >
-                                  Mark as Paid
-                                </button>
-                              ) : (
-                                <span aria-hidden="true" className="h-9 w-28 shrink-0" />
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedRepaymentNumber(row.paymentNumber);
-                                  startRepaymentEdit(row.paymentNumber, repayment);
-                                }}
-                                className="inline-flex min-h-9 w-14 shrink-0 items-center justify-center px-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })(),
-                  )}
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedRepaymentNumber(row.paymentNumber);
+                                startRepaymentEdit(row.paymentNumber, repayment);
+                              }}
+                              className="rounded-md px-2 py-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </div>,
-          document.getElementById(`loan-schedule-${selectedLoan.id}`)!,
-        )}
+          </div>
+        </section>
+      )}
 
       {selectedLoan && selectedRepayment && selectedRepaymentNumber !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
