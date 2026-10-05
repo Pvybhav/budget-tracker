@@ -94,55 +94,41 @@ export default function NetWorthSummary() {
     },
   ];
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5">
-      
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4">
       <div className="flex items-start justify-between gap-4">
-        
         <div>
-          
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-            
             All accounts
           </div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            
             Net worth snapshot
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            
             Accounts, investments, and loans in one view.
           </p>
         </div>
         <Landmark className="h-5 w-5 text-cyan-400" />
       </div>
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        
         {metricItems.map((item) => (
           <div key={item.label}>
-            
             <div className="text-sm text-slate-600 dark:text-slate-400">{item.label}</div>
             <div className={`mt-1 text-xl font-semibold ${item.color}`}>
-              
               {formatMoney(item.value, displayCurrency)}
             </div>
           </div>
         ))}
       </div>
       <div className="mt-5 grid gap-3 border-t border-slate-200 dark:border-slate-800 pt-4 sm:grid-cols-2">
-        
         <div className="space-y-2">
-          
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-            
             <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" /> Asset balances
           </div>
           {summary.accountGroups.length > 0 ? (
             summary.accountGroups.map(([label, value]) => (
               <div key={label} className="flex items-center justify-between text-sm">
-                
                 <span className="text-slate-600 dark:text-slate-400">{label}</span>
                 <span className="font-medium text-slate-700 dark:text-slate-200">
-                  
                   {formatMoney(value, displayCurrency)}
                 </span>
               </div>
@@ -152,24 +138,18 @@ export default function NetWorthSummary() {
           )}
         </div>
         <div className="space-y-2">
-          
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-            
             <ArrowDownLeft className="h-3.5 w-3.5 text-rose-400" /> Debt balances
           </div>
           <div className="flex items-center justify-between text-sm">
-            
             <span className="text-slate-600 dark:text-slate-400">Credit cards</span>
             <span className="font-medium text-slate-700 dark:text-slate-200">
-              
               {formatMoney(summary.cardLiabilities, displayCurrency)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            
             <span className="text-slate-600 dark:text-slate-400">Loans</span>
             <span className="font-medium text-slate-700 dark:text-slate-200">
-              
               {formatMoney(summary.loanLiabilities, displayCurrency)}
             </span>
           </div>

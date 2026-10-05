@@ -170,7 +170,7 @@ export default function InvestmentsSection() {
     if (ok) await deleteInvestment(investment.id);
   };
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5">
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">

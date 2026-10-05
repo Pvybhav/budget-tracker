@@ -463,8 +463,8 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               {mode === "monthly"
                 ? "Month Total"
@@ -472,30 +472,30 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                   ? "Year Total"
                   : "Visible Total"}
             </p>
-            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {formatMoney(totalAmount, displayCurrency)}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               Transactions
             </p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               EMI Count
             </p>
-            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               Largest Spend
             </p>
-            <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">
+            <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">
               {formatMoney(
                 convertCurrency(
                   biggestExpense?.amount ?? 0,
@@ -513,18 +513,18 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       )}
 
       {mode && mode !== "emi" && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               {mode === "monthly" ? "Month Total" : "Year Total"}
             </p>
-            <p className="text-3xl font-bold text-emerald-400">
+            <p className="text-2xl font-bold text-emerald-400">
               {formatMoney(totalAmount, displayCurrency)}
             </p>
           </div>
 
           {mode === "yearly" && (
-            <div className="md:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl overflow-x-auto">
+            <div className="md:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl overflow-x-auto">
               <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">
                 Monthly Breakdown
               </p>

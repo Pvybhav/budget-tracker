@@ -65,7 +65,7 @@ export default function ManageHouseholdPage() {
       </div>
 
       {status?.role === "member" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p className="text-slate-700 dark:text-slate-300">
             You are a member of another household and are currently viewing that owner's data.
           </p>
@@ -125,7 +125,7 @@ export default function ManageHouseholdPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               <Users className="h-5 w-5" /> Members
             </h2>

@@ -56,7 +56,7 @@ export default function MonthlySummary({ className }: { className?: string }) {
 
   return (
     <div
-      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5 ${className || ""}`}
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4 ${className || ""}`}
     >
       <div className="flex items-center justify-between mb-2">
         <div>

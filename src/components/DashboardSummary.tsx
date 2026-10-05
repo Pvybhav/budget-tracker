@@ -66,7 +66,7 @@ export default function DashboardSummary() {
   ];
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+    <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/60">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">

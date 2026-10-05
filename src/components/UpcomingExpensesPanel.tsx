@@ -219,7 +219,7 @@ export default function UpcomingExpensesPanel() {
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+    <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/60">
       <div className="flex items-center gap-2">
         <CalendarClock className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
         <div>

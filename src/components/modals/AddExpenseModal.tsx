@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import type { Expense, ExpenseStatus } from "../../db/db";
 import { useBackendResource } from "../../services/backendHooks";
-import { fetchCards, fetchCategories, fetchExpenses } from "../../services/backend.service";
+import {
+  fetchAutoCategorizeRules,
+  fetchCards,
+  fetchCategories,
+  fetchExpenses,
+} from "../../services/backend.service";
 import { X, TrendingUp, TrendingDown, Tags, AlertTriangle, Info } from "lucide-react";
 import { showAlert } from "../../components/Confirm";
 import { useNavigate } from "react-router-dom";
 import { calcMonthlyEmi } from "../../services/card.service";
 import { getBudgetStatus, getEffectiveMonthlyBudget } from "../../services/budget.service";
+import { findAutoCategorizeMatch } from "../../services/budget-rules.service";
 import { syncRecurringExpenses } from "../../services/recurring.service";
 import { createExpense, updateExpense } from "../../services/backendSync";
 import CurrencySelect from "../CurrencySelect";
@@ -49,6 +55,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
   const categories = useBackendResource(() => fetchCategories(), []);
+  const autoCategorizeRules = useBackendResource(() => fetchAutoCategorizeRules(), []);
   const [continueAdding, setContinueAdding] = useState(false);
   const [splitEnabled, setSplitEnabled] = useState(false);
   const [status, setStatus] = useState<ExpenseStatus>("pending");
@@ -427,6 +434,17 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    if (name === "details") {
+      const matchingCategoryId = autoCategorizeRules
+        ? findAutoCategorizeMatch(value, autoCategorizeRules)
+        : undefined;
+      setFormData((current) => ({
+        ...current,
+        details: value,
+        ...(matchingCategoryId ? { categoryId: matchingCategoryId } : {}),
+      }));
+      return;
+    }
     if (type === "checkbox") {
       setFormData({
         ...formData,

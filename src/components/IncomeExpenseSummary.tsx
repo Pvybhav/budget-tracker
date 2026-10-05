@@ -34,7 +34,7 @@ export default function IncomeExpenseSummary({ className }: { className?: string
   const savingsRate = incomeThis > 0 ? Math.round((netSavings / incomeThis) * 100) : 0;
   return (
     <div
-      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-5 ${className || ""}`}
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 p-4 ${className || ""}`}
     >
       <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
         Income vs Expense
