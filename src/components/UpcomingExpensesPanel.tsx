@@ -232,18 +232,17 @@ export default function UpcomingExpensesPanel() {
       </div>
       <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
         {rows.map(({ label, amount, to, description }) => (
-          <Link
-            key={label}
-            to={to}
-            title={description}
-            aria-label={`${label}: ${formatMoney(amount, displayCurrency)}. ${description}`}
-            className="flex justify-between gap-4 py-2 text-sm hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:hover:text-cyan-300"
-          >
+          <div key={label} className="flex justify-between gap-4 py-2 text-sm">
             <span className="text-slate-600 dark:text-slate-400">{label}</span>
-            <span className="font-medium text-slate-900 dark:text-slate-100">
+            <Link
+              to={to}
+              title={description}
+              aria-label={`${label}: ${formatMoney(amount, displayCurrency)}. ${description}`}
+              className="font-medium text-cyan-700 underline decoration-cyan-700/40 underline-offset-2 hover:text-cyan-500 hover:decoration-cyan-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-cyan-300 dark:decoration-cyan-300/40 dark:hover:text-cyan-200"
+            >
               {formatMoney(amount, displayCurrency)}
-            </span>
-          </Link>
+            </Link>
+          </div>
         ))}
       </div>
       <div className="mt-3 flex justify-between border-t border-slate-200 pt-3 font-semibold dark:border-slate-700">
