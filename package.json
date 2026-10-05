@@ -24,6 +24,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/vite": "^4.2.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

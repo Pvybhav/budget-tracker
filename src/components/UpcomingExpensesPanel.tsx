@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { CalendarClock } from "lucide-react";
 import { Link } from "react-router-dom";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useBackendResource } from "../services/backendHooks";
 import {
   fetchBills,
@@ -232,17 +233,33 @@ export default function UpcomingExpensesPanel() {
       </div>
       <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
         {rows.map(({ label, amount, to, description }) => (
-          <div key={label} className="flex justify-between gap-4 py-2 text-sm">
-            <span className="text-slate-600 dark:text-slate-400">{label}</span>
-            <Link
-              to={to}
-              title={description}
-              aria-label={`${label}: ${formatMoney(amount, displayCurrency)}. ${description}`}
-              className="font-medium text-cyan-700 underline decoration-cyan-700/40 underline-offset-2 hover:text-cyan-500 hover:decoration-cyan-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-cyan-300 dark:decoration-cyan-300/40 dark:hover:text-cyan-200"
-            >
-              {formatMoney(amount, displayCurrency)}
-            </Link>
-          </div>
+          <Tooltip.Root key={label}>
+            <div className="flex justify-between gap-4 py-2 text-sm">
+              <span className="text-slate-600 dark:text-slate-400">{label}</span>
+              <Tooltip.Trigger asChild>
+                <Link
+                  to={to}
+                  aria-label={`${label}: ${formatMoney(amount, displayCurrency)}. ${description}`}
+                  className="font-medium text-cyan-700 underline decoration-cyan-700/40 underline-offset-2 hover:text-cyan-500 hover:decoration-cyan-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-cyan-300 dark:decoration-cyan-300/40 dark:hover:text-cyan-200"
+                >
+                  {formatMoney(amount, displayCurrency)}
+                </Link>
+              </Tooltip.Trigger>
+            </div>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="top"
+                sideOffset={8}
+                className="z-50 max-w-xs rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <div className="font-semibold">{label}</div>
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  {formatMoney(amount, displayCurrency)} · {description}
+                </div>
+                <Tooltip.Arrow className="fill-white dark:fill-slate-800" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
         ))}
       </div>
       <div className="mt-3 flex justify-between border-t border-slate-200 pt-3 font-semibold dark:border-slate-700">
