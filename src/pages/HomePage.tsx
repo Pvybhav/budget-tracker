@@ -17,6 +17,7 @@ import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CardThumbnail from "../components/CardThumbnail";
 import MonthlySummary from "../components/MonthlySummary";
 import DashboardSummary from "../components/DashboardSummary";
+import UpcomingExpensesPanel from "../components/UpcomingExpensesPanel";
 import IncomeExpenseSummary from "../components/IncomeExpenseSummary";
 import PaymentDueAlerts from "../components/PaymentDueAlerts";
 import SavingsGoalsSection from "../components/SavingsGoalsSection";
@@ -149,6 +150,7 @@ export default function HomePage() {
         </div>
       </div>
       <DashboardSummary />
+      <UpcomingExpensesPanel />
       <NetWorthSummary />
       {showBudgetForecastAlerts && <BudgetForecastPanel forecasts={budgetForecasts} />}
       {recommendations.length > 0 && (
