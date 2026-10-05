@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { CalendarClock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useBackendResource } from "../services/backendHooks";
 import {
   fetchBills,
@@ -177,14 +178,44 @@ export default function UpcomingExpensesPanel() {
   }
 
   const rows = [
-    ["Next month loan payments", amounts.loanPayments],
-    ["Next month card EMIs", amounts.cardEmis],
-    ["This month expenses", amounts.currentMonthExpenses],
-    ["Bills due next month", amounts.billPayments],
-    ["Investments / SIPs", amounts.investments],
-    ["Other planned expenses", amounts.otherExpenses],
+    {
+      label: "Next month loan payments",
+      amount: amounts.loanPayments,
+      to: "/loans",
+      description: "View loan repayment schedules and payment status.",
+    },
+    {
+      label: "Next month card EMIs",
+      amount: amounts.cardEmis,
+      to: "/expenses/emi",
+      description: "View expenses currently being paid in installments.",
+    },
+    {
+      label: "This month expenses",
+      amount: amounts.currentMonthExpenses,
+      to: "/expenses/monthly",
+      description: "View expenses recorded this month.",
+    },
+    {
+      label: "Bills due next month",
+      amount: amounts.billPayments,
+      to: "/bills",
+      description: "View bill amounts, due dates, and payment status.",
+    },
+    {
+      label: "Investments / SIPs",
+      amount: amounts.investments,
+      to: "/investments",
+      description: "View your investments and transactions.",
+    },
+    {
+      label: "Other planned expenses",
+      amount: amounts.otherExpenses,
+      to: "/expenses/monthly",
+      description: "View recurring and planned expenses.",
+    },
   ] as const;
-  const total = rows.reduce((sum, [, value]) => sum + value, 0);
+  const total = rows.reduce((sum, row) => sum + row.amount, 0);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-800 dark:bg-slate-900/60">
@@ -200,13 +231,19 @@ export default function UpcomingExpensesPanel() {
         </div>
       </div>
       <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
-        {rows.map(([label, amount]) => (
-          <div key={label} className="flex justify-between gap-4 py-2 text-sm">
+        {rows.map(({ label, amount, to, description }) => (
+          <Link
+            key={label}
+            to={to}
+            title={description}
+            aria-label={`${label}: ${formatMoney(amount, displayCurrency)}. ${description}`}
+            className="flex justify-between gap-4 py-2 text-sm hover:text-cyan-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:hover:text-cyan-300"
+          >
             <span className="text-slate-600 dark:text-slate-400">{label}</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">
               {formatMoney(amount, displayCurrency)}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
       <div className="mt-3 flex justify-between border-t border-slate-200 pt-3 font-semibold dark:border-slate-700">
