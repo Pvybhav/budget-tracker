@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -11,7 +11,7 @@ import showConfirm from "../components/Confirm";
 import { deleteExpense, updateExpense } from "../services/backendSync";
 import { getNextRecurringExpenseDue, syncRecurringExpenses } from "../services/recurring.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { formatDateInput, formatDateOnly } from "../utils/date";
+import { dateOnly, formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
 import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
@@ -188,6 +188,27 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   ]);
   const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / pageSize));
   const visibleExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
+  const groupExpensesByDate = sortBy === "date-desc" || sortBy === "date-asc";
+  const visibleExpenseGroups = groupExpensesByDate
+    ? Array.from(
+        visibleExpenses.reduce((groups, expense) => {
+          const date = dateOnly(expense.date);
+          const group = groups.get(date) ?? [];
+          group.push(expense);
+          groups.set(date, group);
+          return groups;
+        }, new Map<string, Expense[]>()),
+        ([date, groupedExpenses]) => ({
+          dateKey: date,
+          date: formatDateOnly(date),
+          expenses: groupedExpenses,
+        }),
+      )
+    : visibleExpenses.map((expense, index) => ({
+        dateKey: `${dateOnly(expense.date)}-${expense.id ?? index}`,
+        date: formatDateOnly(expense.date),
+        expenses: [expense],
+      }));
 
   const totalAmount =
     filteredExpenses?.reduce(
@@ -580,7 +601,23 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
-            {visibleExpenses.map((expense) => {
+            {visibleExpenseGroups.map((group) => (
+              <Fragment key={group.dateKey}>
+                {groupExpensesByDate && (
+                  <tr className="bg-slate-100/70 dark:bg-slate-800/60">
+                    <td
+                      colSpan={mode === "emi" ? 9 : 5}
+                      className="px-6 py-2 text-sm font-semibold text-slate-800 dark:text-slate-200"
+                    >
+                      {group.date}
+                      <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
+                        {group.expenses.length}{" "}
+                        {group.expenses.length === 1 ? "expense" : "expenses"}
+                      </span>
+                    </td>
+                  </tr>
+                )}
+                {group.expenses.map((expense) => {
               const category = getCategoryById(expense.categoryId);
               const isEmi = !!expense.isEmi;
               const emiMonths = expense.emiMonths ?? 1;
@@ -594,7 +631,9 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
               return (
                 <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
-                  <td className="px-6 py-4">{formatDateOnly(expense.date)}</td>
+                  <td className="px-6 py-4">
+                    {groupExpensesByDate ? "" : formatDateOnly(expense.date)}
+                  </td>
                   <td className="px-6 py-4 max-w-xs">
                     <div className="flex items-start gap-2">
                       {(expense.status ?? "pending") === "paid" ? (
@@ -810,8 +849,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     </Tooltip>
                   </td>
                 </tr>
-              );
-            })}
+                );
+                })}
+              </Fragment>
+            ))}
             {filteredExpenses.length === 0 && (
               <tr>
                 <td
