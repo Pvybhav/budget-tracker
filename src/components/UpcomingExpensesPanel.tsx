@@ -9,7 +9,7 @@ import {
   fetchInvestmentTransactions,
   fetchLoans,
 } from "../services/backend.service";
-import { calcMonthlyEmi, getEmiSchedule } from "../services/card.service";
+import { getBalanceMonthAmountForExpense, getEmiSchedule } from "../services/card.service";
 import { getNextRecurringExpenseDue } from "../services/recurring.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 
@@ -67,9 +67,11 @@ export default function UpcomingExpensesPanel() {
     const currentMonthExpenses = expenses.reduce(
       (sum, expense) =>
         sum +
-        (dateInMonth(expense.date, currentYear, currentMonth)
-          ? convertCurrency(expense.amount, expense.currency, displayCurrency)
-          : 0),
+        convertCurrency(
+          getBalanceMonthAmountForExpense(expense, new Date(currentYear, currentMonth, 1)),
+          expense.currency,
+          displayCurrency,
+        ),
       0,
     );
     const loanPayments = loans.reduce((sum, loan) => {
@@ -93,18 +95,14 @@ export default function UpcomingExpensesPanel() {
       return sum + convertCurrency(due, loan.currency, displayCurrency);
     }, 0);
     const cardEmis = expenses.reduce((sum, expense) => {
-      if (!expense.isEmi || !expense.emiMonths) return sum;
-      const start = localDate(expense.emiStartDate ?? expense.date);
-      const monthOffset = (year - start.getFullYear()) * 12 + month - start.getMonth();
-      if (monthOffset < 0 || monthOffset >= expense.emiMonths) return sum;
-      const amount = calcMonthlyEmi(
-        expense.amount,
-        expense.emiInterestRate ?? 0,
-        expense.emiMonths,
-      ) +
-        (expense.emiProcessingFee ?? 0) / expense.emiMonths +
-        (expense.emiGst ?? 0) / expense.emiMonths;
-      return sum + convertCurrency(amount, expense.currency, displayCurrency);
+      return (
+        sum +
+        convertCurrency(
+          getBalanceMonthAmountForExpense(expense, nextMonth),
+          expense.currency,
+          displayCurrency,
+        )
+      );
     }, 0);
     const billPayments = bills.reduce((sum, bill) => {
       const due = bill.isSubscription

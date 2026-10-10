@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchExpenses, fetchPayments } from "../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { getBalanceMonthAmountForExpense } from "../services/card.service";
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -22,11 +23,7 @@ export default function MonthlySummary({ className }: { className?: string }) {
 
   const { spentThis, paidThis, spentLast } = useMemo(() => {
     const spentThis = (expenses || []).reduce((sum, e) => {
-      const d = new Date(e.date);
-      if (d >= start && d <= end) {
-        return sum + convertCurrency(e.amount, e.currency, displayCurrency);
-      }
-      return sum;
+      return sum + convertCurrency(getBalanceMonthAmountForExpense(e, start), e.currency, displayCurrency);
     }, 0);
 
     const paidThis = (payments || []).reduce((sum, p) => {
@@ -38,13 +35,8 @@ export default function MonthlySummary({ className }: { className?: string }) {
     }, 0);
 
     const prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-    const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0, 23, 59, 59, 999);
     const spentLast = (expenses || []).reduce((sum, e) => {
-      const d = new Date(e.date);
-      if (d >= prevStart && d <= prevEnd) {
-        return sum + convertCurrency(e.amount, e.currency, displayCurrency);
-      }
-      return sum;
+      return sum + convertCurrency(getBalanceMonthAmountForExpense(e, prevStart), e.currency, displayCurrency);
     }, 0);
 
     return { spentThis, paidThis, spentLast };

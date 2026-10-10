@@ -8,6 +8,7 @@ import {
   fetchSavingsGoals,
 } from "../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { getBalanceMonthAmountForExpense } from "../services/card.service";
 
 function isCurrentMonth(date: string) {
   const value = new Date(date);
@@ -24,10 +25,7 @@ export default function DashboardSummary() {
   const summary = useMemo(() => {
     const spent = (expenses ?? []).reduce(
       (total, expense) =>
-        total +
-        (isCurrentMonth(expense.date)
-          ? convertCurrency(expense.amount, expense.currency, displayCurrency)
-          : 0),
+        total + convertCurrency(getBalanceMonthAmountForExpense(expense, new Date()), expense.currency, displayCurrency),
       0,
     );
     const income = (incomes ?? []).reduce(

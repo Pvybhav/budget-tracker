@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchExpenses, fetchIncomes } from "../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
+import { getBalanceMonthAmountForExpense } from "../services/card.service";
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
@@ -22,12 +23,10 @@ export default function IncomeExpenseSummary({ className }: { className?: string
         ? sum + convertCurrency(i.amount, i.currency, displayCurrency)
         : sum;
     }, 0);
-    const expenseThis = (expenses || []).reduce((sum, e) => {
-      const d = new Date(e.date);
-      return d >= start && d <= end
-        ? sum + convertCurrency(e.amount, e.currency, displayCurrency)
-        : sum;
-    }, 0);
+    const expenseThis = (expenses || []).reduce(
+      (sum, e) => sum + convertCurrency(getBalanceMonthAmountForExpense(e, start), e.currency, displayCurrency),
+      0,
+    );
     return { incomeThis, expenseThis };
   }, [incomes, expenses, start, end, displayCurrency]);
   const netSavings = incomeThis - expenseThis;

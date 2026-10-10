@@ -21,6 +21,31 @@ export function calcMonthlyEmi(principal: number, annualRatePct: number, months:
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
 }
 
+export function getBalanceMonthAmountForExpense(expense: Expense, month: Date): number {
+  if (!expense.isEmi) {
+    const date = new Date(expense.date);
+    return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth()
+      ? expense.amount
+      : 0;
+  }
+
+  const startDate = expense.emiStartDate ?? expense.date;
+  const start = new Date(`${startDate.slice(0, 10)}T00:00:00`);
+  const months = Math.max(expense.emiMonths ?? 1, 1);
+  const monthIndex =
+    (month.getFullYear() - start.getFullYear()) * 12 + (month.getMonth() - start.getMonth());
+
+  if (monthIndex < 0 || monthIndex >= months) {
+    return 0;
+  }
+
+  return (
+    calcMonthlyEmi(expense.amount, expense.emiInterestRate ?? 0, months) +
+    (expense.emiProcessingFee ?? 0) / months +
+    (expense.emiGst ?? 0) / months
+  );
+}
+
 /**
  * Total amount that an EMI purchase costs over its full tenure.
  * This is what gets blocked from the credit limit and counted toward AMC waiver.
