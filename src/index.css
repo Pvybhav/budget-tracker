@@ -40,6 +40,19 @@
   select {
     @apply transition-colors duration-300;
   }
+
+  select:not([multiple]) {
+    @apply appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.65rem center;
+  }
+
+  input,
+  textarea {
+    caret-color: theme("colors.blue.500");
+    user-select: text;
+  }
+
 }
 
 @layer components {
@@ -73,6 +86,10 @@
 }
 
 @layer utilities {
+  main h1.text-3xl {
+    @apply text-2xl;
+  }
+
   @media (max-width: 639px) {
     main .space-y-8 > :not([hidden]) ~ :not([hidden]) {
       margin-top: 1.25rem;
@@ -155,15 +172,24 @@
     }
 
     main .p-6 {
-      padding: 1.25rem;
+      padding: 1rem;
     }
 
     main .p-8 {
-      padding: 1.5rem;
+      padding: 1.25rem;
     }
 
     main .p-12 {
-      padding: 2rem;
+      padding: 1.5rem;
+    }
+
+    main .expense-table th,
+    main .expense-table td {
+      padding: 0.55rem 0.75rem;
+    }
+
+    main .expense-table td:first-child {
+      padding-left: 0.25rem;
     }
   }
 
@@ -213,4 +239,24 @@
 /* Selection styling */
 ::selection {
   @apply bg-blue-500 dark:bg-blue-600 text-white;
+}
+
+.progress-fill {
+  transform-origin: left center;
+  animation: progress-fill-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes progress-fill-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    animation: none;
+  }
 }

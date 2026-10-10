@@ -33,7 +33,11 @@ export default function AddAutoCategorizeRuleModal({
     if (type === "checkbox") {
       setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({
+        ...formData,
+        [name]: value,
+        ...(name === "keyword" && !value.trim() ? { categoryId: "" } : {}),
+      });
     }
   };
   const handleSubmit = async (e: React.SubmitEvent) => {

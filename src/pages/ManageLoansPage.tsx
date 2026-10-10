@@ -4,7 +4,8 @@ import { type Loan, type LoanRepayment } from "../db/db";
 import AddLoanModal from "../components/modals/AddLoanModal";
 import { calcMonthlyEmi, getEmiSchedule } from "../services/card.service";
 import { deleteLoan, updateLoan } from "../services/backendSync";
-import { fetchCards, fetchLoans } from "../services/backend.service";
+import { fetchCards, fetchExpenses, fetchLoans } from "../services/backend.service";
+import { createExpense, updateExpense } from "../services/backendSync";
 import showConfirm, { showAlert } from "../components/Confirm";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
@@ -159,6 +160,17 @@ export default function ManageLoansPage() {
       ...(paymentSource ? { paymentSource } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
     };
+    const scheduleEntry = paid
+      ? getEmiSchedule(
+          selectedLoan.principal,
+          selectedLoan.annualInterestRate,
+          selectedLoan.termMonths,
+          selectedLoan.startDate,
+        ).find((entry) => entry.paymentNumber === paymentNumber)
+      : undefined;
+    if (paid && !scheduleEntry) {
+      throw new Error(`No schedule entry found for loan installment ${paymentNumber}`);
+    }
     const existingIndex = repayments.findIndex((item) => item.paymentNumber === paymentNumber);
 
     if (existingIndex >= 0) {
@@ -169,6 +181,29 @@ export default function ManageLoansPage() {
 
     const updatedLoan = await updateLoan(selectedLoan.id, { repayments });
     setSelectedLoan({ ...selectedLoan, ...updatedLoan, repayments });
+
+    if (!paid || !scheduleEntry) return;
+
+    const repaymentExpense = (await fetchExpenses()).find(
+      (expense) =>
+        expense.loanId === selectedLoan.id && expense.loanPaymentNumber === paymentNumber,
+    );
+
+    const expense = {
+      cardId: paymentSource || null,
+      loanId: selectedLoan.id,
+      loanPaymentNumber: paymentNumber,
+      details: `${selectedLoan.lender} loan repayment · installment ${paymentNumber}`,
+      amount: scheduleEntry.paymentAmount,
+      date: paidDate || scheduleEntry.dueDate,
+      status: "paid" as const,
+      currency: selectedLoan.currency,
+    };
+    if (repaymentExpense?.id) {
+      await updateExpense(repaymentExpense.id, expense);
+    } else {
+      await createExpense(expense);
+    }
   };
 
   const startRepaymentEdit = (paymentNumber: number, repayment?: LoanRepayment) => {
@@ -324,6 +359,29 @@ export default function ManageLoansPage() {
             <option value="months-desc">Most first</option>
           </select>
         </label>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSearch("");
+              setPage(1);
+            }}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSearch("");
+              setLoanSort("months-asc");
+              setPage(1);
+            }}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -417,7 +475,7 @@ export default function ManageLoansPage() {
                       </div>
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                         <div
-                          className="h-full rounded-full bg-cyan-500 transition-all"
+                          className="progress-fill h-full rounded-full bg-cyan-500 transition-all"
                           style={{ width: `${progress.percent}%` }}
                         />
                       </div>
@@ -564,7 +622,7 @@ export default function ManageLoansPage() {
                 aria-valuenow={repaymentProgress.percent}
               >
                 <div
-                  className="h-full rounded-full bg-cyan-500 transition-all"
+                  className="progress-fill h-full rounded-full bg-cyan-500 transition-all"
                   style={{ width: `${repaymentProgress.percent}%` }}
                 />
               </div>
@@ -578,7 +636,7 @@ export default function ManageLoansPage() {
                       Installment
                     </th>
                     <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
-                      Due date
+                      Due / paid date
                     </th>
                     <th className="px-4 py-3 font-medium text-slate-600 dark:text-slate-300">
                       Payment
@@ -607,7 +665,9 @@ export default function ManageLoansPage() {
                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                           {row.paymentNumber}
                         </td>
-                        <td className="px-4 py-3">{formatDateOnly(row.dueDate)}</td>
+                        <td className="px-4 py-3">
+                          {formatDateOnly(isPaid && repayment?.paidDate ? repayment.paidDate : row.dueDate)}
+                        </td>
                         <td className="px-4 py-3 font-medium">
                           {formatMoney(
                             convertCurrency(

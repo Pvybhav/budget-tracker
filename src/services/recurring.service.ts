@@ -142,6 +142,7 @@ export async function syncRecurringExpenses(now = new Date()) {
           amount: template.amount,
           date: nextOccurrenceValue,
           isEmi: template.isEmi,
+          emiStartDate: template.emiStartDate,
           emiMonths: template.emiMonths,
           emiInterestRate: template.emiInterestRate,
           emiProcessingFee: template.emiProcessingFee,

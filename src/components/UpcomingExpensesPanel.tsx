@@ -94,14 +94,16 @@ export default function UpcomingExpensesPanel() {
     }, 0);
     const cardEmis = expenses.reduce((sum, expense) => {
       if (!expense.isEmi || !expense.emiMonths) return sum;
-      const start = localDate(expense.date);
+      const start = localDate(expense.emiStartDate ?? expense.date);
       const monthOffset = (year - start.getFullYear()) * 12 + month - start.getMonth();
       if (monthOffset < 0 || monthOffset >= expense.emiMonths) return sum;
       const amount = calcMonthlyEmi(
         expense.amount,
         expense.emiInterestRate ?? 0,
         expense.emiMonths,
-      );
+      ) +
+        (expense.emiProcessingFee ?? 0) / expense.emiMonths +
+        (expense.emiGst ?? 0) / expense.emiMonths;
       return sum + convertCurrency(amount, expense.currency, displayCurrency);
     }, 0);
     const billPayments = bills.reduce((sum, bill) => {

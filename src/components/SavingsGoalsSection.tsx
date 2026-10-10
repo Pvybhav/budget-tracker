@@ -216,7 +216,7 @@ export default function SavingsGoalsSection() {
 
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                   <div
-                    className={`h-full rounded-full ${progressColor}`}
+                    className={`progress-fill h-full rounded-full ${progressColor}`}
                     style={{ width: `${summary.progressPercent}%` }}
                   />
                 </div>

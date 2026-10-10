@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import type { Card } from "../../db/db";
-import { createBeneficiary, createTransfer } from "../../services/backendSync";
+import { CalendarDays, Landmark, X } from "lucide-react";
+import type { Card, Transfer } from "../../db/db";
+import { createBeneficiary, createTransfer, updateTransfer } from "../../services/backendSync";
 import { useBackendResource } from "../../services/backendHooks";
 import { fetchBeneficiaries } from "../../services/backend.service";
 import { showAlert } from "../../components/Confirm";
@@ -13,13 +13,14 @@ interface Props {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly cards: Card[];
-}
+  readonly initialTransfer?: Transfer;
+};
 
 function todayLocal() {
   return todayDateInput();
 }
 
-export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
+export default function AddTransferModal({ isOpen, onClose, cards, initialTransfer }: Props) {
   const [formData, setFormData] = useState({
     fromAccountId: "",
     toAccountId: "",
@@ -40,24 +41,41 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        fromAccountId: "",
-        toAccountId: "",
-        destinationType: "internal",
-        externalName: "",
-        externalBankName: "",
-        externalAccountNumber: "",
-        externalIfscCode: "",
-        externalUpiId: "",
-        amount: "",
-        date: todayLocal(),
-        note: "",
-        currency: getDisplayCurrency(),
-      });
+      setFormData(
+        initialTransfer
+          ? {
+              fromAccountId: initialTransfer.fromAccountId,
+              toAccountId: initialTransfer.toAccountId ?? "",
+              destinationType: initialTransfer.destinationType ?? "internal",
+              externalName: initialTransfer.externalName ?? "",
+              externalBankName: initialTransfer.externalBankName ?? "",
+              externalAccountNumber: initialTransfer.externalAccountNumber ?? "",
+              externalIfscCode: initialTransfer.externalIfscCode ?? "",
+              externalUpiId: initialTransfer.externalUpiId ?? "",
+              amount: String(initialTransfer.amount),
+              date: initialTransfer.date.slice(0, 10),
+              note: initialTransfer.note ?? "",
+              currency: initialTransfer.currency ?? getDisplayCurrency(),
+            }
+          : {
+              fromAccountId: "",
+              toAccountId: "",
+              destinationType: "internal",
+              externalName: "",
+              externalBankName: "",
+              externalAccountNumber: "",
+              externalIfscCode: "",
+              externalUpiId: "",
+              amount: "",
+              date: todayLocal(),
+              note: "",
+              currency: getDisplayCurrency(),
+            },
+      );
       setBeneficiaryId("");
       setSaveBeneficiary(false);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTransfer]);
 
   if (!isOpen) return null;
 
@@ -100,7 +118,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
       ifscCode: formData.externalIfscCode.trim() || undefined,
       upiId: formData.externalUpiId.trim() || undefined,
     };
-    await createTransfer({
+    const transferData = {
       fromAccountId,
       ...(formData.destinationType === "internal" ? { toAccountId } : {}),
       destinationType: formData.destinationType,
@@ -117,7 +135,12 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
       date: formData.date,
       note: formData.note.trim() || undefined,
       currency: formData.currency,
-    });
+    };
+    if (initialTransfer?.id) {
+      await updateTransfer(initialTransfer.id, transferData);
+    } else {
+      await createTransfer(transferData);
+    }
     if (formData.destinationType === "external" && saveBeneficiary && !externalDetails) {
       await createBeneficiary({
         name: recipient.name,
@@ -133,8 +156,10 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 pb-0">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Add Transfer</h2>
+        <div className="flex items-center justify-between p-5 pb-0">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            {initialTransfer ? "Edit Transfer" : "Add Transfer"}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -143,7 +168,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
@@ -157,7 +182,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
                 name="destinationType"
                 value={formData.destinationType}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="internal">My account</option>
                 <option value="external">External recipient</option>
@@ -166,8 +191,9 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
             <div>
               <label
                 htmlFor="fromAccountId"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300"
               >
+                <Landmark className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
                 From account
               </label>
               <select
@@ -175,7 +201,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
                 name="fromAccountId"
                 value={formData.fromAccountId}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-100 dark:bg-slate-800 dark:border-slate-200 dark:border-slate-700 dark:text-slate-900 dark:text-slate-100"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">Select account</option>
                 {cards.map((card) => (
@@ -188,8 +214,9 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
             <div>
               <label
                 htmlFor="toAccountId"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300"
               >
+                <Landmark className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
                 To account
               </label>
               {formData.destinationType === "internal" ? (
@@ -198,7 +225,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
                   name="toAccountId"
                   value={formData.toAccountId}
                   onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="">Select account</option>
                   {cards.map((card) => (
@@ -306,24 +333,25 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
                 <input
                   id="amount"
                   name="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={formData.amount}
                   onChange={handleChange}
-                  className="w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-100 dark:bg-slate-800 dark:border-slate-200 dark:border-slate-700 dark:text-slate-900 dark:text-slate-100"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 <CurrencySelect
                   value={formData.currency}
                   onChange={(currency) => setFormData((prev) => ({ ...prev, currency }))}
+                  className="w-32 min-w-0 shrink-0 appearance-none rounded-lg border border-slate-300 bg-white bg-[right_0.55rem_center] bg-no-repeat px-2 py-2 pr-7 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
             </div>
             <div>
               <label
                 htmlFor="date"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300"
               >
+                <CalendarDays className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
                 Date
               </label>
               <input
@@ -332,7 +360,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
                 type="date"
                 value={formData.date}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-100 dark:bg-slate-800 dark:border-slate-200 dark:border-slate-700 dark:text-slate-900 dark:text-slate-100"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
@@ -349,7 +377,7 @@ export default function AddTransferModal({ isOpen, onClose, cards }: Props) {
               rows={2}
               value={formData.note}
               onChange={handleChange}
-              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 dark:bg-slate-100 dark:bg-slate-800 dark:border-slate-200 dark:border-slate-700 dark:text-slate-900 dark:text-slate-100"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

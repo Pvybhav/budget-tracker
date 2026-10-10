@@ -3,7 +3,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type Expense, type Category } from "../db/db";
-import { calcMonthlyEmi } from "../services/card.service";
+import { calcMonthlyEmi, getEmiSchedule } from "../services/card.service";
 import AddExpenseModal from "../components/modals/AddExpenseModal";
 import CategoryExpensesModal from "../components/modals/CategoryExpensesModal";
 import { fetchCards, fetchExpenses, fetchCategories } from "../services/backend.service";
@@ -15,7 +15,7 @@ import { dateOnly, formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
 import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
-import { Check, CheckCircle2, Clock3, Pencil, Trash2 } from "lucide-react";
+import { Check, CheckCircle2, Clock3, Eye, Pencil, Trash2 } from "lucide-react";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -23,7 +23,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 function getEmiProgress(expense: Expense) {
   const months = Math.max(1, expense.emiMonths ?? 1);
-  const start = new Date(expense.date);
+  const start = new Date(`${(expense.emiStartDate ?? expense.date).slice(0, 10)}T00:00:00`);
   start.setHours(0, 0, 0, 0);
 
   const today = new Date();
@@ -76,6 +76,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [showEmiOnly, setShowEmiOnly] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedCardId, setSelectedCardId] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "pending" | "paid">("all");
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
@@ -90,7 +91,14 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     showEmiOnly,
     selectedCategoryId,
     selectedCardId,
+    selectedStatus,
   ]);
+  useEffect(() => {
+    setSelectedCategoryId("all");
+    setSelectedCardId("all");
+    setSelectedStatus("all");
+    setShowEmiOnly(false);
+  }, [mode]);
 
   const [categoryModal, setCategoryModal] = useState<{
     open: boolean;
@@ -118,25 +126,16 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     }
     return true;
   });
-
-  const getEmiExpenseStatus = (expense: Expense) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(expense.date);
-    start.setHours(0, 0, 0, 0);
-    const months = expense.emiMonths ?? 1;
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + months - 1);
-    end.setHours(0, 0, 0, 0);
-
-    if (today < start) {
-      return "upcoming" as const;
-    }
-    if (today > end) {
-      return "completed" as const;
-    }
-    return "current" as const;
-  };
+  const usedCategoryIds = new Set(
+    (periodFilteredExpenses ?? [])
+      .map((expense) => expense.categoryId)
+      .filter((categoryId): categoryId is string => Boolean(categoryId)),
+  );
+  const usedCardIds = new Set(
+    (periodFilteredExpenses ?? [])
+      .map((expense) => expense.cardId)
+      .filter((cardId): cardId is string => Boolean(cardId)),
+  );
 
   const filteredExpenses = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -157,9 +156,11 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       const matchesCategory =
         selectedCategoryId === "all" || expense.categoryId?.toString() === selectedCategoryId;
       const matchesCard = selectedCardId === "all" || expense.cardId === selectedCardId;
-      const matchesEmi = !showEmiOnly || !!expense.isEmi;
+      const matchesStatus =
+        selectedStatus === "all" || (expense.status ?? "pending") === selectedStatus;
+      const matchesEmi = mode === "emi" || !showEmiOnly || !!expense.isEmi;
 
-      return matchesSearch && matchesCategory && matchesCard && matchesEmi;
+      return matchesSearch && matchesCategory && matchesCard && matchesStatus && matchesEmi;
     });
 
     result.sort((a, b) => {
@@ -184,7 +185,9 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     selectedCategoryId,
     selectedCardId,
     showEmiOnly,
+    selectedStatus,
     sortBy,
+    mode,
   ]);
   const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / pageSize));
   const visibleExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
@@ -307,6 +310,31 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     });
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategoryId("all");
+    setSelectedCardId("all");
+    setSelectedStatus("all");
+    setShowEmiOnly(false);
+    setPage(1);
+  };
+
+  const resetFilters = () => {
+    clearFilters();
+    setSortBy("date-desc");
+    setSelectedYear(new Date().getFullYear());
+    setSelectedMonth(new Date().getMonth() + 1);
+  };
+  const filtersModified =
+    searchQuery.trim().length > 0 ||
+    selectedCategoryId !== "all" ||
+    selectedCardId !== "all" ||
+    selectedStatus !== "all" ||
+    showEmiOnly ||
+    sortBy !== "date-desc" ||
+    selectedYear !== new Date().getFullYear() ||
+    (mode === "monthly" && selectedMonth !== new Date().getMonth() + 1);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -362,7 +390,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr_1fr_1fr] gap-4">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr] xl:gap-3">
         <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Search expenses</span>
           <input
@@ -384,7 +412,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
           >
             <option value="all">All categories</option>
-            {categories?.map((category) => (
+            {categories?.filter((category) => usedCategoryIds.has(category.id ?? "")).map((category) => (
               <option key={category.id} value={category.id?.toString()}>
                 {category.title}
               </option>
@@ -417,7 +445,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
           >
             <option value="all">All cards</option>
-            {cards?.map((card) => (
+            {cards?.filter((card) => usedCardIds.has(card.id ?? "")).map((card) => (
               <option key={card.id} value={card.id?.toString()}>
                 {card.title}
               </option>
@@ -427,31 +455,47 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
         <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Quick filters</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowEmiOnly((prev) => !prev)}
-              className={cn(
-                "flex-1 rounded-lg border px-3 py-2 font-medium transition-colors",
-                showEmiOnly
-                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600",
-              )}
-            >
-              {showEmiOnly ? "EMI only" : "All expenses"}
-            </button>
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedCategoryId("all");
-                setSelectedCardId("all");
-                setSortBy("date-desc");
-                setShowEmiOnly(false);
-                setPage(1);
-              }}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-700 dark:text-slate-300 transition-colors hover:border-slate-400 dark:hover:border-slate-600"
-            >
-              Reset
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { label: "All", status: "all", emi: false },
+                { label: "Pending", status: "pending", emi: false },
+                { label: "Paid", status: "paid", emi: false },
+                { label: "EMI", status: "all", emi: true },
+              ] as const
+            ).map((filter) => {
+              const active =
+                selectedStatus === filter.status && showEmiOnly === filter.emi;
+              return (
+                <button
+                  key={filter.label}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setSelectedStatus(filter.status);
+                    setShowEmiOnly(filter.emi);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "rounded-lg border px-2.5 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+                  )}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+            {filtersModified && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -571,31 +615,17 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
+      <div className="max-h-[calc(100dvh-18rem)] overflow-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <table className="expense-table w-full min-w-max whitespace-nowrap text-left text-slate-700 dark:text-slate-300">
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
+              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Date</th>
+              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                 Description
               </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
-              {mode === "emi" && (
-                <>
-                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                    End date
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Paid</th>
-                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                    Pending
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                    Status
-                  </th>
-                </>
-              )}
-              <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
+              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Category</th>
+              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Amount</th>
+              <th className="sticky top-0 z-30 bg-slate-100 text-right font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                 Actions
               </th>
             </tr>
@@ -604,10 +634,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             {visibleExpenseGroups.map((group) => (
               <Fragment key={group.dateKey}>
                 {groupExpensesByDate && (
-                  <tr className="bg-slate-100/70 dark:bg-slate-800/60">
+                  <tr className="sticky top-10 z-20 bg-slate-100 dark:bg-slate-800">
                     <td
-                      colSpan={mode === "emi" ? 9 : 5}
-                      className="px-6 py-2 text-sm font-semibold text-slate-800 dark:text-slate-200"
+                      colSpan={5}
+                      className="py-2 pl-3 text-sm font-semibold text-slate-800 dark:text-slate-200"
                     >
                       {group.date}
                       <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
@@ -626,16 +656,19 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                   (expense.emiProcessingFee ?? 0) / emiMonths +
                   (expense.emiGst ?? 0) / emiMonths
                 : 0;
-              const emiProgress = isEmi ? getEmiProgress(expense) : null;
-              const emiStatus = isEmi ? getEmiExpenseStatus(expense) : null;
-
               return (
-                <tr key={expense.id} className="hover:bg-slate-800/20 transition-colors">
-                  <td className="px-6 py-4">
+                <tr
+                  key={expense.id}
+                  className={cn(
+                    "border-l-4 transition-colors hover:bg-slate-100/70 dark:hover:bg-slate-800/40",
+                    category ? getCategoryAccent(category).border : "border-l-slate-400",
+                  )}
+                >
+                  <td className="py-2 pl-2 pr-3">
                     {groupExpensesByDate ? "" : formatDateOnly(expense.date)}
                   </td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <div className="flex items-start gap-2">
+                  <td className="max-w-xs">
+                    <div className="flex min-w-0 items-start gap-2">
                       {(expense.status ?? "pending") === "paid" ? (
                         <CheckCircle2
                           className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
@@ -648,6 +681,30 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         />
                       )}
                       <div className="flex min-w-0 flex-col gap-1">
+                        {(() => {
+                          const description = expense.details ?? "";
+                          const merchant = [
+                            { match: /\bkfc\b|kentucky fried chicken/i, label: "KFC", color: "bg-red-700 text-white" },
+                            { match: /taco\s*bell/i, label: "TACO BELL", color: "bg-violet-800 text-white" },
+                            { match: /\blulu\b|lulu hypermarket/i, label: "LULU", color: "bg-rose-700 text-white" },
+                            { match: /starbucks/i, label: "STARBUCKS", color: "bg-emerald-900 text-white" },
+                            { match: /mcdonald/i, label: "McD", color: "bg-amber-400 text-red-900" },
+                            { match: /\buber\b/i, label: "UBER", color: "bg-slate-900 text-white dark:bg-slate-700" },
+                            { match: /\bzomato\b/i, label: "ZOMATO", color: "bg-rose-700 text-white" },
+                            { match: /\bswiggy\b/i, label: "SWIGGY", color: "bg-orange-600 text-white" },
+                          ].find((brand) => brand.match.test(description));
+                          return merchant ? (
+                            <span
+                              title={merchant.label}
+                              className={cn(
+                                "mb-0.5 w-fit rounded px-1.5 py-0.5 text-[9px] font-black tracking-wide",
+                                merchant.color,
+                              )}
+                            >
+                              {merchant.label}
+                            </span>
+                          ) : null;
+                        })()}
                         {expense.details ? (
                           <span className="truncate block max-w-[200px]">{expense.details}</span>
                         ) : (
@@ -656,9 +713,14 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         {(isEmi || expense.recurringFrequency) && (
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {isEmi && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedEmiExpense(expense)}
+                                aria-label={`View ${expense.emiMonths} month EMI schedule`}
+                                className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-500/25 dark:text-amber-300"
+                              >
                                 EMI · {expense.emiMonths}mo
-                              </span>
+                              </button>
                             )}
                             {expense.recurringFrequency && (
                               <>
@@ -697,7 +759,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     {category ? (
                       <Tooltip
                         content={`View ${category.title} expenses this ${mode === "yearly" ? "year" : "month"}`}
@@ -720,7 +782,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       <span className="text-slate-600 text-sm italic">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     <div className="flex flex-col">
                       <span>
                         {formatMoney(
@@ -736,87 +798,30 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       ) : null}
                     </div>
                   </td>
-                  {mode === "emi" && emiProgress && (
-                    <>
-                      <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                        {formatDateOnly(formatDateInput(emiProgress.end))}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {emiProgress.paidInstallments}
-                          </span>
-                          <span className="text-[11px] text-slate-500">
-                            {formatMoney(
-                              convertCurrency(
-                                emiProgress.paidAmount,
-                                expense.currency,
-                                displayCurrency,
-                              ),
-                              displayCurrency,
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {emiProgress.pendingInstallments}
-                          </span>
-                          <span className="text-[11px] text-slate-500">
-                            {formatMoney(
-                              convertCurrency(
-                                emiProgress.pendingAmount,
-                                expense.currency,
-                                displayCurrency,
-                              ),
-                              displayCurrency,
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${(() => {
-                            if (emiStatus === "completed") {
-                              return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300";
-                            }
-                            if (emiStatus === "current") {
-                              return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-                            }
-                            return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
-                          })()}`}
-                        >
-                          {emiStatus === "completed"
-                            ? "Completed"
-                            : emiStatus === "current"
-                              ? "Ongoing"
-                              : "Upcoming"}
-                        </span>
-                      </td>
-                    </>
-                  )}
                   <td className="px-6 py-4 text-right">
                     {mode === "emi" && (
                       <button
                         type="button"
                         onClick={() => setSelectedEmiExpense(expense)}
-                        className="mr-3 text-cyan-700 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300"
+                        className="mr-3 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 px-3 py-1.5 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
                       >
-                        View details
+                        <Eye className="h-4 w-4" aria-hidden="true" />
+                        View schedule
                       </button>
                     )}
-                    <Tooltip content="Edit expense">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(expense)}
-                        className="mr-3 rounded p-1.5 text-blue-500 hover:text-blue-400"
-                        aria-label="Edit expense"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
-                    {(expense.status ?? "pending") !== "paid" && (
+                    {!expense.loanId && (
+                      <Tooltip content="Edit expense">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(expense)}
+                          className="mr-3 rounded p-1.5 text-blue-500 hover:text-blue-400"
+                          aria-label="Edit expense"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                    )}
+                    {!expense.loanId && (expense.status ?? "pending") !== "paid" && (
                       <Tooltip content="Mark paid">
                         <button
                           type="button"
@@ -828,7 +833,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         </button>
                       </Tooltip>
                     )}
-                    {expense.recurringFrequency && !expense.isRecurringInstance && (
+                    {!expense.loanId && expense.recurringFrequency && !expense.isRecurringInstance && (
                       <button
                         type="button"
                         onClick={() => void handleSkipNext(expense)}
@@ -837,16 +842,20 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         {expense.skipNextDue ? "Undo skip" : "Skip next"}
                       </button>
                     )}
-                    <Tooltip content="Delete expense">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(expense)}
-                        className="rounded p-1.5 text-red-500 hover:text-red-400"
-                        aria-label="Delete expense"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
+                    {expense.loanId ? (
+                      <span className="text-xs text-slate-500">Managed in loan schedule</span>
+                    ) : (
+                      <Tooltip content="Delete expense">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(expense)}
+                          className="rounded p-1.5 text-red-500 hover:text-red-400"
+                          aria-label="Delete expense"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                    )}
                   </td>
                 </tr>
                 );
@@ -856,7 +865,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             {filteredExpenses.length === 0 && (
               <tr>
                 <td
-                  colSpan={mode === "emi" ? 9 : 5}
+                  colSpan={5}
                   className="px-6 py-12 text-center text-slate-500"
                 >
                   No expenses found for the selected filters.
@@ -908,10 +917,22 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           <dialog
             open
             aria-labelledby="emi-details-title"
-            className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+            className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
           >
             {(() => {
               const progress = getEmiProgress(selectedEmiExpense);
+              const months = Math.max(1, selectedEmiExpense.emiMonths ?? 1);
+              const monthlyFees =
+                ((selectedEmiExpense.emiProcessingFee ?? 0) +
+                  (selectedEmiExpense.emiGst ?? 0)) /
+                months;
+              const schedule = getEmiSchedule(
+                selectedEmiExpense.amount,
+                selectedEmiExpense.emiInterestRate ?? 0,
+                months,
+                dateOnly(selectedEmiExpense.emiStartDate ?? selectedEmiExpense.date),
+              );
+              const progressPercent = Math.round((progress.paidInstallments / months) * 100);
               const money = (amount: number) =>
                 formatMoney(
                   convertCurrency(amount, selectedEmiExpense.currency, displayCurrency),
@@ -925,7 +946,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         id="emi-details-title"
                         className="text-xl font-semibold text-slate-900 dark:text-slate-100"
                       >
-                        EMI details
+                        EMI repayment schedule
                       </h2>
                       <p className="mt-1 text-sm text-slate-500">
                         {selectedEmiExpense.details || "Expense"}
@@ -951,7 +972,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     <div>
                       <dt className="text-slate-500">Term</dt>
                       <dd className="mt-1 font-medium">
-                        {selectedEmiExpense.emiMonths ?? 1} months
+                        {months} months
                       </dd>
                     </div>
                     <div>
@@ -973,7 +994,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                     <div>
                       <dt className="text-slate-500">Started</dt>
                       <dd className="mt-1 font-medium">
-                        {formatDateOnly(selectedEmiExpense.date)}
+                        {formatDateOnly(selectedEmiExpense.emiStartDate ?? selectedEmiExpense.date)}
                       </dd>
                     </div>
                     <div>
@@ -997,15 +1018,51 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       <dd className="mt-1 font-medium">{money(progress.pendingAmount)}</dd>
                     </div>
                   </dl>
-                  <progress
-                    className="mt-5 h-2 w-full accent-emerald-500"
+                  <div
+                    className="mt-5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+                    role="progressbar"
                     aria-label="EMI repayment progress"
-                    max={100}
-                    value={Math.round(
-                      (progress.paidInstallments / Math.max(1, selectedEmiExpense.emiMonths ?? 1)) *
-                        100,
-                    )}
-                  />
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progressPercent}
+                  >
+                    <div
+                      className="progress-fill h-full rounded-full bg-emerald-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <table className="w-full min-w-[760px] text-left text-sm">
+                      <thead className="bg-slate-100 text-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
+                        <tr>
+                          <th className="px-4 py-3">Payment</th>
+                          <th className="px-4 py-3">Due date</th>
+                          <th className="px-4 py-3">Principal</th>
+                          <th className="px-4 py-3">Interest</th>
+                          <th className="px-4 py-3">Payment amount</th>
+                          <th className="px-4 py-3">Balance</th>
+                          <th className="px-4 py-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        {schedule.map((installment) => (
+                          <tr key={installment.paymentNumber}>
+                            <td className="px-4 py-3">
+                              {installment.paymentNumber} of {months}
+                            </td>
+                            <td className="px-4 py-3">{formatDateOnly(installment.dueDate)}</td>
+                            <td className="px-4 py-3">{money(installment.principalAmount)}</td>
+                            <td className="px-4 py-3">{money(installment.interestAmount)}</td>
+                            <td className="px-4 py-3 font-medium">
+                              {money(installment.paymentAmount + monthlyFees)}
+                            </td>
+                            <td className="px-4 py-3">{money(installment.remainingBalance)}</td>
+                            <td className="px-4 py-3 capitalize">{installment.status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </>
               );
             })()}

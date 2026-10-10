@@ -104,6 +104,12 @@ export async function createTransfer(data: Omit<Transfer, "id">) {
   toastSuccess("Transfer recorded successfully");
   return transfer;
 }
+export async function updateTransfer(id: string, data: Partial<Omit<Transfer, "id">>) {
+  const transfer = await backend.updateTransfer(id, data);
+  dispatchBackendRefresh();
+  toastSuccess("Transfer updated successfully");
+  return transfer;
+}
 export async function createBeneficiary(data: Omit<Beneficiary, "id">) {
   const beneficiary = await backend.createBeneficiary(data);
   dispatchBackendRefresh();

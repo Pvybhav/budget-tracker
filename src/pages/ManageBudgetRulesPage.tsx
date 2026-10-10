@@ -125,7 +125,7 @@ export default function ManageBudgetRulesPage() {
                       )}
                     </div>
                     <div className="mt-1 text-sm text-slate-700 dark:text-slate-400">
-                      Flag if spend exceeds
+                      Flag if spend exceeds{" "}
                       {formatMoney(
                         convertCurrency(rule.thresholdAmount, rule.currency, displayCurrency),
                         displayCurrency,
@@ -202,10 +202,14 @@ export default function ManageBudgetRulesPage() {
               {visibleAutoRules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  className={`rounded-xl border p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ${
+                    rule.enabled
+                      ? "border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10"
+                      : "border-slate-300 bg-slate-100/70 dark:border-slate-700 dark:bg-slate-900/40"
+                  }`}
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                         "{rule.keyword}"
                       </h3>
@@ -213,17 +217,25 @@ export default function ManageBudgetRulesPage() {
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         {categoryName(rule)}
                       </span>
-                      {!rule.enabled && (
-                        <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-[11px] text-slate-500">
-                          Disabled
-                        </span>
-                      )}
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                          rule.enabled
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "border-slate-400/40 bg-slate-500/10 text-slate-600 dark:text-slate-400"
+                        }`}
+                      >
+                        {rule.enabled ? "Enabled" : "Disabled"}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => toggleAutoRuleEnabled(rule)}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                      className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        rule.enabled
+                          ? "border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
+                          : "border-slate-400/40 text-slate-600 hover:bg-slate-500/10 dark:text-slate-300"
+                      }`}
                     >
                       {rule.enabled ? "Disable" : "Enable"}
                     </button>
@@ -233,7 +245,7 @@ export default function ManageBudgetRulesPage() {
                           setAutoRuleToEdit(rule);
                           setIsAutoModalOpen(true);
                         }}
-                        className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-white"
+                        className="rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-2 text-indigo-600 transition-colors hover:bg-indigo-500/15 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -241,7 +253,7 @@ export default function ManageBudgetRulesPage() {
                     <Tooltip content="Delete rule">
                       <button
                         onClick={() => handleDeleteAutoRule(rule)}
-                        className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:text-rose-400"
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-2 text-rose-600 transition-colors hover:bg-rose-500/15 hover:text-rose-700 dark:text-rose-300 dark:hover:text-rose-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

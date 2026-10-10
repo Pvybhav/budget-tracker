@@ -126,7 +126,9 @@ export default function ReconciliationPage() {
                   </Tooltip>
                 </td>
                 <td className="px-5 py-3"> {formatDateOnly(expense.date)} </td>
-                <td className="px-5 py-3">{accountName(expense.cardId)}</td>
+                <td className="px-5 py-3">
+                  {expense.cardId ? accountName(expense.cardId) : "No account"}
+                </td>
                 <td className="px-5 py-3"> {expense.details || "Uncategorized expense"} </td>
                 <td className="px-5 py-3 font-medium">
                   {formatMoney(

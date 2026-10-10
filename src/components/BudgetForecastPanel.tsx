@@ -146,7 +146,7 @@ export default function BudgetForecastPanel({
             <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
               
               <div
-                className={`h-full transition-all ${forecast.riskLevel === "danger" ? "bg-red-500" : forecast.riskLevel === "warning" ? "bg-amber-500" : "bg-emerald-500"}`}
+                className={`progress-fill h-full transition-all ${forecast.riskLevel === "danger" ? "bg-red-500" : forecast.riskLevel === "warning" ? "bg-amber-500" : "bg-emerald-500"}`}
                 style={{ width: `${Math.min(100, forecast.forecastPercentage)}%` }}
               />
             </div>

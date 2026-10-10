@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useBackendResource } from "../services/backendHooks";
-import { Tags, Pencil, Trash2, Plus, Wallet } from "lucide-react";
+import { Tags, Pencil, Trash2, Plus, Wallet, Grid2X2, List } from "lucide-react";
 import { type Category } from "../db/db";
 import showConfirm from "../components/Confirm";
 import AddCategoryModal from "../components/modals/AddCategoryModal";
@@ -60,7 +60,7 @@ export default function ManageCategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);
   const [categoryForExpenses, setCategoryForExpenses] = useState<Category | null>(null);
-  const [compactMode, setCompactMode] = useState(false);
+  const [isListView, setIsListView] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const visibleCategories = (categories ?? []).slice((page - 1) * pageSize, page * pageSize);
@@ -213,14 +213,38 @@ export default function ManageCategoriesPage() {
             Add Category
           </button>
 
-          <Tooltip content="Toggle compact mode">
-            <button
-              onClick={() => setCompactMode((c) => !c)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors border ${compactMode ? "bg-blue-100 dark:bg-slate-800 text-blue-900 dark:text-slate-100 border-blue-300 dark:border-slate-700" : "bg-transparent text-slate-700 dark:text-slate-300 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"}`}
-            >
-              <span className="text-sm font-medium">{compactMode ? "Compact" : "Expanded"}</span>
-            </button>
-          </Tooltip>
+          <div className="flex items-center rounded-lg border border-slate-200 p-1 dark:border-slate-700">
+            <Tooltip content="Card view">
+              <button
+                type="button"
+                aria-label="Card view"
+                aria-pressed={!isListView}
+                onClick={() => setIsListView(false)}
+                className={`rounded-md p-1.5 transition-colors ${
+                  !isListView
+                    ? "bg-blue-100 text-blue-900 dark:bg-slate-800 dark:text-slate-100"
+                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Grid2X2 className="h-4 w-4" />
+              </button>
+            </Tooltip>
+            <Tooltip content="List view">
+              <button
+                type="button"
+                aria-label="List view"
+                aria-pressed={isListView}
+                onClick={() => setIsListView(true)}
+                className={`rounded-md p-1.5 transition-colors ${
+                  isListView
+                    ? "bg-blue-100 text-blue-900 dark:bg-slate-800 dark:text-slate-100"
+                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </Tooltip>
+          </div>
         </div>
       </div>
       {categories && categories.length === 0 && (
@@ -242,14 +266,18 @@ export default function ManageCategoriesPage() {
         </div>
       )}
       {categories && categories.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          className={
+            isListView ? "flex flex-col gap-2" : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          }
+        >
           {visibleCategories.map((category) => {
             const previews = getBudgetPreviews(category, displayCurrency);
             const accent = getCategoryAccent(category);
             return (
               <div
                 key={category.id}
-                className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 ${accent.border} rounded-2xl ${compactMode ? "p-3 gap-2 text-sm" : "p-5 gap-3"} hover:border-slate-300 dark:hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
+                className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 ${accent.border} rounded-2xl ${isListView ? "p-3 gap-3 sm:flex-row sm:items-center" : "p-5 gap-3"} hover:border-slate-300 dark:hover:border-slate-700 transition-colors min-h-[120px] flex flex-col`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -285,8 +313,8 @@ export default function ManageCategoriesPage() {
                   </div>
                 </div>
 
-                <div className="min-h-[36px] mt-1">
-                  {compactMode ? (
+                <div className={`min-h-[36px] mt-1 ${isListView ? "sm:flex-1 sm:min-w-0" : ""}`}>
+                  {isListView ? (
                     <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-3">
                       <button
                         onClick={() => openCategoryExpenses(category)}
@@ -333,7 +361,7 @@ export default function ManageCategoriesPage() {
                 </div>
 
                 {category.budgetAmount != null && category.budgetMode ? (
-                  <div className="mt-auto space-y-1.5">
+                  <div className={`mt-auto space-y-1.5 ${isListView ? "sm:w-80 sm:shrink-0" : ""}`}>
                     <div className="flex items-center gap-2">
                       <Wallet className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                       <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">
@@ -345,7 +373,7 @@ export default function ManageCategoriesPage() {
                         {BUDGET_MODE_LABELS[category.budgetMode] ?? category.budgetMode}
                       </span>
                     </div>
-                    {!compactMode && previews && (
+                    {!isListView && previews && (
                       <p className="text-xs text-slate-500 pl-5">{previews}</p>
                     )}
 
@@ -376,13 +404,13 @@ export default function ManageCategoriesPage() {
                             </div>
 
                             <div
-                              className={`w-full bg-slate-200 dark:bg-slate-800 rounded-full ${compactMode ? "h-2" : "h-3"} overflow-hidden border border-slate-300 dark:border-slate-700`}
+                              className={`w-full bg-slate-200 dark:bg-slate-800 rounded-full ${isListView ? "h-2" : "h-3"} overflow-hidden border border-slate-300 dark:border-slate-700`}
                             >
                               <div
                                 style={{
                                   width: `${Math.min(100, budgetStatus.progressClamped)}%`,
                                 }}
-                                className={`${over ? "bg-red-500" : nearLimit ? "bg-amber-500" : "bg-emerald-400"} ${compactMode ? "h-2" : "h-3"} transition-all duration-300`}
+                                className={`progress-fill ${over ? "bg-red-500" : nearLimit ? "bg-amber-500" : "bg-emerald-400"} ${isListView ? "h-2" : "h-3"} transition-all duration-300`}
                               />
                             </div>
 

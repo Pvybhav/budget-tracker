@@ -75,7 +75,7 @@ export function getEmiSchedule(
   const monthlyRate = annualRatePct / 100 / 12;
   const monthlyPayment = calcMonthlyEmi(principal, annualRatePct, months);
   let balance = principal;
-  const start = new Date(startDate);
+  const start = new Date(`${startDate.slice(0, 10)}T00:00:00`);
 
   return Array.from({ length: months }, (_, index) => {
     const dueDate = new Date(start);
@@ -141,7 +141,7 @@ function getCardScopeExpenses(card: Card, expenses: Expense[], allCards: Card[] 
     return expenses;
   }
 
-  return expenses.filter((expense) => scopeCardIds.includes(expense.cardId));
+  return expenses.filter((expense) => expense.cardId && scopeCardIds.includes(expense.cardId));
 }
 
 function getCardScopePayments(card: Card, payments: Payment[], allCards: Card[] = []): Payment[] {
@@ -254,7 +254,7 @@ export function getCardMetrics(
       }
     } else {
       // Determine which "installment month" this billing cycle corresponds to
-      const emiStart = new Date(exp.date);
+      const emiStart = new Date(`${(exp.emiStartDate ?? exp.date).slice(0, 10)}T00:00:00`);
       const monthIndex = monthsBetween(emiStart, lastBillDate);
       const months = exp.emiMonths ?? 1;
       if (monthIndex >= 0 && monthIndex < months) {

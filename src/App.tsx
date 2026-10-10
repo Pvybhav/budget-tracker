@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
+import { API_BASE_URL } from "./services/config";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const ManageCardsPage = lazy(() => import("./pages/ManageCardsPage"));
@@ -90,6 +91,25 @@ function App() {
       }
     })();
   }, []);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkHealth = () => {
+      void fetch(`${API_BASE_URL}/health`)
+        .then((response) => {
+          if (!response.ok) {
+            console.error(`Health check failed with status ${response.status}`);
+          }
+        })
+        .catch((error: unknown) => {
+          console.error("Health check failed", error);
+        });
+    };
+
+    checkHealth();
+    const intervalId = window.setInterval(checkHealth, 3 * 60 * 1000);
+    return () => window.clearInterval(intervalId);
+  }, [isAuthenticated]);
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200">

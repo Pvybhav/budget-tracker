@@ -44,8 +44,8 @@ export default function ManageCardsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
-  const searchableCards = useMemo(() => {
-    const query = search.trim().toLowerCase();
+  const query = search.trim().toLowerCase();
+  const matchingCards = useMemo(() => {
     return (cards ?? []).filter(
       (card) =>
         !query ||
@@ -53,30 +53,47 @@ export default function ManageCardsPage() {
         getAccountTypeLabel(card.type).toLowerCase().includes(query) ||
         card.bankName?.toLowerCase().includes(query),
     );
-  }, [cards, search]);
+  }, [cards, query]);
   const displayCards = useMemo(() => {
-    if (accountView === "flat") return searchableCards.map((card) => ({ card, depth: 0 }));
+    if (accountView === "flat") return matchingCards.map((card) => ({ card, depth: 0 }));
+
+    const allCards = cards ?? [];
+    const cardsById = new Map(allCards.map((card) => [card.id ?? "", card]));
+    const includedIds = new Set(matchingCards.map((card) => card.id ?? ""));
+    for (const card of matchingCards) {
+      let parentId = card.linkedCardIds?.[0];
+      const ancestors = new Set<string>();
+      while (parentId && !ancestors.has(parentId)) {
+        ancestors.add(parentId);
+        includedIds.add(parentId);
+        parentId = cardsById.get(parentId)?.linkedCardIds?.[0];
+      }
+    }
+
     const childrenByParent = new Map<string, Card[]>();
-    for (const card of searchableCards) {
+    for (const card of allCards) {
       const parentId = card.linkedCardIds?.[0];
-      if (!parentId) continue;
+      if (!parentId || parentId === card.id) continue;
       const children = childrenByParent.get(parentId) ?? [];
       children.push(card);
       childrenByParent.set(parentId, children);
     }
     const ordered: { card: Card; depth: number }[] = [];
+    const visited = new Set<string>();
     const addBranch = (card: Card, depth: number) => {
+      const id = card.id ?? "";
+      if (!includedIds.has(id) || visited.has(id)) return;
+      visited.add(id);
       ordered.push({ card, depth });
-      for (const child of childrenByParent.get(card.id ?? "") ?? []) addBranch(child, depth + 1);
+      for (const child of childrenByParent.get(id) ?? []) addBranch(child, depth + 1);
     };
-    const childIds = new Set(
-      searchableCards.flatMap((card) => (card.linkedCardIds ?? []).slice(0, 1)),
-    );
-    for (const card of searchableCards) {
-      if (!childIds.has(card.id ?? "")) addBranch(card, 0);
+    for (const card of allCards) {
+      const parentId = card.linkedCardIds?.[0];
+      if (!parentId || !cardsById.has(parentId)) addBranch(card, 0);
     }
+    for (const card of allCards) addBranch(card, 0);
     return ordered;
-  }, [searchableCards, accountView]);
+  }, [cards, matchingCards, accountView]);
   const visibleCards = displayCards.slice((page - 1) * pageSize, page * pageSize);
 
   const handleDelete = async (card: Card) => {
@@ -130,7 +147,10 @@ export default function ManageCardsPage() {
             <button
               key={view}
               type="button"
-              onClick={() => setAccountView(view)}
+              onClick={() => {
+                setAccountView(view);
+                setPage(1);
+              }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize ${accountView === view ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-400"}`}
             >
               {view}
@@ -265,7 +285,7 @@ export default function ManageCardsPage() {
                         </div>
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                           <div
-                            className={`h-full rounded-full ${utilization > 80 ? "bg-rose-500" : utilization > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
+                            className={`progress-fill h-full rounded-full ${utilization > 80 ? "bg-rose-500" : utilization > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
                             style={{ width: `${Math.min(100, utilization)}%` }}
                           />
                         </div>

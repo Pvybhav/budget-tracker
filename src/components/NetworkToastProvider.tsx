@@ -11,10 +11,14 @@ interface ToastState extends ToastPayload {
 
 export default function NetworkToastProvider({ children }: { children: ReactNode }) {
   const [loadingCount, setLoadingCount] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("Updating your financial data…");
   const [toasts, setToasts] = useState<ToastState[]>([]);
 
   useEffect(() => {
-    const offLoading = onNetworkLoadingChange(setLoadingCount);
+    const offLoading = onNetworkLoadingChange((count, message) => {
+      setLoadingCount(count);
+      setLoadingMessage(message);
+    });
     const offToast = onNetworkToast((toast) => {
       setToasts((current) => [...current, { ...toast, visible: true }]);
     });
@@ -76,16 +80,20 @@ export default function NetworkToastProvider({ children }: { children: ReactNode
     <>
       {children}
       {createPortal(
-        <div className="pointer-events-none fixed inset-x-0 top-5 z-[100] flex flex-col items-center gap-3 px-4">
+        <div className="pointer-events-none fixed right-4 top-4 z-[100] flex w-[min(24rem,calc(100vw-2rem))] flex-col items-end gap-3 sm:right-6 sm:top-6">
           {toastNodes}
         </div>,
         document.body,
       )}
       {createPortal(
         loadingCount > 0 ? (
-          <div className="pointer-events-auto fixed left-1/2 top-6 z-[90] flex -translate-x-1/2 items-center gap-3 rounded-full border border-slate-700/80 bg-slate-950/95 px-4 py-3 shadow-2xl backdrop-blur-sm">
-            <Loader2 className="h-5 w-5 animate-spin text-sky-400" />
-            <span className="text-sm text-slate-100">Network activity in progress...</span>
+          <div
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none fixed bottom-4 right-4 z-[90] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-950/95 px-3 py-2 text-sm text-slate-100 shadow-xl backdrop-blur-sm sm:bottom-6 sm:right-6"
+          >
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-sky-400" />
+            <span>{loadingMessage}</span>
           </div>
         ) : null,
         document.body,

@@ -65,8 +65,10 @@ export interface ExpenseSplitItem {
 
 export interface Expense {
   id?: string;
-  cardId: string;
+  cardId?: string | null;
   categoryId?: string;
+  loanId?: string;
+  loanPaymentNumber?: number;
   details?: string;
   tags?: string[];
   amount: number;
@@ -76,6 +78,7 @@ export interface Expense {
   splitItems?: ExpenseSplitItem[];
   skipNextDue?: boolean;
   isEmi?: boolean;
+  emiStartDate?: string;
   emiMonths?: number;
   emiInterestRate?: number;
   emiProcessingFee?: number;

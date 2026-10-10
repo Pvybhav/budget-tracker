@@ -163,7 +163,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div
-                  className={`h-full rounded-full ${utilization > 80 ? "bg-rose-400" : utilization > 50 ? "bg-amber-400" : "bg-emerald-400"}`}
+                  className={`progress-fill h-full rounded-full ${utilization > 80 ? "bg-rose-400" : utilization > 50 ? "bg-amber-400" : "bg-emerald-400"}`}
                   style={{ width: `${Math.min(100, utilization)}%` }}
                 />
               </div>

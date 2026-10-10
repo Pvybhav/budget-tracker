@@ -203,7 +203,7 @@ export default function AddLoanModal({ isOpen, onClose, initialLoan }: Props) {
                 <CurrencySelect
                   value={formData.currency}
                   onChange={(currency) => setFormData({ ...formData, currency })}
-                  className="w-36 shrink-0 px-2 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-32 min-w-0 shrink-0 appearance-none bg-white bg-[right_0.55rem_center] bg-no-repeat px-2 py-2 pr-7 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>

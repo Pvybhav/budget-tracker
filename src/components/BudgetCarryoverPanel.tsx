@@ -106,7 +106,7 @@ export default function BudgetCarryoverPanel({
             <div className="bg-slate-200 dark:bg-slate-700/50 h-1 rounded-full mb-2 overflow-hidden">
               
               <div
-                className="h-full bg-purple-500"
+                className="progress-fill h-full bg-purple-500"
                 style={{
                   width: `${(carryover.previousMonthSpent / carryover.previousMonthBudget) * 100}%`,
                 }}

@@ -189,11 +189,23 @@ export default function HomePage() {
           </h2>
         </div>
         {showBudgetForecastAlerts && <BudgetForecastPanel forecasts={budgetForecasts} />}
-        {recommendations.length > 0 && (
-          <SmartBudgetRecommendationsPanel recommendations={recommendations} />
-        )}
         {monthlyComparison && <MonthlyComparisonPanel comparison={monthlyComparison} />}
-        {carryovers.length > 0 && <BudgetCarryoverPanel carryovers={carryovers} />}
+        {(recommendations.length > 0 || carryovers.length > 0) && (
+          <details className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-800 marker:hidden hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/50">
+              <span className="flex items-center justify-between gap-3">
+                <span>Smart recommendations &amp; budget carryover</span>
+                <span className="text-xs font-normal text-slate-500">Show details</span>
+              </span>
+            </summary>
+            <div className="space-y-4 border-t border-slate-200 p-3 dark:border-slate-800 sm:p-4">
+              {recommendations.length > 0 && (
+                <SmartBudgetRecommendationsPanel recommendations={recommendations} />
+              )}
+              {carryovers.length > 0 && <BudgetCarryoverPanel carryovers={carryovers} />}
+            </div>
+          </details>
+        )}
         <CustomBudgetPeriodsDisplay selectedStartDate={1} />
       </section>
       {showFullDescription && (

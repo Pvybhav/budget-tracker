@@ -1,6 +1,6 @@
 # Budget Tracker Backend
 
-This backend exposes REST APIs for cards, categories, expenses, payments, loans, and savings goals.
+This backend exposes REST APIs for cards, categories, expenses, payments, transfers, loans, and savings goals.
 
 ## Setup
 
@@ -46,11 +46,19 @@ This backend exposes REST APIs for cards, categories, expenses, payments, loans,
 - `PUT /api/expenses/:id`
 - `DELETE /api/expenses/:id`
 
+EMI expenses may include an `emiStartDate` (`YYYY-MM-DD`) to set the first scheduled installment
+date. When omitted, the expense date is used.
+
 - `GET /api/payments`
 - `POST /api/payments`
 - `GET /api/payments/:id`
 - `PUT /api/payments/:id`
 - `DELETE /api/payments/:id`
+
+- `GET /api/transfers`
+- `POST /api/transfers`
+- `PUT /api/transfers/:id`
+- `DELETE /api/transfers/:id`
 
 - `GET /api/loans`
 - `POST /api/loans`

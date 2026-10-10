@@ -87,6 +87,9 @@ export async function deleteBeneficiary(id: string) {
 export async function createTransfer(data: Omit<Transfer, "id">) {
   return apiPost<Transfer>("/transfers", data);
 }
+export async function updateTransfer(id: string, data: Partial<Omit<Transfer, "id">>) {
+  return apiPut<Transfer>(`/transfers/${id}`, data);
+}
 export async function deleteTransfer(id: string) {
   return apiDelete<{ success: boolean }>(`/transfers/${id}`);
 }

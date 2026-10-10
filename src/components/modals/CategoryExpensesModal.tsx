@@ -1,10 +1,19 @@
 import { useBackendResource } from "../../services/backendHooks";
 import { X, Tags, TrendingUp } from "lucide-react";
-import { type Category } from "../../db/db";
+import { type Category, type Expense } from "../../db/db";
 import { fetchExpenses, fetchCards } from "../../services/backend.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../../services/currency.service";
-import { formatDateOnly } from "../../utils/date";
+import { dateOnly, formatDateInput, formatDateOnly, parseDateOnly } from "../../utils/date";
 import { getCategoryAccent } from "../../utils/categoryTheme";
+import { getEmiSchedule } from "../../services/card.service";
+
+interface PeriodExpenseEntry {
+  expense: Expense;
+  date: string;
+  amount: number;
+  month: number;
+  installmentLabel?: string;
+}
 
 interface Props {
   isOpen: boolean;
@@ -31,33 +40,71 @@ export default function CategoryExpensesModal({
   const isYearly = periodMode === "yearly";
   const isQuarterly = periodMode === "quarterly";
   const currentQuarterIndex = Math.floor((currentMonth - 1) / 3);
+  const periodStart = isYearly
+    ? new Date(currentYear, 0, 1)
+    : isQuarterly
+      ? new Date(currentYear, currentQuarterIndex * 3, 1)
+      : new Date(currentYear, currentMonth - 1, 1);
+  const periodEnd = isYearly
+    ? new Date(currentYear + 1, 0, 1)
+    : isQuarterly
+      ? new Date(currentYear, currentQuarterIndex * 3 + 3, 1)
+      : new Date(currentYear, currentMonth, 1);
+  const periodStartKey = formatDateInput(periodStart);
+  const periodEndKey = formatDateInput(periodEnd);
 
-  const monthExpenses = useBackendResource(async () => {
+  const categoryExpenses = useBackendResource(async () => {
     if (!category.id) return [];
     const all = await fetchExpenses();
-    return all.filter((e) => {
-      const d = new Date(e.date);
-      return (
-        e.categoryId === category.id &&
-        d.getFullYear() === currentYear &&
-        (isYearly ||
-          (isQuarterly
-            ? Math.floor(d.getMonth() / 3) === currentQuarterIndex
-            : d.getMonth() + 1 === currentMonth))
-      );
-    });
-  }, [category.id, currentYear, currentMonth, isYearly, isQuarterly, currentQuarterIndex]);
+    return all.filter((expense) => expense.categoryId === category.id);
+  }, [category.id]);
 
   const cards = useBackendResource(() => fetchCards(), []);
   const accent = getCategoryAccent(category);
 
   if (!isOpen) return null;
 
-  const total =
-    monthExpenses?.reduce(
-      (sum, e) => sum + convertCurrency(e.amount, e.currency, displayCurrency),
-      0,
-    ) ?? 0;
+  const periodEntries: PeriodExpenseEntry[] = (categoryExpenses ?? []).flatMap((expense) => {
+    if (expense.isEmi) {
+      const months = Math.max(1, expense.emiMonths ?? 1);
+      const monthlyFees =
+        ((expense.emiProcessingFee ?? 0) + (expense.emiGst ?? 0)) / months;
+      return getEmiSchedule(
+        expense.amount,
+        expense.emiInterestRate ?? 0,
+        months,
+        dateOnly(expense.emiStartDate ?? expense.date),
+      )
+        .filter(
+          (installment) =>
+            installment.dueDate >= periodStartKey && installment.dueDate < periodEndKey,
+        )
+        .map((installment) => ({
+          expense,
+          date: installment.dueDate,
+          amount: installment.paymentAmount + monthlyFees,
+          month: parseDateOnly(installment.dueDate)?.getMonth() ?? 0,
+          installmentLabel: `EMI payment ${installment.paymentNumber} of ${months}`,
+        }));
+    }
+
+    const date = dateOnly(expense.date);
+    if (date < periodStartKey || date >= periodEndKey) return [];
+    return [
+      {
+        expense,
+        date,
+        amount: expense.amount,
+        month: parseDateOnly(date)?.getMonth() ?? 0,
+      },
+    ];
+  });
+
+  const total = periodEntries.reduce(
+    (sum, entry) =>
+      sum + convertCurrency(entry.amount, entry.expense.currency, displayCurrency),
+    0,
+  );
 
   const periodName = isYearly
     ? `the year ${currentYear}`
@@ -65,18 +112,18 @@ export default function CategoryExpensesModal({
       ? `Q${currentQuarterIndex + 1} ${currentYear}`
       : `${new Date(currentYear, currentMonth! - 1).toLocaleString("default", { month: "long" })} ${currentYear}`;
 
-  const sortedExpenses = (monthExpenses ?? [])
+  const sortedEntries = periodEntries
     .slice()
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const expensesByMonth = sortedExpenses.reduce<
-    { month: number; expenses: typeof sortedExpenses }[]
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const expensesByMonth = sortedEntries.reduce<
+    { month: number; entries: typeof sortedEntries }[]
   >((groups, expense) => {
-    const month = new Date(expense.date).getMonth();
+    const month = expense.month;
     const group = groups.find((item) => item.month === month);
     if (group) {
-      group.expenses.push(expense);
+      group.entries.push(expense);
     } else {
-      groups.push({ month, expenses: [expense] });
+      groups.push({ month, entries: [expense] });
     }
     return groups;
   }, []);
@@ -106,7 +153,7 @@ export default function CategoryExpensesModal({
             </h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Expenses in
+            Expenses in{" "}
             <span className="text-slate-700 dark:text-slate-300 font-medium">{periodName}</span>
           </p>
         </div>
@@ -130,13 +177,13 @@ export default function CategoryExpensesModal({
         </div>
 
         <div className="overflow-y-auto flex-1 px-4 pb-4">
-          {!monthExpenses || monthExpenses.length === 0 ? (
+          {!categoryExpenses || periodEntries.length === 0 ? (
             <div className="py-10 text-center">
               <p className="text-slate-500">No expenses in {periodName} for this category.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {(isYearly ? expensesByMonth : [{ month: -1, expenses: sortedExpenses }]).map(
+              {(isYearly ? expensesByMonth : [{ month: -1, entries: sortedEntries }]).map(
                 (group) => (
                   <div key={group.month} className="space-y-2">
                     {isYearly && (
@@ -148,10 +195,14 @@ export default function CategoryExpensesModal({
                         </span>
                         <span className="shrink-0 rounded-md bg-emerald-400/10 px-2 py-1 text-xs font-bold text-emerald-300">
                           {formatMoney(
-                            group.expenses.reduce(
-                              (sum, expense) =>
+                            group.entries.reduce(
+                              (sum, entry) =>
                                 sum +
-                                convertCurrency(expense.amount, expense.currency, displayCurrency),
+                                convertCurrency(
+                                  entry.amount,
+                                  entry.expense.currency,
+                                  displayCurrency,
+                                ),
                               0,
                             ),
                             displayCurrency,
@@ -159,26 +210,37 @@ export default function CategoryExpensesModal({
                         </span>
                       </h3>
                     )}
-                    {group.expenses.map((expense) => (
+                    {group.entries.map((entry, index) => (
                       <div
-                        key={expense.id}
-                        className="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-100 dark:bg-slate-800/40 rounded-xl px-4 py-3 border border-slate-200 dark:border-slate-800 hover:border-slate-200 dark:border-slate-700 transition-colors"
+                        key={`${entry.expense.id}-${entry.date}-${index}`}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 transition-colors hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40"
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-                            {expense.details || (
+                            {entry.expense.details || (
                               <span className="italic text-slate-500">No description</span>
+                            )}
+                            {entry.installmentLabel && (
+                              <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-300">
+                                {entry.installmentLabel}
+                              </span>
                             )}
                           </p>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {formatDateOnly(expense.date)}
+                            {formatDateOnly(entry.date)}
                             {" · "}
-                            {getCardTitle(expense.cardId)}
+                            {entry.expense.cardId
+                              ? getCardTitle(entry.expense.cardId)
+                              : "No account"}
                           </p>
                         </div>
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-shrink-0">
                           {formatMoney(
-                            convertCurrency(expense.amount, expense.currency, displayCurrency),
+                            convertCurrency(
+                              entry.amount,
+                              entry.expense.currency,
+                              displayCurrency,
+                            ),
                             displayCurrency,
                           )}
                         </p>

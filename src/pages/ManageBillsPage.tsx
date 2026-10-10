@@ -9,8 +9,12 @@ import showConfirm from "../components/Confirm";
 import {
   CalendarClock,
   Check,
+  CircleAlert,
+  CircleCheck,
   ChevronLeft,
   ChevronRight,
+  Clock3,
+  Eye,
   Pencil,
   Plus,
   Receipt,
@@ -45,6 +49,7 @@ export default function ManageBillsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [billToEdit, setBillToEdit] = useState<Bill | undefined>();
   const [billToPay, setBillToPay] = useState<Bill | undefined>();
+  const [billToView, setBillToView] = useState<Bill | undefined>();
   const [search, setSearch] = useState("");
   const [month, setMonth] = useState(() => {
     const now = new Date();
@@ -264,7 +269,6 @@ export default function ManageBillsPage() {
                 <tr>
                   <th className="px-5 py-4">Bill</th> <th className="px-5 py-4">Type</th>
                   <th className="px-5 py-4">Due date</th> <th className="px-5 py-4">Amount</th>
-                  <th className="px-5 py-4">Status</th>
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -274,14 +278,37 @@ export default function ManageBillsPage() {
                   return (
                     <tr key={bill.id} className="transition-colors hover:bg-slate-800/20">
                       <td className="px-5 py-4">
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
-                          {bill.name}
-                        </div>
-                        {bill.provider && (
-                          <div className="text-xs text-slate-600 dark:text-slate-500">
-                            {bill.provider}
+                        <div className="flex items-start gap-2.5">
+                          <Tooltip content={status.label}>
+                            <span
+                              className={`mt-0.5 ${
+                                status.label === "Paid"
+                                  ? "text-emerald-600 dark:text-emerald-300"
+                                  : status.label === "Overdue"
+                                    ? "text-rose-600 dark:text-rose-300"
+                                    : "text-amber-600 dark:text-amber-300"
+                              }`}
+                            >
+                              {status.label === "Paid" ? (
+                                <CircleCheck className="h-4 w-4" aria-label="Paid" />
+                              ) : status.label === "Overdue" ? (
+                                <CircleAlert className="h-4 w-4" aria-label="Overdue" />
+                              ) : (
+                                <Clock3 className="h-4 w-4" aria-label="Due" />
+                              )}
+                            </span>
+                          </Tooltip>
+                          <div className="min-w-0">
+                            <div className="font-medium text-slate-900 dark:text-slate-100">
+                              {bill.name}
+                            </div>
+                            {bill.provider && (
+                              <div className="text-xs text-slate-600 dark:text-slate-500">
+                                {bill.provider}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </td>
                       <td className="px-5 py-4 text-sm">
                         <span className="inline-flex items-center gap-2">
@@ -304,13 +331,18 @@ export default function ManageBillsPage() {
                           displayCurrency,
                         )}
                       </td>
-                      <td className="px-5 py-4">
-                        <span className={`rounded-full border px-2 py-1 text-xs ${status.style}`}>
-                          {status.label}
-                        </span>
-                      </td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <Tooltip content="View bill details">
+                            <button
+                              type="button"
+                              onClick={() => setBillToView(bill)}
+                              aria-label={`View ${bill.name} details`}
+                              className="rounded-lg border border-slate-300 p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-sky-300"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </Tooltip>
                           <Tooltip content={bill.paid ? "Mark unpaid" : "Mark paid"}>
                             <button
                               onClick={() => markPaid(bill)}
@@ -380,6 +412,97 @@ export default function ManageBillsPage() {
         initialBill={billToEdit}
       />
       {billToPay && <BillPaymentModal bill={billToPay} onClose={() => setBillToPay(undefined)} />}
+      {billToView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <dialog
+            open
+            aria-labelledby="bill-details-title"
+            className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="bill-details-title"
+                  className="text-xl font-semibold text-slate-900 dark:text-slate-100"
+                >
+                  {billToView.name}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {billToView.provider || TYPE_LABELS[billToView.type] || billToView.type}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBillToView(undefined)}
+                className="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+            <dl className="mt-6 grid grid-cols-2 gap-x-5 gap-y-4 text-sm">
+              <div>
+                <dt className="text-slate-500">Type</dt>
+                <dd className="mt-1 font-medium">{TYPE_LABELS[billToView.type] ?? billToView.type}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Status</dt>
+                <dd className="mt-1 font-medium">{getStatus(billToView).label}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Due date</dt>
+                <dd className="mt-1 font-medium">{formatDateOnly(billToView.dueDate)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Amount</dt>
+                <dd className="mt-1 font-medium">
+                  {formatMoney(
+                    convertCurrency(billToView.amount, billToView.currency, displayCurrency),
+                    displayCurrency,
+                  )}
+                </dd>
+              </div>
+              {billToView.paidDate && (
+                <div>
+                  <dt className="text-slate-500">Paid date</dt>
+                  <dd className="mt-1 font-medium">{formatDateOnly(billToView.paidDate)}</dd>
+                </div>
+              )}
+              {billToView.paymentType && (
+                <div>
+                  <dt className="text-slate-500">Payment method</dt>
+                  <dd className="mt-1 font-medium">{billToView.paymentType.toUpperCase()}</dd>
+                </div>
+              )}
+              {billToView.paymentReference && (
+                <div>
+                  <dt className="text-slate-500">Payment reference</dt>
+                  <dd className="mt-1 font-medium">{billToView.paymentReference}</dd>
+                </div>
+              )}
+              {billToView.subscriptionFrequency && (
+                <div>
+                  <dt className="text-slate-500">Frequency</dt>
+                  <dd className="mt-1 font-medium capitalize">
+                    {billToView.subscriptionFrequency}
+                  </dd>
+                </div>
+              )}
+              {billToView.isSubscription && (
+                <div>
+                  <dt className="text-slate-500">Subscription</dt>
+                  <dd className="mt-1 font-medium">Yes</dd>
+                </div>
+              )}
+              {billToView.note && (
+                <div className="col-span-2">
+                  <dt className="text-slate-500">Note</dt>
+                  <dd className="mt-1 whitespace-pre-wrap font-medium">{billToView.note}</dd>
+                </div>
+              )}
+            </dl>
+          </dialog>
+        </div>
+      )}
     </div>
   );
 }

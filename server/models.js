@@ -124,8 +124,10 @@ const expenseSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     expenseKey: { type: String, unique: true, sparse: true, select: false },
-    cardId: { type: ObjectId, ref: "Card", required: true },
+    cardId: { type: ObjectId, ref: "Card" },
     categoryId: { type: ObjectId, ref: "Category" },
+    loanId: { type: ObjectId, ref: "Loan" },
+    loanPaymentNumber: Number,
     details: String,
     tags: { type: [String], default: [] },
     amount: { type: Decimal128, required: true, set: toMoney },
@@ -143,6 +145,7 @@ const expenseSchema = new Schema(
     ],
     skipNextDue: { type: Boolean, default: false },
     isEmi: Boolean,
+    emiStartDate: { type: Date, set: toUTCDate, validate: validDate },
     emiMonths: Number,
     emiInterestRate: Number,
     emiProcessingFee: Number,
@@ -230,6 +233,7 @@ const loanRepaymentSchema = withIdTransform(
     note: String,
     paymentType: { type: String, enum: ["card", "bank", "cash", "upi", "other"] },
     paymentSource: { type: ObjectId, ref: "Card" },
+    paymentReference: String,
   }),
 );
 const loanSchema = new Schema(

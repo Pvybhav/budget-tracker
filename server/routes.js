@@ -269,13 +269,18 @@ async function createWithId(model, data, userId) {
   return model.create(clean);
 }
 const expenseDuplicateFields = (data) => ({
-  cardId: String(data.cardId),
+  cardId: data.cardId == null ? null : String(data.cardId),
   categoryId: data.categoryId ? String(data.categoryId) : null,
+  loanId: data.loanId ? String(data.loanId) : null,
+  loanPaymentNumber: data.loanPaymentNumber == null ? null : Number(data.loanPaymentNumber),
   details: String(data.details ?? "").trim(),
   amount: Number(data.amount).toFixed(2),
   date: new Date(data.date).toISOString(),
   currency: String(data.currency ?? "INR").toUpperCase(),
   isEmi: Boolean(data.isEmi),
+  emiStartDate: data.isEmi
+    ? new Date(data.emiStartDate ?? data.date).toISOString()
+    : null,
   emiMonths: data.isEmi ? Number(data.emiMonths ?? 1) : null,
   emiInterestRate: data.isEmi ? Number(data.emiInterestRate ?? 0) : null,
   emiProcessingFee: data.isEmi ? Number(data.emiProcessingFee ?? 0) : null,
@@ -297,6 +302,8 @@ const getExpenseDuplicateFilter = (data, userId, id) => {
     userId,
     cardId: fields.cardId,
     categoryId: fields.categoryId,
+    loanId: fields.loanId,
+    loanPaymentNumber: fields.loanPaymentNumber,
     details: fields.details,
     amount: fields.amount,
     date: new Date(fields.date),
@@ -459,9 +466,29 @@ router.get(
 router.post(
   "/expenses",
   catchAsync(async (req, res) => {
-    const cardId = toRecordId(req.body.cardId);
+    const cardId = req.body.cardId == null ? undefined : toRecordId(req.body.cardId);
     const categoryId = req.body.categoryId == null ? undefined : toRecordId(req.body.categoryId);
-    if (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))) {
+    const loanId = req.body.loanId == null ? undefined : toRecordId(req.body.loanId);
+    const loanPaymentNumber = Number(req.body.loanPaymentNumber);
+    const hasLoanLink = req.body.loanId != null || req.body.loanPaymentNumber != null;
+    let isLoanRepayment = false;
+    if (hasLoanLink) {
+      if (loanId == null || !Number.isInteger(loanPaymentNumber) || loanPaymentNumber <= 0) {
+        return res.status(400).json({ error: "Loan repayment reference is invalid" });
+      }
+      const loan = await Loan.findOne({ _id: loanId, userId: req.user.userId });
+      if (!loan?.repayments.some(
+        (repayment) => repayment.paymentNumber === loanPaymentNumber && repayment.paid,
+      )) {
+        return res.status(400).json({ error: "Paid loan repayment must exist" });
+      }
+      isLoanRepayment = true;
+    }
+    if (
+      (cardId == null && !isLoanRepayment) ||
+      (req.body.cardId != null &&
+        (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))))
+    ) {
       return res.status(400).json({ error: "Expense account must exist" });
     }
     if (
@@ -499,6 +526,29 @@ router.put(
     const currentExpense = await Expense.findOne({ _id: id, userId: req.user.userId });
     if (!currentExpense) return res.status(404).json({ error: "Expense not found" });
     const updatedValues = { ...currentExpense.toObject(), ...stripProtectedFields(req.body) };
+    const cardId = updatedValues.cardId == null ? undefined : toRecordId(updatedValues.cardId);
+    if (
+      updatedValues.cardId != null &&
+      (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId })))
+    ) {
+      return res.status(400).json({ error: "Expense account must exist" });
+    }
+    if (cardId == null) {
+      const loanId =
+        updatedValues.loanId == null ? undefined : toRecordId(updatedValues.loanId);
+      const loanPaymentNumber = Number(updatedValues.loanPaymentNumber);
+      const loan =
+        loanId != null && Number.isInteger(loanPaymentNumber) && loanPaymentNumber > 0
+          ? await Loan.findOne({ _id: loanId, userId: req.user.userId })
+          : null;
+      if (
+        !loan?.repayments.some(
+          (repayment) => repayment.paymentNumber === loanPaymentNumber && repayment.paid,
+        )
+      ) {
+        return res.status(400).json({ error: "Expense account must exist" });
+      }
+    }
     if (await Expense.exists(getExpenseDuplicateFilter(updatedValues, req.user.userId, id))) {
       return res.status(409).json({ error: "This expense has already been recorded." });
     }
@@ -678,6 +728,61 @@ router.post(
     res.status(201).json(transfer);
   }),
 );
+router.put(
+  "/transfers/:id",
+  catchAsync(async (req, res) => {
+    const id = toRecordId(req.params.id);
+    if (id == null) return res.status(400).json({ error: "Invalid transfer id" });
+    const existingTransfer = await Transfer.findOne({ _id: id, userId: req.user.userId });
+    if (!existingTransfer) return res.status(404).json({ error: "Transfer not found" });
+    const updatedValues = {
+      ...existingTransfer.toObject(),
+      ...stripProtectedFields(req.body),
+    };
+    const fromAccountId = toRecordId(updatedValues.fromAccountId);
+    const toAccountId = toRecordId(updatedValues.toAccountId);
+    const amount = Number(updatedValues.amount);
+    const isExternal = updatedValues.destinationType === "external";
+    if (
+      fromAccountId == null ||
+      (!isExternal && (toAccountId == null || fromAccountId === toAccountId))
+    ) {
+      return res.status(400).json({ error: "Select a valid source and destination" });
+    }
+    if (isExternal && !updatedValues.externalName?.trim()) {
+      return res.status(400).json({ error: "Enter the external recipient name" });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ error: "Transfer amount must be greater than zero" });
+    }
+    const [source, destination] = await Promise.all([
+      Card.findOne({ _id: fromAccountId, userId: req.user.userId }),
+      isExternal ? null : Card.findOne({ _id: toAccountId, userId: req.user.userId }),
+    ]);
+    if (!source || (!isExternal && !destination)) {
+      return res.status(400).json({ error: "Source and destination accounts must exist" });
+    }
+    const transfer = await Transfer.findOneAndUpdate(
+      { _id: id, userId: req.user.userId },
+      {
+        ...stripProtectedFields(updatedValues),
+        fromAccountId,
+        toAccountId: isExternal ? null : toAccountId,
+        externalName: isExternal ? updatedValues.externalName?.trim() : null,
+        externalBankName: isExternal ? updatedValues.externalBankName?.trim() || null : null,
+        externalAccountNumber: isExternal
+          ? updatedValues.externalAccountNumber?.trim() || null
+          : null,
+        externalIfscCode: isExternal ? updatedValues.externalIfscCode?.trim() || null : null,
+        externalUpiId: isExternal ? updatedValues.externalUpiId?.trim() || null : null,
+        amount,
+      },
+      { new: true, runValidators: true },
+    );
+    if (!transfer) return res.status(404).json({ error: "Transfer not found" });
+    res.json(transfer);
+  }),
+);
 router.delete(
   "/transfers/:id",
   catchAsync(async (req, res) => {
@@ -771,6 +876,7 @@ router.put(
         ...(repayment.paidDate ? { paidDate: repayment.paidDate } : {}),
         ...(repayment.note ? { note: repayment.note } : {}),
         ...(repayment.paymentType ? { paymentType: repayment.paymentType } : {}),
+        ...(repayment.paymentSource ? { paymentSource: repayment.paymentSource } : {}),
         ...(repayment.paymentReference ? { paymentReference: repayment.paymentReference } : {}),
       }));
     }
@@ -780,6 +886,14 @@ router.put(
       { new: true, runValidators: true },
     );
     if (!loan) return res.status(404).json({ error: "Loan not found" });
+    const paidPaymentNumbers = loan.repayments
+      .filter((repayment) => repayment.paid)
+      .map((repayment) => repayment.paymentNumber);
+    await Expense.deleteMany({
+      userId: req.user.userId,
+      loanId: id,
+      ...(paidPaymentNumbers.length ? { loanPaymentNumber: { $nin: paidPaymentNumbers } } : {}),
+    });
     res.json(loan);
   }),
 );
@@ -790,6 +904,7 @@ router.delete(
     if (id == null) return res.status(400).json({ error: "Invalid loan id" });
     const loan = await Loan.findOne({ _id: id, userId: req.user.userId });
     if (!loan) return res.status(404).json({ error: "Loan not found" });
+    await Expense.deleteMany({ userId: req.user.userId, loanId: id });
     await loan.deleteOne();
     res.json({ success: true });
   }),

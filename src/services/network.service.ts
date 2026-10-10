@@ -6,24 +6,28 @@ export interface ToastPayload {
   message: string;
 }
 
-const loadingListeners = new Set<(activeRequests: number) => void>();
+const loadingListeners = new Set<(activeRequests: number, message: string) => void>();
 const toastListeners = new Set<(toast: ToastPayload) => void>();
 
-let activeRequestCount = 0;
+const activeRequests = new Map<number, string>();
+let nextRequestId = 1;
 let nextToastId = 1;
 const recentErrorToasts = new Map<string, number>();
 
 function notifyLoading() {
-  loadingListeners.forEach((listener) => listener(activeRequestCount));
+  const message = [...activeRequests.values()].at(-1) ?? "Updating your financial data…";
+  loadingListeners.forEach((listener) => listener(activeRequests.size, message));
 }
 
 function notifyToast(toast: ToastPayload) {
   toastListeners.forEach((listener) => listener(toast));
 }
 
-export function onNetworkLoadingChange(listener: (activeRequests: number) => void) {
+export function onNetworkLoadingChange(
+  listener: (activeRequests: number, message: string) => void,
+) {
   loadingListeners.add(listener);
-  listener(activeRequestCount);
+  listener(activeRequests.size, "Updating your financial data…");
   return () => {
     loadingListeners.delete(listener);
   };
@@ -37,16 +41,18 @@ export function onNetworkToast(listener: (toast: ToastPayload) => void) {
 }
 
 export function getNetworkRequestCount() {
-  return activeRequestCount;
+  return activeRequests.size;
 }
 
-export function startNetworkRequest() {
-  activeRequestCount += 1;
+export function startNetworkRequest(message = "Updating your financial data…") {
+  const requestId = nextRequestId++;
+  activeRequests.set(requestId, message);
   notifyLoading();
+  return requestId;
 }
 
-export function finishNetworkRequest() {
-  activeRequestCount = Math.max(0, activeRequestCount - 1);
+export function finishNetworkRequest(requestId: number) {
+  activeRequests.delete(requestId);
   notifyLoading();
 }
 

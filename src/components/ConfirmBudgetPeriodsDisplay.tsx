@@ -67,7 +67,7 @@ export default function CustomBudgetPeriodsDisplay({
         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
           
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+            className="progress-fill h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
             style={{ width: `${Math.min(100, percentElapsed)}%` }}
           />
         </div>

@@ -22,6 +22,7 @@ import {
   dateOnly,
   dateTimeInput,
   dateTimeInputToUTC,
+  todayDateInput,
 } from "../../utils/date";
 
 interface Props {
@@ -75,6 +76,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     date: currentDateTimeInput(),
     // EMI
     isEmi: false,
+    emiStartDate: todayDateInput(),
     emiMonths: 3,
     emiInterestPreset: 0, // value from INTEREST_PRESETS
     emiCustomInterest: "", // used when preset = -1 (Custom)
@@ -113,7 +115,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     for (const e of filtered) {
       if (isMonthlyBudget && e.isEmi) {
         // Count this installment if the EMI window covers the current month
-        const emiStart = new Date(e.date);
+        const emiStart = new Date(`${(e.emiStartDate ?? e.date).slice(0, 10)}T00:00:00`);
         const monthIndex =
           (currentMonthStart.getFullYear() - emiStart.getFullYear()) * 12 +
           (currentMonthStart.getMonth() - emiStart.getMonth());
@@ -133,7 +135,15 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
     // indicator shows the "before this edit" baseline.
     if (initialExpense?.categoryId === selectedCategory.id) {
       if (isMonthlyBudget && initialExpense.isEmi) {
-        spent -= monthlyInstallmentOf(initialExpense);
+        const start = new Date(
+          `${(initialExpense.emiStartDate ?? initialExpense.date).slice(0, 10)}T00:00:00`,
+        );
+        const monthIndex =
+          (currentMonthStart.getFullYear() - start.getFullYear()) * 12 +
+          (currentMonthStart.getMonth() - start.getMonth());
+        if (monthIndex >= 0 && monthIndex < (initialExpense.emiMonths ?? 1)) {
+          spent -= monthlyInstallmentOf(initialExpense);
+        }
       } else {
         const d = new Date(initialExpense.date);
         if (d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth) {
@@ -173,12 +183,13 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
             ],
       );
       setFormData({
-        cardId: initialExpense.cardId.toString(),
+        cardId: initialExpense.cardId?.toString() ?? "",
         categoryId: initialExpense.categoryId?.toString() ?? "",
         details: initialExpense.details ?? "",
         amount: initialExpense.amount.toString(),
         date: dateTimeInput(initialExpense.date),
         isEmi: initialExpense.isEmi ?? false,
+        emiStartDate: dateOnly(initialExpense.emiStartDate ?? initialExpense.date),
         emiMonths: initialExpense.emiMonths ?? 3,
         emiInterestPreset: presetExists ? interestRate : -1,
         emiCustomInterest: presetExists ? "" : interestRate.toString(),
@@ -204,6 +215,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         amount: "",
         date: currentDateTimeInput(),
         isEmi: false,
+        emiStartDate: todayDateInput(),
         emiMonths: 3,
         emiInterestPreset: 0,
         emiCustomInterest: "",
@@ -330,6 +342,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       await showAlert("Expense amount must be greater than zero");
       return;
     }
+    if (formData.isEmi && Number.isNaN(new Date(formData.emiStartDate).getTime())) {
+      await showAlert("Please enter a valid EMI start date");
+      return;
+    }
 
     if (formData.isRecurring && formData.recurringEndDate) {
       const endDate = new Date(formData.recurringEndDate);
@@ -392,6 +408,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       splitItems: splitEnabled && splitRowsToUse.length > 0 ? splitRowsToUse : undefined,
       reconciled: initialExpense?.reconciled ?? false,
       isEmi: formData.isEmi || undefined,
+      emiStartDate: formData.isEmi ? formData.emiStartDate : undefined,
       emiMonths: formData.isEmi ? months : undefined,
       emiInterestRate: formData.isEmi ? effectiveInterestRate : undefined,
       emiProcessingFee: formData.isEmi && processingFeeAmount > 0 ? processingFeeAmount : undefined,
@@ -416,6 +433,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
         details: "",
         amount: "",
         isEmi: false,
+        emiStartDate: todayDateInput(),
         emiMonths: 3,
         emiInterestPreset: 0,
         emiCustomInterest: "",
@@ -446,18 +464,16 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
       return;
     }
     if (type === "checkbox") {
-      setFormData({
-        ...formData,
-        [name]: (e.target as HTMLInputElement).checked,
-      });
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((current) => ({ ...current, [name]: checked }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((current) => ({
+        ...current,
         [name]:
           name === "emiMonths" || name === "emiInterestPreset" || name === "recurringInterval"
             ? parseInt(value)
             : value,
-      });
+      }));
     }
   };
 
@@ -612,13 +628,13 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                   <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div className="h-full flex">
                       <div
-                        className={`h-full shrink-0 transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
+                        className={`progress-fill h-full shrink-0 transition-all ${isOverBudget ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-emerald-400"}`}
                         style={{
                           width: `${Math.min(100, budgetStatus.effectiveBudget > 0 ? (spent / budgetStatus.effectiveBudget) * 100 : 0)}%`,
                         }}
                       />
                       <div
-                        className="h-full shrink-0 bg-sky-400 transition-all"
+                        className="progress-fill h-full shrink-0 bg-sky-400 transition-all"
                         style={{
                           width: `${Math.min(100, budgetStatus.effectiveBudget > 0 ? (enteredBudgetImpact / budgetStatus.effectiveBudget) * 100 : 0)}%`,
                         }}
@@ -856,7 +872,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       }
                       onChange={(e) => {
                         const v = Math.min(60, Math.max(2, parseInt(e.target.value) || 2));
-                        setFormData({ ...formData, emiMonths: v });
+                        setFormData((current) => ({ ...current, emiMonths: v }));
                       }}
                       className="mt-1.5 w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-amber-500 placeholder-slate-400 dark:placeholder-slate-600"
                     />
@@ -892,6 +908,23 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                       />
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                    EMI Start Date
+                  </label>
+                  <input
+                    required
+                    type="date"
+                    name="emiStartDate"
+                    value={formData.emiStartDate}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Set the first billing date for this installment plan.
+                  </p>
                 </div>
 
                 {/* Processing Fee + GST row */}
