@@ -16,6 +16,17 @@ import { getCategoryAccent } from "../utils/categoryTheme";
 import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
 import { Check, CheckCircle2, Clock3, Eye, Pencil, Trash2 } from "lucide-react";
+import SortableTableHeader from "../components/SortableTableHeader";
+
+type ExpenseSort =
+  | "date-desc"
+  | "date-asc"
+  | "amount-desc"
+  | "amount-asc"
+  | "details-desc"
+  | "details-asc"
+  | "category-desc"
+  | "category-asc";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -70,9 +81,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "amount-desc" | "amount-asc">(
-    "date-desc",
-  );
+  const [sortBy, setSortBy] = useState<ExpenseSort>("date-desc");
   const [showEmiOnly, setShowEmiOnly] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedCardId, setSelectedCardId] = useState("all");
@@ -169,6 +178,28 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           return a.amount - b.amount;
         case "amount-desc":
           return b.amount - a.amount;
+        case "details-asc":
+          return (a.details ?? "").localeCompare(b.details ?? "", undefined, {
+            sensitivity: "base",
+          });
+        case "details-desc":
+          return (b.details ?? "").localeCompare(a.details ?? "", undefined, {
+            sensitivity: "base",
+          });
+        case "category-asc":
+          return (categories?.find((category) => category.id === a.categoryId)?.title ?? "")
+            .toLowerCase()
+            .localeCompare(
+              (categories?.find((category) => category.id === b.categoryId)?.title ?? "")
+                .toLowerCase(),
+            );
+        case "category-desc":
+          return (categories?.find((category) => category.id === b.categoryId)?.title ?? "")
+            .toLowerCase()
+            .localeCompare(
+              (categories?.find((category) => category.id === a.categoryId)?.title ?? "")
+                .toLowerCase(),
+            );
         case "date-asc":
           return new Date(a.date).getTime() - new Date(b.date).getTime();
         case "date-desc":
@@ -431,6 +462,10 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             <option value="date-asc">Oldest first</option>
             <option value="amount-desc">Highest amount</option>
             <option value="amount-asc">Lowest amount</option>
+            <option value="details-asc">Description A-Z</option>
+            <option value="details-desc">Description Z-A</option>
+            <option value="category-asc">Category A-Z</option>
+            <option value="category-desc">Category Z-A</option>
           </select>
         </label>
 
@@ -619,12 +654,54 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         <table className="expense-table w-full min-w-max whitespace-nowrap text-left text-slate-700 dark:text-slate-300">
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Date</th>
-              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">
-                Description
-              </th>
-              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Category</th>
-              <th className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">Amount</th>
+              <SortableTableHeader
+                label="Date"
+                sortKey="date"
+                activeKey={sortBy.split("-")[0]}
+                direction={sortBy.endsWith("-asc") ? "asc" : "desc"}
+                onSort={(key) =>
+                  setSortBy((current) =>
+                    `${key}-${current.startsWith(`${key}-`) && current.endsWith("-asc") ? "desc" : "asc"}` as ExpenseSort,
+                  )
+                }
+                className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              />
+              <SortableTableHeader
+                label="Description"
+                sortKey="details"
+                activeKey={sortBy.split("-")[0]}
+                direction={sortBy.endsWith("-asc") ? "asc" : "desc"}
+                onSort={(key) =>
+                  setSortBy((current) =>
+                    `${key}-${current.startsWith(`${key}-`) && current.endsWith("-asc") ? "desc" : "asc"}` as ExpenseSort,
+                  )
+                }
+                className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              />
+              <SortableTableHeader
+                label="Category"
+                sortKey="category"
+                activeKey={sortBy.split("-")[0]}
+                direction={sortBy.endsWith("-asc") ? "asc" : "desc"}
+                onSort={(key) =>
+                  setSortBy((current) =>
+                    `${key}-${current.startsWith(`${key}-`) && current.endsWith("-asc") ? "desc" : "asc"}` as ExpenseSort,
+                  )
+                }
+                className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              />
+              <SortableTableHeader
+                label="Amount"
+                sortKey="amount"
+                activeKey={sortBy.split("-")[0]}
+                direction={sortBy.endsWith("-asc") ? "asc" : "desc"}
+                onSort={(key) =>
+                  setSortBy((current) =>
+                    `${key}-${current.startsWith(`${key}-`) && current.endsWith("-asc") ? "desc" : "asc"}` as ExpenseSort,
+                  )
+                }
+                className="sticky top-0 z-30 bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+              />
               <th className="sticky top-0 z-30 bg-slate-100 text-right font-medium text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                 Actions
               </th>

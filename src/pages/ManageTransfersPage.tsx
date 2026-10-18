@@ -14,6 +14,8 @@ import Tooltip from "../components/Tooltip";
 import hdfcLogo from "../assets/banks/hdfc.png";
 import iciciLogo from "../assets/banks/icici.png";
 import sbiLogo from "../assets/banks/sbi.svg";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 
 function BankMark({ card, bankName }: { card?: Card; bankName?: string }) {
   const name = bankName ?? card?.bankName ?? card?.title ?? "";
@@ -45,6 +47,7 @@ export default function ManageTransfersPage() {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "month">("all");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, sortRows } = useTableSort<Transfer>("date", "desc");
   const pageSize = 50;
   const accountName = (id: string) =>
     cards?.find((card) => card.id === id)?.title ?? "Unknown account";
@@ -71,7 +74,13 @@ export default function ManageTransfersPage() {
         transfer.note?.toLowerCase().includes(query))
     );
   });
-  const visibleTransfers = filteredTransfers.slice((page - 1) * pageSize, page * pageSize);
+  const tableTransfers = sortRows(filteredTransfers, {
+    date: (transfer) => transfer.date,
+    from: (transfer) => accountName(transfer.fromAccountId),
+    to: (transfer) => destinationName(transfer),
+    amount: (transfer) => convertCurrency(transfer.amount, transfer.currency, displayCurrency),
+  });
+  const visibleTransfers = tableTransfers.slice((page - 1) * pageSize, page * pageSize);
   const handleDelete = async (transfer: Transfer) => {
     const ok = await showConfirm(
       `Delete this transfer of ${formatMoney(convertCurrency(transfer.amount, transfer.currency, displayCurrency), displayCurrency)}?`,
@@ -178,11 +187,11 @@ export default function ManageTransfersPage() {
         <table className="w-full min-w-[640px] text-left text-sm text-slate-700 dark:text-slate-300">
           <thead className="border-b border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
-              <th className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100">Date</th>
-              <th className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100">From</th>
+              <SortableTableHeader label="Date" sortKey="date" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="From" sortKey="from" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100" />
               <th className="w-8 px-1 py-3"></th>
-              <th className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100">To</th>
-              <th className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100">Amount</th>
+              <SortableTableHeader label="To" sortKey="to" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Amount" sortKey="amount" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3 font-medium text-slate-900 dark:text-slate-100" />
               <th className="px-3 py-3 text-right font-medium text-slate-900 dark:text-slate-100">
                 Actions
               </th>

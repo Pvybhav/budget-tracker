@@ -13,6 +13,8 @@ import { INVESTMENT_TYPE_ICONS } from "../utils/typeIcons";
 import AppTooltip from "./Tooltip";
 import { inferFundClassification } from "../utils/fundClassification";
 import { formatDateOnly } from "../utils/date";
+import SortableTableHeader from "./SortableTableHeader";
+import { useTableSort } from "./useTableSort";
 const typeLabels: Record<Investment["type"], string> = {
   equity: "Equity",
   "mutual-fund": "Mutual Fund",
@@ -52,6 +54,10 @@ export default function InvestmentsSection() {
   const [platformFilter, setPlatformFilter] = useState("all");
   const [gainSort, setGainSort] = useState<"none" | "asc" | "desc">("none");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, setSort, sortRows } = useTableSort<Investment>(
+    "gainSort",
+    "desc",
+  );
   const pageSize = 50;
   const platforms = useMemo(
     () =>
@@ -139,7 +145,16 @@ export default function InvestmentsSection() {
   useEffect(() => {
     setPage(1);
   }, [search, typeFilter, subtypeFilter, platformFilter, gainSort]);
-  const visibleInvestments = filteredInvestments.slice((page - 1) * pageSize, page * pageSize);
+  const tableInvestments = sortRows(filteredInvestments, {
+    name: (investment) => investment.name,
+    platform: (investment) => investment.platform,
+    type: (investment) => typeLabels[investment.type],
+    units: (investment) => investment.quantity,
+    currentValue: (investment) =>
+      convertCurrency(investment.currentValue, investment.currency, displayCurrency),
+    updated: (investment) => investment.purchaseDate,
+  });
+  const visibleInvestments = tableInvestments.slice((page - 1) * pageSize, page * pageSize);
   const totals = useMemo(() => {
     const invested = filteredInvestments.reduce(
       (sum, item) => sum + convertCurrency(item.investedAmount, item.currency, displayCurrency),
@@ -241,7 +256,10 @@ export default function InvestmentsSection() {
         </select>
         <select
           value={gainSort}
-          onChange={(event) => setGainSort(event.target.value as typeof gainSort)}
+          onChange={(event) => {
+            setGainSort(event.target.value as typeof gainSort);
+            setSort("gainSort", "desc");
+          }}
           aria-label="Sort by gain"
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
         >
@@ -374,12 +392,12 @@ export default function InvestmentsSection() {
           <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Investment</th>
-                <th className="px-4 py-3 font-medium">Platform</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium text-right">Units</th>
-                <th className="px-4 py-3 font-medium text-right"> Current value </th>
-                <th className="px-4 py-3 font-medium">Updated</th>
+                <SortableTableHeader label="Investment" sortKey="name" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+                <SortableTableHeader label="Platform" sortKey="platform" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+                <SortableTableHeader label="Type" sortKey="type" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+                <SortableTableHeader label="Units" sortKey="units" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 text-right font-medium" />
+                <SortableTableHeader label="Current value" sortKey="currentValue" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 text-right font-medium" />
+                <SortableTableHeader label="Updated" sortKey="updated" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>

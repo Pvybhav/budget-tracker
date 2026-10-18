@@ -9,6 +9,8 @@ import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/cu
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly } from "../utils/date";
 import Tooltip from "../components/Tooltip";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 
 export default function ManagePaymentsPage() {
   const displayCurrency = useDisplayCurrency();
@@ -18,6 +20,7 @@ export default function ManagePaymentsPage() {
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, sortRows } = useTableSort<Payment>("date", "desc");
   const pageSize = 50;
   const filteredPayments = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -32,7 +35,13 @@ export default function ManagePaymentsPage() {
       );
     });
   }, [payments, cards, search]);
-  const visiblePayments = filteredPayments.slice((page - 1) * pageSize, page * pageSize);
+  const sortedPayments = sortRows(filteredPayments, {
+    date: (payment) => payment.date,
+    card: (payment) => cards?.find((card) => card.id === payment.cardId)?.title ?? "",
+    amount: (payment) => convertCurrency(payment.amount, payment.currency, displayCurrency),
+    notes: (payment) => payment.note ?? "",
+  });
+  const visiblePayments = sortedPayments.slice((page - 1) * pageSize, page * pageSize);
 
   const openAddModal = () => {
     setPaymentToEdit(undefined);
@@ -74,10 +83,10 @@ export default function ManagePaymentsPage() {
         <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Card</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Notes</th>
+              <SortableTableHeader label="Date" sortKey="date" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Card" sortKey="card" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Amount" sortKey="amount" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Notes" sortKey="notes" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
               </th>

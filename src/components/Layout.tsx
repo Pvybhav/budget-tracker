@@ -348,6 +348,15 @@ export default function Layout({ logout }: LayoutProps) {
           >
             <Info className="w-5 h-5 flex-shrink-0" /> <span className="text-sm">About</span>
           </Link>
+          <a
+            href="https://vy-todo-app.onrender.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+          >
+            <ListChecks className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Todo App</span>
+          </a>
           <button
             type="button"
             onClick={async () => {

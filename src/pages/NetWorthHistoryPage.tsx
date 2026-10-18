@@ -107,6 +107,7 @@ export default function NetWorthHistoryPage() {
     ...item,
     label: formatDateOnly(item.date),
   }));
+  const chartTextColor = theme === "dark" ? "#cbd5e1" : "#475569";
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -199,11 +200,27 @@ export default function NetWorthHistoryPage() {
             <LineChart data={chartData}>
               <XAxis
                 dataKey="label"
-                stroke="#94a3b8"
-                tick={{ fill: theme === "dark" ? "#cbd5e1" : "#475569" }}
+                stroke={chartTextColor}
+                tick={{ fill: chartTextColor, fontSize: 12 }}
+                tickLine={{ stroke: chartTextColor }}
+                axisLine={{ stroke: chartTextColor }}
               />
-              <YAxis stroke="#94a3b8" tick={{ fill: theme === "dark" ? "#cbd5e1" : "#475569" }} />
-              <Tooltip formatter={(value) => formatMoney(Number(value), displayCurrency)} />
+              <YAxis
+                stroke={chartTextColor}
+                tick={{ fill: chartTextColor, fontSize: 12 }}
+                tickLine={{ stroke: chartTextColor }}
+                axisLine={{ stroke: chartTextColor }}
+              />
+              <Tooltip
+                formatter={(value) => formatMoney(Number(value), displayCurrency)}
+                contentStyle={{
+                  backgroundColor: theme === "dark" ? "#0f172a" : "#ffffff",
+                  borderColor: theme === "dark" ? "#334155" : "#cbd5e1",
+                  color: chartTextColor,
+                }}
+                labelStyle={{ color: chartTextColor }}
+                itemStyle={{ color: chartTextColor }}
+              />
               <Line
                 type="monotone"
                 dataKey="netWorth"

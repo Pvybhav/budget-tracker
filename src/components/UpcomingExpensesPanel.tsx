@@ -6,6 +6,7 @@ import { useBackendResource } from "../services/backendHooks";
 import {
   fetchBills,
   fetchExpenses,
+  fetchInvestments,
   fetchInvestmentTransactions,
   fetchLoans,
 } from "../services/backend.service";
@@ -54,16 +55,17 @@ export default function UpcomingExpensesPanel() {
   const bills = useBackendResource(() => fetchBills(), []);
   const loans = useBackendResource(() => fetchLoans(), []);
   const investmentTransactions = useBackendResource(() => fetchInvestmentTransactions(), []);
+  const portfolio = useBackendResource(() => fetchInvestments(), []);
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
   const targetMonth = currentMonth + 1;
   const year = currentYear + Math.floor(targetMonth / 12);
   const month = targetMonth % 12;
-  const nextMonth = new Date(year, month, 1);
+  const nextMonth = useMemo(() => new Date(year, month, 1), [year, month]);
 
   const amounts = useMemo(() => {
-    if (!expenses || !bills || !loans || !investmentTransactions) return undefined;
+    if (!expenses || !bills || !loans || !investmentTransactions || !portfolio) return undefined;
     const currentMonthExpenses = expenses.reduce(
       (sum, expense) =>
         sum +
@@ -121,11 +123,22 @@ export default function UpcomingExpensesPanel() {
           : 0)
       );
     }, 0);
-    const investments = investmentTransactions.reduce(
+    const nextMonthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const investmentBuys = investmentTransactions.reduce(
       (sum, transaction) =>
         sum +
         (transaction.type === "buy" && dateInMonth(transaction.date, year, month)
           ? convertCurrency(transaction.amount, transaction.currency, displayCurrency)
+          : 0),
+      0,
+    );
+    const scheduledSips = portfolio.reduce(
+      (sum, investment) =>
+        sum +
+        (investment.sipAmount &&
+        investment.sipDueDay &&
+        investment.sipLastPaidMonth !== nextMonthKey
+          ? convertCurrency(investment.sipAmount, investment.currency, displayCurrency)
           : 0),
       0,
     );
@@ -157,7 +170,7 @@ export default function UpcomingExpensesPanel() {
       loanPayments,
       cardEmis,
       billPayments,
-      investments,
+      investments: investmentBuys + scheduledSips,
       otherExpenses,
     };
   }, [
@@ -165,10 +178,12 @@ export default function UpcomingExpensesPanel() {
     bills,
     loans,
     investmentTransactions,
+    portfolio,
     currentYear,
     currentMonth,
     year,
     month,
+    nextMonth,
     displayCurrency,
   ]);
 

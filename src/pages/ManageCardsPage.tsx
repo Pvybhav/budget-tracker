@@ -15,6 +15,8 @@ import {
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { ACCOUNT_TYPE_ICONS, CARD_ICONS } from "../utils/typeIcons";
 import PaginationControls from "../components/PaginationControls";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 
 function getAccountTypeLabel(type: Card["type"]) {
   const labels: Record<NonNullable<Card["type"]>, string> = {
@@ -43,6 +45,10 @@ export default function ManageCardsPage() {
   const [accountView, setAccountView] = useState<"hierarchy" | "flat">("hierarchy");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, setSort, sortRows } = useTableSort<{
+    card: Card;
+    depth: number;
+  }>("title", "asc");
   const pageSize = 50;
   const query = search.trim().toLowerCase();
   const matchingCards = useMemo(() => {
@@ -94,7 +100,52 @@ export default function ManageCardsPage() {
     for (const card of allCards) addBranch(card, 0);
     return ordered;
   }, [cards, matchingCards, accountView]);
-  const visibleCards = displayCards.slice((page - 1) * pageSize, page * pageSize);
+  const tableCards =
+    accountView === "flat"
+      ? sortRows(displayCards, {
+          title: ({ card }) => card.title,
+          type: ({ card }) => getAccountTypeLabel(card.type),
+          billingDate: ({ card }) => card.billingDate ?? 0,
+          paymentDate: ({ card }) => card.paymentDate ?? 0,
+          limit: ({ card }) =>
+            convertCurrency(card.totalLimit ?? 0, card.currency, displayCurrency),
+          balance: ({ card }) => {
+            const metrics = getCardMetrics(
+              card,
+              (expenses ?? []).filter((expense) => expense.cardId === card.id),
+              (payments ?? []).filter((payment) => payment.cardId === card.id),
+              cards ?? [],
+            );
+            const accountIncome = (incomes ?? [])
+              .filter((income) => income.accountId === card.id)
+              .reduce((sum, income) => sum + income.amount, 0);
+            const transferIn = (transfers ?? [])
+              .filter((transfer) => transfer.toAccountId === card.id)
+              .reduce((sum, transfer) => sum + transfer.amount, 0);
+            const transferOut = (transfers ?? [])
+              .filter((transfer) => transfer.fromAccountId === card.id)
+              .reduce((sum, transfer) => sum + transfer.amount, 0);
+            const balance =
+              card.type === "credit"
+                ? metrics.currentBalance
+                : metrics.currentBalance + accountIncome + transferIn - transferOut;
+            return convertCurrency(balance, card.currency, displayCurrency);
+          },
+          utilization: ({ card }) => {
+            if (card.type !== "credit") return -1;
+            const metrics = getCardMetrics(
+              card,
+              (expenses ?? []).filter((expense) => expense.cardId === card.id),
+              (payments ?? []).filter((payment) => payment.cardId === card.id),
+              cards ?? [],
+            );
+            return getCreditUtilization(card.totalLimit ?? 0, metrics.currentBalance);
+          },
+          amc: ({ card }) => card.amc ?? 0,
+          waiverLimit: ({ card }) => card.waiveOffLimit ?? 0,
+        })
+      : displayCards;
+  const visibleCards = tableCards.slice((page - 1) * pageSize, page * pageSize);
 
   const handleDelete = async (card: Card) => {
     const ok = await showConfirm(
@@ -114,6 +165,11 @@ export default function ManageCardsPage() {
   const openEditModal = (card: Card) => {
     setCardToEdit(card);
     setIsModalOpen(true);
+  };
+  const handleCardSort = (key: string) => {
+    if (accountView === "hierarchy") setSort(key, "asc");
+    else toggleSort(key);
+    setAccountView("flat");
   };
 
   return (
@@ -175,27 +231,15 @@ export default function ManageCardsPage() {
         <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Title</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Type</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Billing Date
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Payment Date
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Limit / Balance
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Current Balance
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Utilization
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">AMC</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Waiver Limit
-              </th>
+              <SortableTableHeader label="Title" sortKey="title" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Type" sortKey="type" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Billing Date" sortKey="billingDate" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Payment Date" sortKey="paymentDate" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Limit / Balance" sortKey="limit" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Current Balance" sortKey="balance" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Utilization" sortKey="utilization" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="AMC" sortKey="amc" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Waiver Limit" sortKey="waiverLimit" activeKey={accountView === "flat" ? sortKey : ""} direction={direction} onSort={handleCardSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
               </th>

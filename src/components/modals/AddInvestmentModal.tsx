@@ -64,6 +64,9 @@ export default function AddInvestmentModal({
     quantity: "",
     investedAmount: "",
     currentValue: "",
+    hasMonthlySip: false,
+    sipAmount: "",
+    sipDueDay: "1",
     purchaseDate: today(),
     note: "",
     currency: getDisplayCurrency(),
@@ -80,6 +83,9 @@ export default function AddInvestmentModal({
       quantity: initialInvestment?.quantity.toString() ?? "",
       investedAmount: initialInvestment?.investedAmount.toString() ?? "",
       currentValue: initialInvestment?.currentValue.toString() ?? "",
+      hasMonthlySip: Boolean(initialInvestment?.sipAmount),
+      sipAmount: initialInvestment?.sipAmount?.toString() ?? "",
+      sipDueDay: String(initialInvestment?.sipDueDay ?? 1),
       purchaseDate: initialInvestment?.purchaseDate
         ? dateOnly(initialInvestment.purchaseDate)
         : today(),
@@ -107,13 +113,22 @@ export default function AddInvestmentModal({
     const quantity = Number.parseFloat(formData.quantity || "0");
     const investedAmount = Number.parseFloat(formData.investedAmount || "0");
     const currentValue = Number.parseFloat(formData.currentValue || "0");
+    const sipAmount = Number.parseFloat(formData.sipAmount || "0");
+    const sipDueDay = Number.parseInt(formData.sipDueDay, 10);
     if (
       !formData.name.trim() ||
       !formData.platform.trim() ||
       (!isPf && (!Number.isFinite(quantity) || quantity < 0)) ||
       !Number.isFinite(investedAmount) ||
       investedAmount < 0 ||
-      (!isPf && (!Number.isFinite(currentValue) || currentValue < 0))
+      !Number.isFinite(currentValue) ||
+      currentValue < 0 ||
+      (formData.hasMonthlySip &&
+        (!Number.isFinite(sipAmount) ||
+          sipAmount <= 0 ||
+          !Number.isInteger(sipDueDay) ||
+          sipDueDay < 1 ||
+          sipDueDay > 31))
     ) {
       return;
     }
@@ -131,10 +146,12 @@ export default function AddInvestmentModal({
           : undefined,
       quantity,
       investedAmount,
-      currentValue: isPf ? investedAmount : currentValue,
+      currentValue,
       purchaseDate: formData.purchaseDate,
       note: formData.note.trim() || undefined,
       currency: formData.currency,
+      sipAmount: formData.hasMonthlySip ? sipAmount : null,
+      sipDueDay: formData.hasMonthlySip ? sipDueDay : null,
     };
     setIsSubmitting(true);
     try {
@@ -276,7 +293,9 @@ export default function AddInvestmentModal({
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="text-sm text-slate-500 dark:text-slate-400">
-              {formData.subtype === "pf" ? "Newly invested amount" : "Invested amount"}
+              {formData.subtype === "pf"
+                ? "Total contributions"
+                : "Invested amount"}
               <input
                 required
                 min="0"
@@ -288,21 +307,19 @@ export default function AddInvestmentModal({
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               />
             </label>
-            {formData.subtype !== "pf" && (
-              <label className="text-sm text-slate-500 dark:text-slate-400">
-                Current value
-                <input
-                  required
-                  min="0"
-                  step="0.01"
-                  type="number"
-                  name="currentValue"
-                  value={formData.currentValue}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
-                />
-              </label>
-            )}
+            <label className="text-sm text-slate-500 dark:text-slate-400">
+              {formData.subtype === "pf" ? "Current PF balance" : "Current value"}
+              <input
+                required
+                min="0"
+                step="0.01"
+                type="number"
+                name="currentValue"
+                value={formData.currentValue}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
+              />
+            </label>
             <label className="text-sm text-slate-500 dark:text-slate-400">
               Currency
               <CurrencySelect
@@ -311,6 +328,52 @@ export default function AddInvestmentModal({
                 className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-cyan-500"
               />
             </label>
+          </div>
+          <div className="space-y-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={formData.hasMonthlySip}
+                onChange={(event) =>
+                  setFormData((previous) => ({
+                    ...previous,
+                    hasMonthlySip: event.target.checked,
+                  }))
+                }
+                className="h-4 w-4 accent-cyan-600"
+              />
+              Track a monthly SIP for this investment
+            </label>
+            {formData.hasMonthlySip && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="text-sm text-slate-500 dark:text-slate-400">
+                  Monthly SIP amount
+                  <input
+                    required
+                    min="0.01"
+                    step="0.01"
+                    type="number"
+                    name="sipAmount"
+                    value={formData.sipAmount}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </label>
+                <label className="text-sm text-slate-500 dark:text-slate-400">
+                  Monthly due day
+                  <input
+                    required
+                    min="1"
+                    max="31"
+                    type="number"
+                    name="sipDueDay"
+                    value={formData.sipDueDay}
+                    onChange={handleChange}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </label>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="text-sm text-slate-500 dark:text-slate-400">

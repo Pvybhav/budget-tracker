@@ -1,5 +1,6 @@
 import InvestmentsSection from "../components/InvestmentsSection";
 import InvestmentTransactionsSection from "../components/InvestmentTransactionsSection";
+import UpcomingSipsSection from "../components/UpcomingSipsSection";
 export default function InvestmentsPage() {
   return (
     <div className="space-y-6">
@@ -14,7 +15,9 @@ export default function InvestmentsPage() {
           Keep a manual portfolio snapshot across all your investment platforms.
         </p>
       </div>
-      <InvestmentsSection /> <InvestmentTransactionsSection />
+      <InvestmentsSection />
+      <UpcomingSipsSection />
+      <InvestmentTransactionsSection />
     </div>
   );
 }

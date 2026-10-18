@@ -25,6 +25,8 @@ import { showNetworkToast } from "../services/network.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 import Tooltip from "../components/Tooltip";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 const TYPE_LABELS: Record<string, string> = {
   mobile: "Mobile",
   internet: "Internet",
@@ -58,6 +60,7 @@ export default function ManageBillsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid">("unpaid");
   const [typeFilter, setTypeFilter] = useState<Bill["type"] | "all">("all");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, sortRows } = useTableSort<Bill>("dueDate", "desc");
   const pageSize = 50;
   useEffect(() => {
     if (!bills || hasCheckedCurrentMonth.current) return;
@@ -96,7 +99,13 @@ export default function ManageBillsPage() {
     });
   }, [bills, month, search, statusFilter, typeFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredBills.length / pageSize));
-  const visibleBills = filteredBills.slice((page - 1) * pageSize, page * pageSize);
+  const sortedBills = sortRows(filteredBills, {
+    name: (bill) => bill.name,
+    type: (bill) => TYPE_LABELS[bill.type] ?? bill.type,
+    dueDate: (bill) => bill.dueDate,
+    amount: (bill) => convertCurrency(bill.amount, bill.currency, displayCurrency),
+  });
+  const visibleBills = sortedBills.slice((page - 1) * pageSize, page * pageSize);
   const openAddModal = () => {
     setBillToEdit(undefined);
     setIsModalOpen(true);
@@ -267,8 +276,10 @@ export default function ManageBillsPage() {
             <table className="w-full min-w-[680px] text-left text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-100 dark:bg-slate-800/50 text-sm text-slate-900 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-5 py-4">Bill</th> <th className="px-5 py-4">Type</th>
-                  <th className="px-5 py-4">Due date</th> <th className="px-5 py-4">Amount</th>
+                  <SortableTableHeader label="Bill" sortKey="name" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-4" />
+                  <SortableTableHeader label="Type" sortKey="type" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-4" />
+                  <SortableTableHeader label="Due date" sortKey="dueDate" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-4" />
+                  <SortableTableHeader label="Amount" sortKey="amount" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-4" />
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -380,8 +391,8 @@ export default function ManageBillsPage() {
       {filteredBills.length > 0 && (
         <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
           <span>
-            Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredBills.length)} of
-            {filteredBills.length}
+            Showing {(page - 1) * pageSize + 1}-
+            {Math.min(page * pageSize, filteredBills.length)} of {filteredBills.length}
           </span>
           <div className="flex gap-2">
             <button

@@ -8,6 +8,8 @@ import showConfirm from "../components/Confirm";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 import Tooltip from "./Tooltip";
+import SortableTableHeader from "./SortableTableHeader";
+import { useTableSort } from "./useTableSort";
 export default function InvestmentTransactionsSection() {
   const displayCurrency = useDisplayCurrency();
   const investments = useBackendResource(() => fetchInvestments(), []);
@@ -18,6 +20,8 @@ export default function InvestmentTransactionsSection() {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(todayDateInput());
   const [note, setNote] = useState("");
+  const { sortKey, direction, toggleSort, sortRows } =
+    useTableSort<InvestmentTransaction>("date", "desc");
   const submit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     const numericAmount = Number(amount);
@@ -46,6 +50,18 @@ export default function InvestmentTransactionsSection() {
     investments?.find((investment) => investment.id === id)?.name ?? `Investment #${id}`;
   const currencyFor = (investmentId: string) =>
     investments?.find((investment) => investment.id === investmentId)?.currency;
+  const sortedTransactions = sortRows(transactions ?? [], {
+    date: (transaction) => transaction.date,
+    investment: (transaction) => name(transaction.investmentId),
+    type: (transaction) => transaction.type,
+    quantity: (transaction) => transaction.quantity ?? -1,
+    amount: (transaction) =>
+      convertCurrency(
+        transaction.amount,
+        currencyFor(transaction.investmentId),
+        displayCurrency,
+      ),
+  });
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
       <div>
@@ -121,13 +137,16 @@ export default function InvestmentTransactionsSection() {
         <table className="w-full min-w-[620px] text-left text-sm text-slate-700 dark:text-slate-300">
           <thead className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-500\">
             <tr>
-              <th className="px-3 py-3">Date</th> <th className="px-3 py-3">Investment</th>
-              <th className="px-3 py-3">Type</th> <th className="px-3 py-3">Quantity</th>
-              <th className="px-3 py-3">Amount</th> <th className="px-3 py-3 text-right"> </th>
+              <SortableTableHeader label="Date" sortKey="date" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3" />
+              <SortableTableHeader label="Investment" sortKey="investment" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3" />
+              <SortableTableHeader label="Type" sortKey="type" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3" />
+              <SortableTableHeader label="Quantity" sortKey="quantity" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3" />
+              <SortableTableHeader label="Amount" sortKey="amount" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-3 py-3" />
+              <th className="px-3 py-3 text-right"> </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {transactions?.map((transaction) => (
+            {sortedTransactions.map((transaction) => (
               <tr key={transaction.id}>
                 <td className="px-3 py-3"> {formatDateOnly(transaction.date)} </td>
                 <td className="px-3 py-3">{name(transaction.investmentId)}</td>

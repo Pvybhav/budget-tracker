@@ -8,6 +8,8 @@ import showConfirm from "../components/Confirm";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import PaginationControls from "../components/PaginationControls";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 import { formatDateOnly } from "../utils/date";
 const CATEGORY_LABELS: Record<string, string> = {
   salary: "Salary",
@@ -27,6 +29,7 @@ export default function ManageIncomePage() {
   const [incomeToEdit, setIncomeToEdit] = useState<Income | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, sortRows } = useTableSort<Income>("date", "desc");
   const pageSize = 50;
   const openAddModal = () => {
     setIncomeToEdit(undefined);
@@ -55,7 +58,14 @@ export default function ManageIncomePage() {
         item.note?.toLowerCase().includes(query),
     );
   }, [sorted, search, cards]);
-  const visibleIncome = filteredIncome.slice((page - 1) * pageSize, page * pageSize);
+  const sortedIncome = sortRows(filteredIncome, {
+    date: (item) => item.date,
+    source: (item) => item.source,
+    category: (item) => CATEGORY_LABELS[item.category ?? "other"],
+    account: (item) => cardTitleFor(item.accountId),
+    amount: (item) => convertCurrency(item.amount, item.currency, displayCurrency),
+  });
+  const visibleIncome = sortedIncome.slice((page - 1) * pageSize, page * pageSize);
   const totalThisMonth = useMemo(() => {
     const now = new Date();
     return sorted
@@ -106,13 +116,11 @@ export default function ManageIncomePage() {
         <table className="w-full text-left text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-max">
           <thead className="bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Date</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Source</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Category</th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
-                Credited To
-              </th>
-              <th className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">Amount</th>
+              <SortableTableHeader label="Date" sortKey="date" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Source" sortKey="source" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Category" sortKey="category" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Credited To" sortKey="account" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
+              <SortableTableHeader label="Amount" sortKey="amount" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100" />
               <th className="px-6 py-4 font-medium text-right text-slate-900 dark:text-slate-100">
                 Actions
               </th>

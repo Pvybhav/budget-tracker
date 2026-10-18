@@ -8,7 +8,10 @@ import { formatDateOnly, formatDateInput, parseDateOnly } from "../utils/date";
 export default function SubscriptionsPage() {
   const displayCurrency = useDisplayCurrency();
   const bills = useBackendResource(() => fetchBills(), []);
-  const subscriptions = useMemo(() => (bills ?? []).filter((bill) => bill.isSubscription), [bills]);
+  const subscriptions = useMemo(
+    () => (bills ?? []).filter((bill) => bill.isSubscription && bill.type !== "rent"),
+    [bills],
+  );
   const annualCost = subscriptions.reduce(
     (sum, bill) =>
       sum +

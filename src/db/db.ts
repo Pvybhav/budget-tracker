@@ -255,6 +255,9 @@ export interface Investment {
   purchaseDate: string;
   note?: string;
   currency?: string;
+  sipAmount?: number | null;
+  sipDueDay?: number | null;
+  sipLastPaidMonth?: string;
 }
 export type InvestmentTransactionType = "buy" | "sell" | "dividend" | "fee";
 export interface InvestmentTransaction {

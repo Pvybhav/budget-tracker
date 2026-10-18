@@ -56,6 +56,10 @@
 }
 
 @layer components {
+  main table thead {
+    @apply bg-slate-200 dark:bg-slate-800;
+  }
+
   .card {
     @apply min-w-0 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-lg transition-all duration-300 hover:shadow-md dark:hover:shadow-xl;
   }

@@ -13,6 +13,8 @@ import { Pencil, Search, Trash2 } from "lucide-react";
 import PaginationControls from "../components/PaginationControls";
 import { formatDateOnly, todayDateInput } from "../utils/date";
 import Tooltip from "../components/Tooltip";
+import SortableTableHeader from "../components/SortableTableHeader";
+import { useTableSort } from "../components/useTableSort";
 
 function getLoanProgress(loan: Loan) {
   const totalMonths = Math.max(0, loan.termMonths);
@@ -52,6 +54,10 @@ export default function ManageLoansPage() {
   const [search, setSearch] = useState("");
   const [loanSort, setLoanSort] = useState<"months-asc" | "months-desc">("months-asc");
   const [page, setPage] = useState(1);
+  const { sortKey, direction, toggleSort, sortRows } = useTableSort<Loan>(
+    "remainingMonths",
+    "asc",
+  );
   const pageSize = 50;
   const filteredLoans = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -71,7 +77,20 @@ export default function ManageLoansPage() {
       }),
     [filteredLoans, loanSort],
   );
-  const visibleLoans = sortedLoans.slice((page - 1) * pageSize, page * pageSize);
+  const tableLoans = sortRows(sortedLoans, {
+    lender: (loan) => loan.lender,
+    principal: (loan) => convertCurrency(loan.principal, loan.currency, displayCurrency),
+    monthlyPayment: (loan) =>
+      convertCurrency(
+        calcMonthlyEmi(loan.principal, loan.annualInterestRate, loan.termMonths),
+        loan.currency,
+        displayCurrency,
+      ),
+    outstanding: (loan) =>
+      convertCurrency(getLoanRemainingBalance(loan), loan.currency, displayCurrency),
+    remainingMonths: (loan) => getLoanProgress(loan).remainingMonths,
+  });
+  const visibleLoans = tableLoans.slice((page - 1) * pageSize, page * pageSize);
   const loanSummary = useMemo(() => {
     const loanList = loans ?? [];
     return {
@@ -389,19 +408,11 @@ export default function ManageLoansPage() {
           <table className="w-full min-w-[760px] text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
-                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">Loan</th>
-                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
-                  Principal
-                </th>
-                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
-                  Monthly payment
-                </th>
-                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
-                  Outstanding
-                </th>
-                <th className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300">
-                  Repayment progress
-                </th>
+                <SortableTableHeader label="Loan" sortKey="lender" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300" />
+                <SortableTableHeader label="Principal" sortKey="principal" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300" />
+                <SortableTableHeader label="Monthly payment" sortKey="monthlyPayment" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300" />
+                <SortableTableHeader label="Outstanding" sortKey="outstanding" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300" />
+                <SortableTableHeader label="Repayment progress" sortKey="remainingMonths" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-5 py-3 font-medium text-slate-600 dark:text-slate-300" />
                 <th className="px-5 py-3 text-right font-medium text-slate-600 dark:text-slate-300">
                   Actions
                 </th>
