@@ -78,6 +78,7 @@ export default function Layout({ logout }: LayoutProps) {
     { name: "Savings Goals", path: "/savings-goals", icon: PiggyBank },
     { name: "Rewards", path: "/rewards", icon: Gift },
   ];
+  const mobileNavItems = navItems.slice(0, 4);
   return (
     <div className="flex flex-col md:flex-row h-dvh min-h-0 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Mobile Topbar */}
@@ -375,11 +376,45 @@ export default function Layout({ logout }: LayoutProps) {
         </div>
       </aside>
       {/* Main Content */}
-      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-50/60 via-slate-50 to-slate-50 dark:from-emerald-950/20 dark:via-slate-950 dark:to-slate-950 p-3 sm:p-4 lg:p-5 transition-colors duration-300">
+      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-emerald-50/60 via-slate-50 to-slate-50 dark:from-emerald-950/20 dark:via-slate-950 dark:to-slate-950 p-3 pb-24 sm:p-4 sm:pb-24 lg:p-5 lg:pb-5 transition-colors duration-300">
         <div className="w-full">
           <Outlet />
         </div>
       </main>
+      <nav
+        aria-label="Primary navigation"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-900/95"
+      >
+        {mobileNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium transition-colors",
+                isActive
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-slate-500 dark:text-slate-400",
+              )}
+            >
+              <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          aria-label="Open more navigation options"
+          onClick={() => setIsSidebarOpen(true)}
+          className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium text-slate-500 transition-colors dark:text-slate-400"
+        >
+          <Menu className="h-5 w-5" />
+          <span>More</span>
+        </button>
+      </nav>
     </div>
   );
 }

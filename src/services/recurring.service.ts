@@ -1,18 +1,21 @@
-import type { Expense, Income, SavingsContribution } from "../db/db";
+import type { Bill, Expense, Income, SavingsContribution } from "../db/db";
 import {
   createExpense,
   createIncome,
   createSavingsContribution,
   fetchExpenses,
+  fetchBills,
   fetchIncomes,
   fetchSavingsContributions,
   fetchSavingsGoals,
   updateExpense,
+  createBill,
 } from "./backend.service";
-import { dateTimeInputToUTC } from "../utils/date";
+import { dateOnly, dateTimeInputToUTC } from "../utils/date";
 
 type RecurringFrequency = NonNullable<Expense["recurringFrequency"]>;
 type ContributionFrequency = NonNullable<SavingsContribution["recurringFrequency"]>;
+type BillFrequency = NonNullable<Bill["subscriptionFrequency"]>;
 
 function toDateTimeLocalValue(date: Date) {
   const offset = date.getTimezoneOffset() * 60000;
@@ -30,6 +33,15 @@ function parseLocalDate(value: string) {
   const [datePart] = value.split("T");
   const [year, month, day] = datePart.split("-").map(Number);
   return new Date(year, month - 1, day);
+}
+
+function addBillInterval(date: Date, frequency: BillFrequency) {
+  const months = frequency === "yearly" ? 12 : frequency === "quarterly" ? 3 : 1;
+  const targetMonth = date.getFullYear() * 12 + date.getMonth() + months;
+  const year = Math.floor(targetMonth / 12);
+  const month = targetMonth % 12;
+  const day = Math.min(date.getDate(), new Date(year, month + 1, 0).getDate());
+  return new Date(year, month, day);
 }
 
 function addInterval(
@@ -60,13 +72,10 @@ function addInterval(
 export function getNextRecurringExpenseDue(template: Expense, expenses: Expense[]) {
   if (!template.recurringFrequency) return null;
   const instances = expenses.filter((expense) => expense.recurringTemplateId === template.id);
-  const latest = instances.reduce(
-    (date, expense) => {
-      const occurrence = new Date(expense.date);
-      return occurrence > date ? occurrence : date;
-    },
-    new Date(template.date),
-  );
+  const latest = instances.reduce((date, expense) => {
+    const occurrence = new Date(expense.date);
+    return occurrence > date ? occurrence : date;
+  }, new Date(template.date));
   const frequency = template.recurringFrequency;
   const interval = template.recurringInterval ?? 1;
   const anchorDay = new Date(template.date).getDate();
@@ -76,11 +85,7 @@ export function getNextRecurringExpenseDue(template: Expense, expenses: Expense[
   return next;
 }
 
-function addContributionInterval(
-  date: Date,
-  frequency: ContributionFrequency,
-  interval: number,
-) {
+function addContributionInterval(date: Date, frequency: ContributionFrequency, interval: number) {
   return addInterval(date, frequency, interval);
 }
 
@@ -165,6 +170,76 @@ export async function syncRecurringExpenses(now = new Date()) {
   }
 }
 
+export async function syncRecurringBills(now = new Date()) {
+  const bills = await fetchBills();
+  const templates = bills.filter(
+    (bill) =>
+      Boolean(bill.isSubscription) &&
+      !bill.isRecurringInstance &&
+      Boolean(bill.subscriptionFrequency) &&
+      Boolean(bill.id),
+  );
+
+  for (const template of templates) {
+    if (!template.id || !template.paid) continue;
+
+    const instances = bills.filter((bill) => bill.recurringTemplateId === template.id);
+    let latestDate = parseLocalDate(template.dueDate);
+    for (const instance of instances) {
+      const instanceDate = parseLocalDate(instance.dueDate);
+      if (instanceDate > latestDate) latestDate = instanceDate;
+    }
+
+    let nextDate = addBillInterval(latestDate, template.subscriptionFrequency!);
+    let createdCount = 0;
+    while (createdCount < 6 && nextDate <= now) {
+      const nextDateValue = toDateValue(nextDate);
+      const alreadyExists = instances.some((bill) => dateOnly(bill.dueDate) === nextDateValue);
+      if (!alreadyExists) {
+        const payload: Omit<Bill, "id"> = {
+          name: template.name,
+          type: template.type,
+          provider: template.provider,
+          amount: template.amount,
+          dueDate: nextDateValue,
+          paid: false,
+          note: template.note,
+          isSubscription: true,
+          subscriptionFrequency: template.subscriptionFrequency,
+          recurringTemplateId: template.id,
+          isRecurringInstance: true,
+          currency: template.currency,
+        };
+        const created = await createBill(payload);
+        instances.push(created);
+        createdCount += 1;
+      }
+      latestDate = nextDate;
+      nextDate = addBillInterval(latestDate, template.subscriptionFrequency!);
+    }
+
+    if (
+      createdCount === 0 &&
+      !instances.some((bill) => dateOnly(bill.dueDate) === toDateValue(nextDate))
+    ) {
+      await createBill({
+        name: template.name,
+        type: template.type,
+        provider: template.provider,
+        amount: template.amount,
+        dueDate: toDateValue(nextDate),
+        paid: false,
+        note: template.note,
+        isSubscription: true,
+        subscriptionFrequency: template.subscriptionFrequency,
+        recurringTemplateId: template.id,
+        isRecurringInstance: true,
+        currency: template.currency,
+      });
+    }
+  }
+}
+
 export async function syncRecurringIncomes(now = new Date()) {
   const income = await fetchIncomes();
   const templates = income.filter(
@@ -223,10 +298,12 @@ export async function syncRecurringIncomes(now = new Date()) {
 export async function syncRecurringContributions(now = new Date()) {
   const goals = await fetchSavingsGoals();
   const contributionGroups = await Promise.all(
-    goals.filter((goal) => goal.id).map(async (goal) => ({
-      goal,
-      contributions: await fetchSavingsContributions(goal.id!),
-    })),
+    goals
+      .filter((goal) => goal.id)
+      .map(async (goal) => ({
+        goal,
+        contributions: await fetchSavingsContributions(goal.id!),
+      })),
   );
 
   for (const { goal, contributions } of contributionGroups) {

@@ -7,6 +7,7 @@ import CurrencySelect from "../CurrencySelect";
 import { getDisplayCurrency } from "../../services/currency.service";
 import { dateOnly, todayDateInput } from "../../utils/date";
 import Tooltip from "../Tooltip";
+import { syncRecurringBills } from "../../services/recurring.service";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -103,6 +104,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         await updateBill(initialBill.id, payload);
       } else {
         await createBill(payload);
+        if (payload.isSubscription && payload.paid) await syncRecurringBills();
       }
       onClose();
     } catch (error) {

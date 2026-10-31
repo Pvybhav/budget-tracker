@@ -221,6 +221,8 @@ const billSchema = new Schema(
     note: String,
     isSubscription: { type: Boolean, default: false },
     subscriptionFrequency: { type: String, enum: ["monthly", "quarterly", "yearly"] },
+    recurringTemplateId: { type: ObjectId, ref: "Bill" },
+    isRecurringInstance: Boolean,
     currency: currencyField,
   },
   { timestamps: true },

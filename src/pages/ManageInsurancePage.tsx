@@ -13,6 +13,18 @@ import PaginationControls from "../components/PaginationControls";
 import { todayDateInput } from "../utils/date";
 import { formatDateOnly } from "../utils/date";
 import Tooltip from "../components/Tooltip";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 const TYPE_LABELS: Record<string, string> = {
   health: "Health",
   life: "Life",
@@ -58,6 +70,50 @@ export default function ManageInsurancePage() {
     );
   }, [policies, search]);
   const visiblePolicies = filteredPolicies.slice((page - 1) * pageSize, page * pageSize);
+  const policySummaries = useMemo(
+    () =>
+      (policies ?? []).map((policy) => ({
+        policy,
+        summary: getInsurancePolicySummary(policy),
+      })),
+    [policies],
+  );
+  const totalCoverage = policySummaries.reduce(
+    (sum, item) =>
+      sum + convertCurrency(item.policy.sumAssured, item.policy.currency, displayCurrency),
+    0,
+  );
+  const annualPremium = policySummaries.reduce((sum, item) => {
+    const premium = convertCurrency(
+      item.policy.premiumAmount,
+      item.policy.currency,
+      displayCurrency,
+    );
+    const multiplier =
+      item.policy.premiumFrequency === "monthly"
+        ? 12
+        : item.policy.premiumFrequency === "quarterly"
+          ? 4
+          : item.policy.premiumFrequency === "half-yearly"
+            ? 2
+            : 1;
+    return sum + premium * multiplier;
+  }, 0);
+  const duePolicies = policySummaries.filter(
+    ({ summary }) => summary.status === "due" || summary.status === "upcoming",
+  ).length;
+  const typeData = Object.entries(TYPE_LABELS)
+    .map(([type, label]) => ({
+      name: label,
+      value: policySummaries.filter(({ policy }) => policy.type === type).length,
+    }))
+    .filter((item) => item.value > 0);
+  const premiumData = policySummaries.slice(0, 8).map(({ policy }) => ({
+    name: policy.policyName.length > 14 ? `${policy.policyName.slice(0, 14)}…` : policy.policyName,
+    premium: convertCurrency(policy.premiumAmount, policy.currency, displayCurrency),
+    coverage: convertCurrency(policy.sumAssured, policy.currency, displayCurrency),
+  }));
+  const chartColors = ["#38bdf8", "#818cf8", "#34d399", "#f59e0b", "#f472b6", "#a78bfa"];
   const openAddModal = () => {
     setPolicyToEdit(undefined);
     setIsModalOpen(true);
@@ -95,22 +151,162 @@ export default function ManageInsurancePage() {
   };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            Manage Insurance
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Track health, life, and vehicle policies with premium due dates.
-          </p>
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl dark:border-slate-800 md:p-8">
+        <div className="absolute -right-16 -top-20 h-56 w-56 animate-pulse rounded-full bg-sky-400/20 blur-3xl" />
+        <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-indigo-400/10 blur-3xl" />
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-300">
+              Protection overview
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Insurance portfolio</h1>
+            <p className="mt-2 text-sm text-slate-300">
+              Stay ahead of renewals and understand the protection you have in place.
+            </p>
+          </div>
+          <button
+            onClick={openAddModal}
+            className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-sky-50"
+          >
+            <Plus className="w-4 h-4" /> Add Policy
+          </button>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Policy
-        </button>
       </div>
+      {policies && policies.length > 0 && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              [
+                "Active policies",
+                policies.length,
+                "Across your portfolio",
+                "text-sky-500 bg-sky-500/10",
+              ],
+              [
+                "Total coverage",
+                formatMoney(totalCoverage, displayCurrency),
+                "Sum assured",
+                "text-indigo-500 bg-indigo-500/10",
+              ],
+              [
+                "Annual premium",
+                formatMoney(annualPremium, displayCurrency),
+                "Estimated yearly cost",
+                "text-emerald-500 bg-emerald-500/10",
+              ],
+              [
+                "Upcoming attention",
+                duePolicies,
+                "Due or upcoming",
+                "text-amber-500 bg-amber-500/10",
+              ],
+            ].map(([label, value, detail, color]) => (
+              <div
+                key={label}
+                className="animate-[fade-in-up_0.5s_ease-out_both] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {label}
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                      {value}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{detail}</p>
+                  </div>
+                  <span className={`rounded-xl p-2.5 ${color}`}>
+                    <ShieldCheck className="h-5 w-5" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100">Coverage mix</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Policies by protection type
+                </p>
+              </div>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={typeData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={82}
+                      paddingAngle={4}
+                      animationBegin={150}
+                      animationDuration={900}
+                    >
+                      {typeData.map((item, index) => (
+                        <Cell key={item.name} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+                {typeData.map((item, index) => (
+                  <span key={item.name} className="flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: chartColors[index % chartColors.length] }}
+                    />
+                    {item.name} ({item.value})
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100">
+                  Premium snapshot
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Premium and coverage by policy
+                </p>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={premiumData} margin={{ left: 0, right: 8, top: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.35} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                    <ChartTooltip
+                      formatter={(value) =>
+                        formatMoney(
+                          typeof value === "number" ? value : Number(value ?? 0),
+                          displayCurrency,
+                        )
+                      }
+                    />
+                    <Bar
+                      dataKey="premium"
+                      name="Premium"
+                      fill="#38bdf8"
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={900}
+                    />
+                    <Bar
+                      dataKey="coverage"
+                      name="Coverage"
+                      fill="#818cf8"
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={1100}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <input
         type="search"
         value={search}
@@ -138,7 +334,7 @@ export default function ManageInsurancePage() {
               return (
                 <div
                   key={policy.id}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4"
+                  className="animate-[fade-in-up_0.5s_ease-out_both] rounded-2xl border border-slate-200 bg-white p-4 transition-shadow duration-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/60"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-1">

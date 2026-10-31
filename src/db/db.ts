@@ -115,6 +115,8 @@ export interface Bill {
   note?: string;
   isSubscription?: boolean;
   subscriptionFrequency?: "monthly" | "quarterly" | "yearly";
+  recurringTemplateId?: string;
+  isRecurringInstance?: boolean;
   currency?: string;
 }
 export type IncomeCategory =

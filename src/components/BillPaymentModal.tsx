@@ -6,6 +6,7 @@ import { useBackendResource } from "../services/backendHooks";
 import { X } from "lucide-react";
 import { todayDateInput } from "../utils/date";
 import Tooltip from "./Tooltip";
+import { syncRecurringBills } from "../services/recurring.service";
 
 interface Props {
   bill: Bill;
@@ -46,6 +47,7 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
         paymentAccountId: paymentAccountId || undefined,
         paymentReference: paymentReference.trim() || undefined,
       });
+      await syncRecurringBills();
       onClose();
     } finally {
       setIsSubmitting(false);

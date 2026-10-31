@@ -647,7 +647,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
           )}
 
           {/* Amount + Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.2fr_1fr]">
             <div>
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Amount <span className="text-red-400">*</span>
@@ -661,7 +661,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
                   name="amount"
                   value={formData.amount}
                   onChange={handleChange}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                  className="min-w-0 flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                 />
                 <CurrencySelect
                   value={formData.currency}

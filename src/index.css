@@ -33,6 +33,12 @@
 
   body {
     @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300;
+    overscroll-behavior-y: none;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
 
   input,
@@ -52,7 +58,6 @@
     caret-color: theme("colors.blue.500");
     user-select: text;
   }
-
 }
 
 @layer components {
@@ -208,6 +213,17 @@
         0 0 5px rgba(52, 211, 153, 0.4),
         0 0 10px rgba(52, 211, 153, 0.2);
       transform: scale(1);
+    }
+
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     50% {
       box-shadow:

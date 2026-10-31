@@ -45,15 +45,22 @@ interface TooltipProps {
 interface TrendTooltipProps extends TooltipProps {
   readonly label?: string | number;
 }
+interface IncomeExpenseTooltipProps {
+  readonly active?: boolean;
+  readonly currency?: string;
+  readonly label?: string | number;
+  readonly payload?: Array<{
+    readonly name?: string;
+    readonly value?: number | string;
+  }>;
+}
 const CustomTooltip = ({ active, payload, currency }: TooltipProps) => {
   if (active && payload?.length) {
     const categoryName = payload[0].payload.name;
     return (
-      <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
-        
-        <p className="text-slate-200 font-medium mb-1">{categoryName}</p>
-        <p className="text-emerald-400 font-bold">
-          
+      <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xl outline-none dark:border-slate-700 dark:bg-slate-800">
+        <p className="mb-1 font-medium text-slate-700 dark:text-slate-200">{categoryName}</p>
+        <p className="font-bold text-emerald-600 dark:text-emerald-400">
           {formatMoney(payload[0].value, currency)}
         </p>
       </div>
@@ -65,28 +72,53 @@ const TrendTooltip = ({ active, payload, label, currency }: TrendTooltipProps) =
   if (active && payload?.length) {
     const categoryBreakdown = payload[0].payload.categoryBreakdown ?? [];
     return (
-      <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl outline-none">
-        
-        <p className="text-slate-200 font-medium mb-1">{label}</p>
-        <p className="text-emerald-400 font-bold mb-2">
-          
+      <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xl outline-none dark:border-slate-700 dark:bg-slate-800">
+        <p className="mb-1 font-medium text-slate-700 dark:text-slate-200">{label}</p>
+        <p className="mb-2 font-bold text-emerald-600 dark:text-emerald-400">
           Total: {formatMoney(payload[0].value, currency)}
         </p>
         {categoryBreakdown.length > 0 && (
           <ul className="space-y-1">
-            
             {categoryBreakdown.map((cat: { name: string; amount: number }) => (
               <li key={cat.name} className="flex items-center justify-between gap-4 text-sm">
-                
                 <span className="text-slate-700 dark:text-slate-300">{cat.name}</span>
                 <span className="text-slate-900 dark:text-slate-100 font-medium">
-                  
                   {formatMoney(cat.amount, currency)}
                 </span>
               </li>
             ))}
           </ul>
         )}
+      </div>
+    );
+  }
+  return null;
+};
+const IncomeExpenseTooltip = ({
+  active,
+  currency,
+  payload,
+  label,
+}: IncomeExpenseTooltipProps) => {
+  if (active && payload?.length) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xl outline-none dark:border-slate-700 dark:bg-slate-800">
+        <p className="mb-2 font-medium text-slate-700 dark:text-slate-200">{label}</p>
+        <ul className="space-y-1">
+          {payload.map((item) => (
+            <li
+              key={item.name}
+              className={`flex items-center justify-between gap-4 text-sm font-medium ${
+                item.name === "Income"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400"
+              }`}
+            >
+              <span>{item.name}</span>
+              <span>{formatMoney(Number(item.value), currency)}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
@@ -533,12 +565,7 @@ export default function VisualizePage() {
                   tickFormatter={(value) => `${getCurrencySymbol(displayCurrency)}${value}`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: 8,
-                  }}
-                  formatter={(value) => formatMoney(Number(value), displayCurrency)}
+                  content={<IncomeExpenseTooltip currency={displayCurrency} />}
                 />
                 <Legend />
                 <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
