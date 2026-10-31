@@ -11,7 +11,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@expo/ui": "^58.0.26",
@@ -41,7 +43,11 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
+    "jest-expo": "~58.0.13",
+    "react-test-renderer": "^19.3.0",
     "typescript": "~6.0.3"
   }
 }

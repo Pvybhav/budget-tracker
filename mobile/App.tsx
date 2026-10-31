@@ -34,6 +34,7 @@ import {
 } from "react-native";
 import { acceptHouseholdInvite, ApiError, enqueueMutation, fetchHousehold, fetchMobileSnapshot, getCachedUser, getPendingMutations, getSession, getToken, inviteHouseholdMember, leaveHousehold, login, logout, removeHouseholdMember, signup, syncPendingMutations, type PendingMutation } from "./api";
 import { calcMonthlyEmi, compareMonthlySpending, getEmiSchedule, getMonthlyExpenseAmount, forecastBudget } from "./calculations";
+import { parseReceiptText, parseStatementText, parseVoiceExpense, type ImportedStatementRow } from "./parsing";
 
 type ModuleKey =
   | "bills" | "payments" | "transfers" | "income" | "loans" | "insurance"
@@ -47,100 +48,6 @@ type AccountOption = { id: string; title: string };
 type ModuleItem = { id: string; title: string; detail: string; amount?: number; status?: string; enabled?: boolean };
 type RemoteRecord = Record<string, unknown>;
 type MobileAlert = { id: string; title: string; detail: string; severity: "high" | "medium" | "info"; screen: Screen };
-type ImportedStatementRow = { date: string; details: string; amount: number; kind: "expense" | "income"; reference?: string; balance?: number };
-
-function statementValue(row: Record<string, unknown>, names: string[]) {
-  const entry = Object.entries(row).find(([key]) => names.some((name) => key.toLowerCase().replace(/[\s_-]/g, "").includes(name)));
-  return entry?.[1];
-}
-
-function statementAmount(value: unknown) {
-  const amount = Number.parseFloat(String(value ?? "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(amount) ? Math.abs(amount) : 0;
-}
-
-function splitStatementLine(line: string, delimiter: string) {
-  const cells: string[] = [];
-  let cell = "";
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const character = line[index];
-    if (character === '"') {
-      if (quoted && line[index + 1] === '"') {
-        cell += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === delimiter && !quoted) {
-      cells.push(cell.trim());
-      cell = "";
-    } else {
-      cell += character;
-    }
-  }
-  cells.push(cell.trim());
-  return cells;
-}
-
-function statementDate(value: unknown) {
-  if (typeof value === "number") {
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
-  }
-  const text = String(value ?? "").trim();
-  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(text)) {
-    const [year, month, day] = text.split(/[-/]/);
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-  const slashDate = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
-  if (slashDate) {
-    const first = Number(slashDate[1]);
-    const second = Number(slashDate[2]);
-    const year = Number(slashDate[3].length === 2 ? `20${slashDate[3]}` : slashDate[3]);
-    const month = first > 12 ? second : first;
-    const day = first > 12 ? first : second;
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
-  }
-  const parsed = new Date(text);
-  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
-}
-
-function parseStatementText(text: string, fileName = ""): ImportedStatementRow[] {
-  let rows: Record<string, unknown>[] = [];
-  if (fileName.toLowerCase().endsWith(".json") || text.trimStart().startsWith("[")) {
-    const parsed = JSON.parse(text) as unknown;
-    const records = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" && Array.isArray((parsed as { transactions?: unknown[] }).transactions) ? (parsed as { transactions: unknown[] }).transactions : [];
-    rows = records.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"));
-  } else {
-    const lines = text.split(/\r?\n/).filter((line) => line.trim());
-    const sample = lines[0] ?? "";
-    const delimiter = (sample.match(/\t/g)?.length ?? 0) >= Math.max(sample.match(/;/g)?.length ?? 0, sample.match(/,/g)?.length ?? 0) ? "\t" : (sample.match(/;/g)?.length ?? 0) > (sample.match(/,/g)?.length ?? 0) ? ";" : ",";
-    const headers = splitStatementLine(lines.shift() ?? "", delimiter).map((cell) => cell.replace(/^"|"$/g, ""));
-    rows = lines.map((line) => {
-      const cells = splitStatementLine(line, delimiter).map((cell) => cell.replace(/^"|"$/g, ""));
-      return Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
-    });
-  }
-  return rows.map((row) => {
-    const debit = statementAmount(statementValue(row, ["debit", "withdrawal", "dr", "paid", "spent"]));
-    const credit = statementAmount(statementValue(row, ["credit", "deposit", "cr", "received", "refunded"]));
-    const generic = statementAmount(statementValue(row, ["amount", "transactionvalue", "value"]));
-    const rawAmount = debit || credit || generic;
-    const signed = Number(String(statementValue(row, ["amount", "transactionvalue", "value"]) ?? "").replace(/,/g, ""));
-    return {
-      date: statementDate(statementValue(row, ["date", "transactiondate", "valuedate", "postingdate"])),
-      details: String(statementValue(row, ["description", "details", "narration", "particular", "merchant", "remarks"]) ?? "Imported transaction").trim(),
-      amount: rawAmount,
-      kind: (credit > 0 || (!debit && signed < 0) ? "income" : "expense") as "income" | "expense",
-      reference: String(statementValue(row, ["reference", "refno", "transactionid", "cheque"]) ?? "").trim(),
-      balance: statementAmount(statementValue(row, ["balance", "closingbalance", "availablebalance"])) || undefined,
-    };
-  }).filter((row) => row.date && row.amount > 0);
-}
-
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true }),
 });
@@ -1399,40 +1306,6 @@ function ModuleScreen({ darkMode, module, items, household, onHouseholdChange, o
     }
   };
   return <ScrollView contentContainerStyle={[styles.scroll, darkMode && styles.darkScroll]} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} colors={["#0f766e"]} />}><View style={styles.pageIntroRow}><View><Text style={[styles.pageTitle, darkMode && styles.darkText]}>{moduleLabels[module]}</Text><Text style={styles.muted}>{moduleDescription(module)}</Text></View>{!isReadOnly && <Pressable onPress={() => setShowForm(true)} style={styles.smallAdd}><Text style={styles.smallAddText}>＋</Text></Pressable>}</View>{module === "household" && <View style={styles.householdCard}><Text style={styles.sectionTitle}>{household.role === "member" ? "Shared household" : "Household access"}</Text><Text style={styles.muted}>{household.role === "member" ? "You are viewing another owner's shared data." : "Invite people with full access to this workspace."}</Text>  {household.role !== "member" && <Pressable style={styles.primaryButton} onPress={() => void invite()}><Text style={styles.primaryButtonText}>Invite by email</Text></Pressable>}{household.role === "none" && <Pressable style={styles.secondaryButton} onPress={() => void accept()}><Text style={styles.secondaryButtonText}>Accept invitation</Text></Pressable>}{household.members.map((member) => <View key={member.email} style={styles.memberRow}><View style={styles.moduleCopy}><Text style={styles.transactionTitle}>{member.email}</Text><Text style={styles.muted}>{member.status}</Text></View><Pressable onPress={() => void removeHouseholdMember(member.email).then(() => onHouseholdChange({ ...household, members: household.members.filter((item) => item.email !== member.email) }))}><Text style={styles.deleteButtonText}>×</Text></Pressable></View>)}{household.role === "member" && <Pressable style={styles.secondaryButton} onPress={() => void leave()}><Text style={styles.secondaryButtonText}>Leave household</Text></Pressable>}</View>}{(module === "import" || module === "export") && <View style={styles.actionRow}><Pressable style={styles.primaryButton} onPress={module === "export" ? onExport : onImport}><Text style={styles.primaryButtonText}>{module === "export" ? "Export JSON" : "Import CSV / JSON"}</Text></Pressable></View>}<View style={styles.moduleSummary}><Text style={styles.cardOverline}>{module === "visualize" ? "THIS MONTH" : "TOTAL RECORDS"}</Text><Text style={styles.summaryAmount}>{module === "visualize" ? money(items.reduce((sum, item) => sum + (item.amount ?? 0), 0)) : items.length}</Text><Text style={styles.muted}>{module === "budgets" ? "rules currently configured" : module === "reconciliation" ? "items waiting for review" : "local records in this module"}</Text></View><View style={styles.searchBox}><Text style={styles.searchIcon}>⌕</Text><TextInput value={query} onChangeText={setQuery} placeholder={`Search ${moduleLabels[module].toLowerCase()}`} placeholderTextColor="#95a2b1" style={styles.searchInput} /></View><View style={styles.moduleCard}>{filtered.map((item) => <View key={item.id} style={styles.moduleRow}><Pressable onPress={() => item.status && (module === "bills" || module === "budgets" || module === "reconciliation") ? onUpdate(item.id, { status: item.status === "Paid" || item.status === "Completed" ? "Pending" : "Paid", enabled: !item.enabled }) : undefined} style={styles.moduleTouch}><View style={styles.moreIcon}><Text style={styles.moreIconText}>{item.title.slice(0, 1)}</Text></View><View style={styles.moduleCopy}><Text style={styles.transactionTitle}>{item.title}</Text><Text style={styles.muted}>{item.detail}</Text></View><View style={styles.moduleValue}>{typeof item.amount === "number" && <Text style={styles.transactionAmount}>{money(item.amount)}</Text>}<Text style={[styles.statusText, item.status === "Paid" || item.status === "Completed" || item.status === "Active" || item.enabled ? styles.statusPositive : styles.statusPending]}>{item.status}</Text></View></Pressable><Pressable onPress={() => Alert.alert("Delete record", `Delete ${item.title}?`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => onDelete(item.id) }])} style={styles.deleteButton}><Text style={styles.deleteButtonText}>×</Text></Pressable></View>)}</View>{!filtered.length && <View style={styles.empty}><Text style={styles.sectionTitle}>No records found</Text><Text style={styles.muted}>Try another search or add a new record.</Text></View>}{showForm && <ModuleForm module={module} onClose={() => setShowForm(false)} onSave={(item) => { onAdd(item); setShowForm(false); }} />}</ScrollView>;
-}
-
-function parseVoiceExpense(transcript: string): Omit<Expense, "id"> | null {
-  const normalized = transcript.trim().replace(/(\d),(?=\d{2,3}(?:,|(?:\.\d{1,2})?\b))/g, "$1").replace(/\s+/g, " ");
-  const amountMatch = normalized.match(/(?:₹|rs\.?|rupees?|inr)?\s*(\d+(?:\.\d{1,2})?)(?:\s*(?:k|thousand))?/i);
-  if (!amountMatch) return null;
-  const amount = Number(amountMatch[1]) * (/k|thousand/i.test(amountMatch[0]) ? 1000 : 1);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  const category = /food|dinner|lunch|breakfast|coffee|restaurant|grocer/i.test(normalized)
-    ? (/grocer/i.test(normalized) ? "Groceries" : "Food & dining")
-    : /rent|home|house|electricity/i.test(normalized)
-      ? "Housing"
-      : /uber|ola|taxi|fuel|bus|train|transport/i.test(normalized)
-        ? "Transport"
-        : "Other";
-  const title = normalized
-    .replace(/^(?:please\s+)?(?:add|record|log)\s+(?:an?\s+)?(?:expense|spending)\s*(?:of)?/i, "")
-    .replace(/^(?:please\s+)?(?:add|record|log)\s+/i, "")
-    .replace(/^(?:i\s+)?spent\s*/i, "")
-    .replace(/(?:₹|rs\.?|rupees?|inr)?\s*\d+(?:\.\d{1,2})?\s*(?:k|thousand)?/i, "")
-    .replace(/^\s*(?:on|for|at)\s+/i, "")
-    .trim();
-  return { title: title || category, category, amount, date: "Just now" };
-}
-
-function parseReceiptText(text: string): Omit<Expense, "id"> | null {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const amountMatches = [...text.replace(/,/g, "").matchAll(/(?:total|amount|grand total|net)\D{0,15}(\d+(?:\.\d{1,2})?)/gi)];
-  const fallbackMatches = [...text.replace(/,/g, "").matchAll(/(?:₹|rs\.?|inr)\s*(\d+(?:\.\d{1,2})?)/gi)];
-  const amount = Number((amountMatches.at(-1) ?? fallbackMatches.at(-1))?.[1] ?? 0);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  const title = lines.find((line) => !/receipt|invoice|tax|gst|total|amount|date|bill/i.test(line) && !/\d{3,}/.test(line)) ?? "Receipt purchase";
-  const category = /grocer|market|super/i.test(text) ? "Groceries" : /restaurant|cafe|food|dining/i.test(text) ? "Food & dining" : /fuel|petrol|uber|taxi/i.test(text) ? "Transport" : "Other";
-  return { title: title.slice(0, 60), category, amount, date: "Just now" };
 }
 
 function ReceiptScanner({ initialImageUri, onClose, onSave }: { initialImageUri?: string | null; onClose: () => void; onSave: (expense: Expense) => void }) {

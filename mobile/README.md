@@ -75,6 +75,18 @@ npm start
 
 Use the Expo QR code with Expo Go, or run `npm run ios` / `npm run android`.
 
+## Tests
+
+```bash
+cd mobile
+npm test
+npm run typecheck
+```
+
+The Jest suites cover financial calculations, statement/voice/receipt parsing, offline queue
+scoping and replay, API snapshot failures, and app boot, authentication, hydration, and navigation.
+Native device integrations still require simulator or physical-device validation.
+
 For simulator, physical-device, EAS build, store submission, notification, biometric, backend URL,
 statement-import, troubleshooting, and release instructions, see
 [DEPLOYMENT.md](./DEPLOYMENT.md).
