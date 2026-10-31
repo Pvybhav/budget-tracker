@@ -1,5 +1,19 @@
 # React + TypeScript + Vite
 
+## Web app tests
+
+Run the web unit and UI tests with line coverage:
+
+```bash
+npm test
+npm run typecheck
+```
+
+The test command enforces at least 90% statement, branch, and line coverage for the app shell, login
+flow, and core financial services included in the coverage configuration. Tests cover authentication
+and routing, API request/error handling, budget forecasts and carryover, recurring dates, and
+currency behavior.
+
 ## Mobile app
 
 The `mobile/` directory contains an Expo React Native companion for Budget Tracker. It mirrors the web app's personal-finance modules, authentication, API synchronization, offline cache, CRUD flows, EMI schedules, budget forecasting, recurring dates, reports, JSON backup/restore, native file sharing, statement import, and household invitations.

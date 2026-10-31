@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 //import tailwindcss from '@tailwindcss/vite'
 
@@ -30,6 +30,25 @@ export default defineConfig({
           }
         },
       },
+    },
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./test/setup.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    restoreMocks: true,
+    coverage: {
+      include: [
+        "src/App.tsx",
+        "src/pages/LoginPage.tsx",
+        "src/services/api.ts",
+        "src/services/budget-carryover.service.ts",
+        "src/services/budget-forecast.service.ts",
+        "src/services/budget.service.ts",
+        "src/services/currency.service.ts",
+      ],
+      reporter: ["text"],
+      thresholds: { branches: 90, lines: 90, statements: 90 },
     },
   },
 });
