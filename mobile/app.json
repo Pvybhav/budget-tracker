@@ -1,0 +1,100 @@
+{
+  "expo": {
+    "name": "Budget Tracker",
+    "slug": "budget-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "budget-tracker",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-notifications",
+      "expo-local-authentication",
+      "expo-camera",
+      "expo-calendar",
+      "expo-background-task",
+      "expo-quick-actions",
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsText": true,
+            "NSExtensionActivationSupportsImageWithMaxCount": 1,
+            "NSExtensionActivationSupportsFileWithMaxCount": 1
+          },
+          "androidIntentFilters": ["text/*", "image/*", "application/json", "text/csv"]
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "enableAndroid": true,
+          "widgets": [
+            {
+              "name": "BudgetTrackerWidget",
+              "displayName": "Budget Tracker",
+              "description": "See your balance, monthly spending, and alerts.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "systemLarge"
+              ],
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge"
+                ]
+              },
+              "android": {
+                "minWidth": 180,
+                "minHeight": 110,
+                "targetCellWidth": 2,
+                "targetCellHeight": 1,
+                "resizeMode": "horizontal"
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Budget Tracker to use the microphone for voice expense entry.",
+          "speechRecognitionPermission": "Allow Budget Tracker to convert your voice into expense details."
+        }
+      ],
+      "expo-status-bar"
+    ],
+    "splash": {
+      "backgroundColor": "#f7f9fc"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to protect your Budget Tracker data.",
+        "NSSpeechRecognitionUsageDescription": "Allow Budget Tracker to convert your voice into expense details.",
+        "NSMicrophoneUsageDescription": "Allow Budget Tracker to use the microphone for voice expense entry.",
+        "NSCameraUsageDescription": "Scan receipts to draft expenses.",
+        "NSCalendarsUsageDescription": "Add bill reminders to your calendar.",
+        "BGTaskSchedulerPermittedIdentifiers": ["com.expo.modules.backgroundtask.processing"]
+      },
+      "bundleIdentifier": "com.pvybhav.budgettracker"
+    },
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#064f46"
+      },
+      "package": "com.pvybhav.budgettracker"
+    }
+  }
+}

@@ -1,5 +1,20 @@
 # React + TypeScript + Vite
 
+## Mobile app
+
+The `mobile/` directory contains an Expo React Native companion for Budget Tracker. It mirrors the web app's personal-finance modules, authentication, API synchronization, offline cache, CRUD flows, EMI schedules, budget forecasting, recurring dates, reports, JSON backup/restore, native file sharing, statement import, and household invitations.
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+For a physical device, set `EXPO_PUBLIC_API_BASE_URL` to the computer's LAN address before starting Expo.
+
+See [mobile/DEPLOYMENT.md](./mobile/DEPLOYMENT.md) for simulator, physical-device, EAS deployment,
+store submission, native permissions, statement imports, and troubleshooting instructions.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
