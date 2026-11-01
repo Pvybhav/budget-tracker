@@ -5,6 +5,7 @@
 Run the web unit and UI tests with line coverage:
 
 ```bash
+npm run test:web
 npm test
 npm run typecheck
 ```

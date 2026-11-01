@@ -3,15 +3,23 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import {
   ApiError,
   apiRequest,
+  acceptHouseholdInvite,
   enqueueMutation,
+  createResource,
+  deleteResource,
   getCachedUser,
   fetchMobileSnapshot,
+  fetchHousehold,
   getSession,
   getPendingMutations,
+  inviteHouseholdMember,
   login,
+  leaveHousehold,
   logout,
+  removeHouseholdMember,
   signup,
   syncPendingMutations,
+  updateResource,
   type PendingMutation,
 } from "../api";
 
@@ -91,6 +99,108 @@ describe("session API", () => {
       message: "Invalid token",
       status: 401,
     });
+  });
+
+  it("handles empty, invalid, and non-JSON API responses with status fallbacks", async () => {
+    fetchMock.mockResolvedValueOnce(response(200, { user, token: "token" }));
+    await login("alice", "password");
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Server unavailable",
+      text: async () => "not-json",
+    } as Response);
+    await expect(apiRequest("/failure")).rejects.toMatchObject({
+      message: "Server unavailable",
+      status: 500,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      statusText: "Service Unavailable",
+      text: async () => "",
+    } as Response);
+    await expect(apiRequest("/failure")).rejects.toMatchObject({
+      message: "Service Unavailable",
+      status: 503,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      statusText: "",
+      text: async () => "",
+    } as Response);
+    await expect(apiRequest("/empty")).resolves.toBeNull();
+  });
+
+  it("tolerates logout network failures and sends no authorization header without a token", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("offline"));
+    await expect(logout()).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/logout"),
+      expect.objectContaining({ method: "POST", headers: undefined }),
+    );
+  });
+
+  it("validates malformed outbox data and coalesces repeated server-side updates", async () => {
+    await AsyncStorage.setItem("budget-tracker-mobile-outbox:alice", "{broken");
+    await expect(getPendingMutations("alice")).rejects.toThrow();
+    await AsyncStorage.setItem("budget-tracker-mobile-outbox:alice", JSON.stringify({ not: "an array" }));
+    await expect(getPendingMutations("alice")).rejects.toThrow("queue is invalid");
+    await AsyncStorage.setItem("budget-tracker-mobile-outbox:alice", "[]");
+
+    await enqueueMutation(mutation({ id: "update-one", operation: "update", recordId: "server-1" }));
+    await enqueueMutation(mutation({
+      id: "update-two",
+      operation: "update",
+      recordId: "server-1",
+      payload: { amount: 99 },
+      optimisticRecord: { id: "server-1", amount: 99 },
+    }));
+    await expect(getPendingMutations("alice")).resolves.toMatchObject([
+      { id: "update-two", payload: { amount: 99 } },
+    ]);
+  });
+
+  it("handles every household and record endpoint with encoded identifiers", async () => {
+    const calls: Array<() => Promise<unknown>> = [
+      () => createResource("bills", { title: "Power" }),
+      () => updateResource("bills", "bill-1", { status: "Paid" }),
+      () => deleteResource("bills", "bill-1"),
+      () => fetchHousehold(),
+      () => inviteHouseholdMember("a@example.com"),
+      () => acceptHouseholdInvite("invite-token"),
+      () => removeHouseholdMember("a+b@example.com"),
+      () => leaveHousehold(),
+    ];
+    fetchMock.mockImplementation(async () => response(200, { success: true, role: "none", household: null }));
+    for (const call of calls) await call();
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      expect.stringContaining("/bills"),
+      expect.stringContaining("/bills/bill-1"),
+      expect.stringContaining("/bills/bill-1"),
+      expect.stringContaining("/household"),
+      expect.stringContaining("/household/invite"),
+      expect.stringContaining("/household/accept"),
+      expect.stringContaining("/household/members/a%2Bb%40example.com"),
+      expect.stringContaining("/household/leave"),
+    ]);
+    expect(fetchMock.mock.calls.map(([, init]) => (init as RequestInit).method)).toEqual([
+      "POST", "PUT", "DELETE", undefined, "POST", "POST", "DELETE", "POST",
+    ]);
+  });
+
+  it("fetches the complete mobile snapshot and rejects any failed resource", async () => {
+    fetchMock.mockImplementation(async () => response(200, []));
+    const snapshot = await fetchMobileSnapshot();
+    expect(Object.keys(snapshot)).toHaveLength(15);
+    expect(snapshot.expenses).toEqual([]);
+    fetchMock.mockImplementationOnce(async () => response(200, []))
+      .mockImplementationOnce(async () => response(503, { error: "cards failed" }));
+    await expect(fetchMobileSnapshot()).rejects.toMatchObject({ message: "cards failed", status: 503 });
   });
 });
 
@@ -174,6 +284,41 @@ describe("offline mutation queue", () => {
     expect(result.remaining).toBe(1);
     expect(result.error).toBeInstanceOf(ApiError);
     await expect(getPendingMutations("alice")).resolves.toHaveLength(1);
+  });
+
+  it("replays updates and deletes and accepts numeric server identifiers", async () => {
+    await enqueueMutation(mutation({ id: "update", operation: "update", recordId: "server-1" }));
+    await enqueueMutation(mutation({ id: "delete", operation: "delete", recordId: "server-2" }));
+    fetchMock.mockResolvedValueOnce(response(200, {})).mockResolvedValueOnce(response(200, {}));
+    await expect(syncPendingMutations("alice", jest.fn())).resolves.toEqual({ synced: 2, remaining: 0 });
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: "PUT" }));
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: "DELETE" }));
+
+    await enqueueMutation(mutation({ id: "numeric", recordId: "local-numeric" }));
+    fetchMock.mockResolvedValueOnce(response(201, { _id: 42 }));
+    const onCreated = jest.fn();
+    await expect(syncPendingMutations("alice", onCreated)).resolves.toEqual({ synced: 1, remaining: 0 });
+    expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: "numeric" }), "42");
+  });
+
+  it("retains creates when the server omits the generated identifier", async () => {
+    await enqueueMutation(mutation());
+    fetchMock.mockResolvedValueOnce(response(201, {}));
+    const result = await syncPendingMutations("alice", jest.fn());
+    expect(result.synced).toBe(0);
+    expect(result.remaining).toBe(1);
+    expect(result.error).toEqual(expect.objectContaining({ message: expect.stringContaining("did not return an ID") }));
+    await expect(getPendingMutations("alice")).resolves.toHaveLength(1);
+  });
+
+  it("keeps deletes queued during an in-flight create and then replays them", async () => {
+    await enqueueMutation(mutation());
+    fetchMock.mockImplementationOnce(async () => {
+      await enqueueMutation(mutation({ id: "delete-active", operation: "delete", payload: undefined }));
+      return response(201, { id: "server-1" });
+    }).mockResolvedValueOnce(response(200, {}));
+    await expect(syncPendingMutations("alice", jest.fn())).resolves.toEqual({ synced: 2, remaining: 0 });
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: "DELETE" }));
   });
 
   it("rejects a partial snapshot instead of returning empty arrays as real data", async () => {

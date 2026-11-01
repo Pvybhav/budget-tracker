@@ -80,12 +80,16 @@ Use the Expo QR code with Expo Go, or run `npm run ios` / `npm run android`.
 ```bash
 cd mobile
 npm test
+npm test -- --coverage
 npm run typecheck
 ```
 
 The Jest suites cover financial calculations, statement/voice/receipt parsing, offline queue
-scoping and replay, API snapshot failures, and app boot, authentication, hydration, and navigation.
-Native device integrations still require simulator or physical-device validation.
+scoping and replay, API snapshot failures, app boot/authentication/hydration, and the extracted
+navigation, feedback, screen, and form components. The app entry point coordinates app state and
+native integrations; reusable UI lives in `components/`, with shared styles, types, and constants
+kept in separate modules. Native device integrations still require simulator or physical-device
+validation.
 
 For simulator, physical-device, EAS build, store submission, notification, biometric, backend URL,
 statement-import, troubleshooting, and release instructions, see

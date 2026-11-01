@@ -19,6 +19,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run --coverage",
+    "test:web": "vitest run --coverage",
     "test:watch": "vitest",
     "format": "prettier . --write",
     "format:check": "prettier .prettierrc.json eslint.config.js package.json --check",
