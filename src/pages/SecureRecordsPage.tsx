@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { KeyRound, LockKeyhole, Plus, ShieldAlert, Trash2, UnlockKeyhole } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  KeyRound,
+  LockKeyhole,
+  Plus,
+  Search,
+  ShieldAlert,
+  Trash2,
+  UnlockKeyhole,
+} from "lucide-react";
 import {
   createVaultSalt,
   decryptVaultRecords,
@@ -36,6 +47,16 @@ const PERSONAL_TYPES: { value: SecureRecordType; label: string }[] = [
 ];
 
 const emptyDraft = (type: SecureRecordType): RecordDraft => ({ type, title: "" });
+const getSafeWebsiteUrl = (website: string): string | null => {
+  try {
+    const url = new URL(website);
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+};
 
 export default function SecureRecordsPage({ view }: { view: View }) {
   const isCredentials = view === "credentials";
@@ -55,9 +76,12 @@ export default function SecureRecordsPage({ view }: { view: View }) {
   const [draft, setDraft] = useState<RecordDraft>(() => emptyDraft(allowedTypes[0].value));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [selectedType, setSelectedType] = useState<SecureRecordType | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
 
-  const isRevealed = (recordId: string, field: string) =>
-    revealedIds.has(`${recordId}:${field}`);
+  const isRevealed = (recordId: string, field: string) => revealedIds.has(`${recordId}:${field}`);
   const toggleReveal = (recordId: string, field: string) => {
     const key = `${recordId}:${field}`;
     setRevealedIds((current) => {
@@ -86,10 +110,39 @@ export default function SecureRecordsPage({ view }: { view: View }) {
     };
   }, []);
 
-  const visibleRecords = useMemo(
-    () => records.filter((record) => allowedTypes.some(({ value }) => value === record.type)),
-    [records, allowedTypes],
-  );
+  const visibleRecords = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    return records.filter((record) => {
+      const matchesType =
+        allowedTypes.some(({ value }) => value === record.type) &&
+        (selectedType === "all" || record.type === selectedType);
+      const matchesSearch =
+        !query ||
+        [record.title, record.provider, record.username, record.website].some((value) =>
+          value?.toLocaleLowerCase().includes(query),
+        );
+      return matchesType && matchesSearch;
+    });
+  }, [records, allowedTypes, selectedType, searchQuery]);
+
+  const toggleExpanded = (recordId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(recordId)) next.delete(recordId);
+      else next.add(recordId);
+      return next;
+    });
+  };
+
+  const copyToClipboard = async (label: string, value: string) => {
+    setCopyMessage("");
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyMessage(`${label} copied to clipboard.`);
+    } catch {
+      setCopyMessage(`Could not copy ${label.toLowerCase()}. Clipboard access is unavailable.`);
+    }
+  };
 
   const lockVault = () => {
     setVaultKey(null);
@@ -98,6 +151,8 @@ export default function SecureRecordsPage({ view }: { view: View }) {
     setConfirmation("");
     setDraft(emptyDraft(allowedTypes[0].value));
     setRevealedIds(new Set());
+    setExpandedIds(new Set());
+    setCopyMessage("");
     setEditingId(null);
     setMessage("");
     setUnlockError("");
@@ -262,13 +317,32 @@ export default function SecureRecordsPage({ view }: { view: View }) {
       {record.website && (
         <p className="break-all">
           <span className="text-slate-500">Website: </span>
-          {record.website}
+          {getSafeWebsiteUrl(record.website) ? (
+            <a
+              href={getSafeWebsiteUrl(record.website) ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline dark:text-blue-400"
+            >
+              {record.website}
+            </a>
+          ) : (
+            record.website
+          )}
         </p>
       )}
       {record.username && (
         <p className="break-all">
           <span className="text-slate-500">Username: </span>
           {record.username}
+          <button
+            type="button"
+            className="ml-2 inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400"
+            onClick={() => void copyToClipboard("Username", record.username ?? "")}
+            aria-label={`Copy username for ${record.title}`}
+          >
+            <Copy className="h-3.5 w-3.5" /> Copy
+          </button>
         </p>
       )}
       {record.password && (
@@ -283,6 +357,14 @@ export default function SecureRecordsPage({ view }: { view: View }) {
             onClick={() => toggleReveal(record.id, "password")}
           >
             {isRevealed(record.id, "password") ? "Hide" : "Reveal"}
+          </button>
+          <button
+            type="button"
+            className="ml-2 inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400"
+            onClick={() => void copyToClipboard("Password", record.password ?? "")}
+            aria-label={`Copy password for ${record.title}`}
+          >
+            <Copy className="h-3.5 w-3.5" /> Copy
           </button>
         </p>
       )}
@@ -638,9 +720,51 @@ export default function SecureRecordsPage({ view }: { view: View }) {
             <h2 className="text-lg font-semibold">
               {title} ({visibleRecords.length})
             </h2>
+            {isCredentials && (
+              <>
+                <label className="relative block max-w-md">
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search by name, provider, or username"
+                    aria-label="Search secure records"
+                    className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2" aria-label="Filter secure records">
+                  {[{ value: "all" as const, label: "All" }, ...CREDENTIAL_TYPES].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={selectedType === option.value}
+                      onClick={() => setSelectedType(option.value)}
+                      className={`rounded-full border px-3 py-1.5 text-sm capitalize ${
+                        selectedType === option.value
+                          ? "border-emerald-600 bg-emerald-600 text-white"
+                          : "border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {option.label === "Bank account" ? "Bank logins" : option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {copyMessage && (
+              <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
+                {copyMessage}
+              </p>
+            )}
             {visibleRecords.length === 0 ? (
               <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-500 dark:border-slate-700">
-                No records here yet.
+                {searchQuery.trim() || selectedType !== "all"
+                  ? "No matching records found."
+                  : "No records here yet."}
               </p>
             ) : (
               visibleRecords.map((record) => (
@@ -651,12 +775,25 @@ export default function SecureRecordsPage({ view }: { view: View }) {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <h3 className="break-words font-semibold">{record.title}</h3>
-                      <p className="mt-1 text-xs capitalize text-slate-500">
-                        {record.type.replaceAll("-", " ")}
-                      </p>
-                      {recordFields(record)}
+                      {expandedIds.has(record.id) && recordFields(record)}
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(record.id)}
+                        aria-expanded={expandedIds.has(record.id)}
+                        className="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
+                      >
+                        {expandedIds.has(record.id) ? (
+                          <>
+                            <ChevronUp className="h-4 w-4" /> View less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-4 w-4" /> View more
+                          </>
+                        )}
+                      </button>
                       <button
                         type="button"
                         onClick={() => editRecord(record)}

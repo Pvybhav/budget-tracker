@@ -149,6 +149,15 @@ export async function updateBill(id: string, data: Partial<Bill>) {
   toastSuccess("Bill updated successfully");
   return bill;
 }
+export async function payBill(
+  id: string,
+  data: Pick<Bill, "paidDate" | "paymentType" | "paymentAccountId" | "paymentReference">,
+) {
+  const bill = await backend.payBill(id, data);
+  dispatchBackendRefresh();
+  toastSuccess("Bill payment recorded successfully");
+  return bill;
+}
 export async function deleteBill(id: string) {
   const result = await backend.deleteBill(id);
   dispatchBackendRefresh();

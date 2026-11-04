@@ -108,6 +108,12 @@ export async function createBill(data: Omit<Bill, "id">) {
 export async function updateBill(id: string, data: Partial<Bill>) {
   return apiPut<Bill>(`/bills/${id}`, data);
 }
+export async function payBill(
+  id: string,
+  data: Pick<Bill, "paidDate" | "paymentType" | "paymentAccountId" | "paymentReference">,
+) {
+  return apiPut<Bill>(`/bills/${id}/pay`, data);
+}
 export async function deleteBill(id: string) {
   return apiDelete<{ success: boolean }>(`/bills/${id}`);
 }

@@ -327,6 +327,7 @@ async function createWithId(model, data, userId) {
   return model.create(clean);
 }
 const expenseDuplicateFields = (data) => ({
+  billId: data.billId == null ? null : String(data.billId),
   cardId: data.cardId == null ? null : String(data.cardId),
   categoryId: data.categoryId ? String(data.categoryId) : null,
   loanId: data.loanId ? String(data.loanId) : null,
@@ -358,6 +359,7 @@ const getExpenseDuplicateFilter = (data, userId, id) => {
   const fields = expenseDuplicateFields(data);
   return {
     userId,
+    billId: fields.billId == null ? null : toRecordId(fields.billId),
     cardId: fields.cardId,
     categoryId: fields.categoryId,
     loanId: fields.loanId,
@@ -524,9 +526,17 @@ router.get(
 router.post(
   "/expenses",
   catchAsync(async (req, res) => {
+    const billId = req.body.billId == null ? undefined : toRecordId(req.body.billId);
     const cardId = req.body.cardId == null ? undefined : toRecordId(req.body.cardId);
     const categoryId = req.body.categoryId == null ? undefined : toRecordId(req.body.categoryId);
     const loanId = req.body.loanId == null ? undefined : toRecordId(req.body.loanId);
+    if (
+      req.body.billId != null &&
+      (billId == null ||
+        !(await Bill.exists({ _id: billId, userId: req.user.userId, paid: true })))
+    ) {
+      return res.status(400).json({ error: "Paid bill must exist" });
+    }
     const loanPaymentNumber = Number(req.body.loanPaymentNumber);
     const hasLoanLink = req.body.loanId != null || req.body.loanPaymentNumber != null;
     let isLoanRepayment = false;
@@ -543,7 +553,7 @@ router.post(
       isLoanRepayment = true;
     }
     if (
-      (cardId == null && !isLoanRepayment) ||
+      (cardId == null && !isLoanRepayment && billId == null) ||
       (req.body.cardId != null &&
         (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))))
     ) {
@@ -583,6 +593,12 @@ router.put(
     if (id == null) return res.status(400).json({ error: "Invalid expense id" });
     const currentExpense = await Expense.findOne({ _id: id, userId: req.user.userId });
     if (!currentExpense) return res.status(404).json({ error: "Expense not found" });
+    if (
+      Object.hasOwn(req.body, "billId") &&
+      String(req.body.billId ?? "") !== String(currentExpense.billId ?? "")
+    ) {
+      return res.status(400).json({ error: "Bill transaction link cannot be changed" });
+    }
     const updatedValues = { ...currentExpense.toObject(), ...stripProtectedFields(req.body) };
     const cardId = updatedValues.cardId == null ? undefined : toRecordId(updatedValues.cardId);
     if (
@@ -592,6 +608,11 @@ router.put(
       return res.status(400).json({ error: "Expense account must exist" });
     }
     if (cardId == null) {
+      const billId = updatedValues.billId == null ? undefined : toRecordId(updatedValues.billId);
+      const bill =
+        billId != null
+          ? await Bill.findOne({ _id: billId, userId: req.user.userId, paid: true })
+          : null;
       const loanId =
         updatedValues.loanId == null ? undefined : toRecordId(updatedValues.loanId);
       const loanPaymentNumber = Number(updatedValues.loanPaymentNumber);
@@ -599,11 +620,12 @@ router.put(
         loanId != null && Number.isInteger(loanPaymentNumber) && loanPaymentNumber > 0
           ? await Loan.findOne({ _id: loanId, userId: req.user.userId })
           : null;
-      if (
-        !loan?.repayments.some(
+      const isPaidLoanRepayment = Boolean(
+        loan?.repayments.some(
           (repayment) => repayment.paymentNumber === loanPaymentNumber && repayment.paid,
-        )
-      ) {
+        ),
+      );
+      if (!bill && !isPaidLoanRepayment) {
         return res.status(400).json({ error: "Expense account must exist" });
       }
     }
@@ -902,6 +924,60 @@ router.put(
       { new: true, runValidators: true },
     );
     if (!bill) return res.status(404).json({ error: "Bill not found" });
+    res.json(bill);
+  }),
+);
+router.put(
+  "/bills/:id/pay",
+  catchAsync(async (req, res) => {
+    const id = toRecordId(req.params.id);
+    if (id == null) return res.status(400).json({ error: "Invalid bill id" });
+    if (!req.body.paidDate) {
+      return res.status(400).json({ error: "Payment date and time are required" });
+    }
+
+    const paymentAccountId =
+      req.body.paymentAccountId == null ? undefined : toRecordId(req.body.paymentAccountId);
+    if (
+      req.body.paymentAccountId != null &&
+      (paymentAccountId == null ||
+        !(await Card.exists({ _id: paymentAccountId, userId: req.user.userId })))
+    ) {
+      return res.status(400).json({ error: "Payment account must exist" });
+    }
+
+    const bill = await Bill.findOneAndUpdate(
+      { _id: id, userId: req.user.userId },
+      {
+        paid: true,
+        paidDate: req.body.paidDate,
+        paymentType: req.body.paymentType,
+        paymentAccountId,
+        paymentReference: req.body.paymentReference,
+      },
+      { new: true, runValidators: true },
+    );
+    if (!bill) return res.status(404).json({ error: "Bill not found" });
+
+    const expenseData = {
+      billId: bill._id,
+      cardId: paymentAccountId,
+      details: `Bill payment: ${bill.name}`,
+      amount: bill.amount,
+      date: req.body.paidDate,
+      status: "paid",
+      currency: bill.currency,
+    };
+    const existingExpense = await Expense.findOne({ userId: req.user.userId, billId: bill._id });
+    if (existingExpense) {
+      await Expense.findOneAndUpdate(
+        { _id: existingExpense._id, userId: req.user.userId },
+        expenseData,
+        { new: true, runValidators: true },
+      );
+    } else {
+      await Expense.create({ ...expenseData, userId: req.user.userId });
+    }
     res.json(bill);
   }),
 );

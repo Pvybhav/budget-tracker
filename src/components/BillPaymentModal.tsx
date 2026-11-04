@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Bill } from "../db/db";
 import { fetchCards } from "../services/backend.service";
-import { updateBill } from "../services/backendSync";
+import { payBill } from "../services/backendSync";
 import { useBackendResource } from "../services/backendHooks";
 import { X } from "lucide-react";
-import { todayDateInput } from "../utils/date";
+import { currentDateTimeInput, dateTimeInput, dateTimeInputToUTC } from "../utils/date";
 import Tooltip from "./Tooltip";
 import { syncRecurringBills } from "../services/recurring.service";
 
@@ -27,7 +27,9 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
     bill.paymentType ?? "card",
   );
   const [paymentAccountId, setPaymentAccountId] = useState(bill.paymentAccountId ?? "");
-  const [paidDate, setPaidDate] = useState(bill.paidDate?.slice(0, 10) ?? todayDateInput());
+  const [paidDate, setPaidDate] = useState(
+    bill.paidDate ? dateTimeInput(bill.paidDate) : currentDateTimeInput(),
+  );
   const [paymentReference, setPaymentReference] = useState(bill.paymentReference ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,9 +42,8 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
     if (!bill.id || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await updateBill(bill.id, {
-        paid: true,
-        paidDate,
+      await payBill(bill.id, {
+        paidDate: dateTimeInputToUTC(paidDate),
         paymentType,
         paymentAccountId: paymentAccountId || undefined,
         paymentReference: paymentReference.trim() || undefined,
@@ -79,12 +80,12 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
               htmlFor="bill-paid-date"
               className="mb-1 block text-sm text-slate-500 dark:text-slate-400"
             >
-              Paid date
+              Paid date and time
             </label>
             <input
               id="bill-paid-date"
               required
-              type="date"
+              type="datetime-local"
               value={paidDate}
               onChange={(event) => setPaidDate(event.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"

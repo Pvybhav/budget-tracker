@@ -124,6 +124,7 @@ const expenseSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     expenseKey: { type: String, unique: true, sparse: true, select: false },
+    billId: { type: ObjectId, ref: "Bill" },
     cardId: { type: ObjectId, ref: "Card" },
     categoryId: { type: ObjectId, ref: "Category" },
     loanId: { type: ObjectId, ref: "Loan" },
@@ -158,6 +159,10 @@ const expenseSchema = new Schema(
     currency: currencyField,
   },
   { timestamps: true },
+);
+expenseSchema.index(
+  { userId: 1, billId: 1 },
+  { unique: true, partialFilterExpression: { billId: { $type: "objectId" } } },
 );
 const paymentSchema = new Schema(
   {

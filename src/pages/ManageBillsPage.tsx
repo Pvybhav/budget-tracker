@@ -23,7 +23,7 @@ import {
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { showNetworkToast } from "../services/network.service";
 import { BILL_TYPE_ICONS } from "../utils/typeIcons";
-import { formatDateOnly, todayDateInput } from "../utils/date";
+import { formatDateOnly, formatDateTime, todayDateInput } from "../utils/date";
 import Tooltip from "../components/Tooltip";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTableSort } from "../components/useTableSort";
@@ -475,7 +475,7 @@ export default function ManageBillsPage() {
               {billToView.paidDate && (
                 <div>
                   <dt className="text-slate-500">Paid date</dt>
-                  <dd className="mt-1 font-medium">{formatDateOnly(billToView.paidDate)}</dd>
+                  <dd className="mt-1 font-medium">{formatDateTime(billToView.paidDate)}</dd>
                 </div>
               )}
               {billToView.paymentType && (

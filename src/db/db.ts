@@ -65,6 +65,7 @@ export interface ExpenseSplitItem {
 
 export interface Expense {
   id?: string;
+  billId?: string;
   cardId?: string | null;
   categoryId?: string;
   loanId?: string;

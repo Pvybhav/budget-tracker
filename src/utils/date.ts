@@ -47,3 +47,8 @@ export function formatDateOnly(value: string) {
   const date = parseDateOnly(value);
   return date ? moment(date).format(DISPLAY_DATE_FORMAT) : "Date unavailable";
 }
+
+export function formatDateTime(value: string) {
+  const date = moment(value, moment.ISO_8601, true);
+  return date.isValid() ? date.local().format("D MMM YY, h:mm A") : "Date unavailable";
+}
