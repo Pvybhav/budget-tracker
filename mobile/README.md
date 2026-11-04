@@ -8,6 +8,8 @@ This Expo React Native app is the mobile companion for the existing Budget Track
 - Savings goals with progress tracking and a create-goal form
 - Bills, transfers, categories, reports, import/export, privacy, and appearance entry points
 - Secure sign-in/sign-up, persisted bearer-token sessions, sign-out, and account-scoped API access
+- Shared secure vault and personal-record screens with passphrase-derived PBKDF2-SHA-256 keys,
+  AES-256-GCM encryption, masked card secrets, and web-compatible encrypted storage
 - Backend snapshot hydration for cards, categories, expenses, payments, transfers, bills, income,
   loans, insurance, budget rules, savings goals, investments, rewards, net-worth, and household data
 - Add and update flows for supported module records, with local demo data retained only when no
@@ -85,8 +87,9 @@ npm run typecheck
 ```
 
 The Jest suites cover financial calculations, statement/voice/receipt parsing, offline queue
-scoping and replay, API snapshot failures, app boot/authentication/hydration, and the extracted
-navigation, feedback, screen, and form components. The app entry point coordinates app state and
+scoping and replay, API snapshot failures, cross-platform secure-vault encryption, app
+boot/authentication/hydration, and the extracted navigation, feedback, screen, and form components.
+The app entry point coordinates app state and
 native integrations; reusable UI lives in `components/`, with shared styles, types, and constants
 kept in separate modules. Native device integrations still require simulator or physical-device
 validation.

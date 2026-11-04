@@ -81,6 +81,8 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: { user
 
 export function More({ darkMode, setDarkMode, notificationsEnabled, setNotificationsEnabled, biometricEnabled, setBiometricEnabled, onNavigate, onLogout, onSync, syncing }: { darkMode: boolean; setDarkMode: (value: boolean) => void; notificationsEnabled: boolean; setNotificationsEnabled: (value: boolean) => void; biometricEnabled: boolean; setBiometricEnabled: (value: boolean) => void; onNavigate: (screen: Screen) => void; onLogout: () => void; onSync: () => void; syncing: boolean }) {
   const items: { label: string; detail: string; icon: string; screen: Screen }[] = [
+    { label: "Secure Vault", detail: "Passwords, account details, and cards", icon: "⌑", screen: "secureVault" },
+    { label: "Nominees & personal records", detail: "Emergency contacts and document references", icon: "♧", screen: "personalRecords" },
     { label: "Bills & subscriptions", detail: "Never miss a payment", icon: "▣", screen: "bills" },
     { label: "Payments", detail: "Credit card payments", icon: "↗", screen: "payments" },
     { label: "Transfers", detail: "Move money between accounts", icon: "⇄", screen: "transfers" },

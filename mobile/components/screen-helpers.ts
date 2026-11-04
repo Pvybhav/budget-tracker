@@ -7,7 +7,9 @@ export function isModuleScreen(screen: Screen): screen is ModuleKey {
     screen !== "expenses" &&
     screen !== "accounts" &&
     screen !== "goals" &&
-    screen !== "more"
+    screen !== "more" &&
+    screen !== "secureVault" &&
+    screen !== "personalRecords"
   );
 }
 

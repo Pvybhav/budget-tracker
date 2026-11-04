@@ -3,7 +3,7 @@ export type ModuleKey =
   | "budgets" | "categories" | "investments" | "rewards" | "subscriptions"
   | "reconciliation" | "calendar" | "visualize" | "import" | "export"
   | "household" | "netWorth" | "about";
-export type Screen = "dashboard" | "expenses" | "accounts" | "goals" | "more" | ModuleKey;
+export type Screen = "dashboard" | "expenses" | "accounts" | "goals" | "more" | "secureVault" | "personalRecords" | ModuleKey;
 export type Expense = { id: string; title: string; category: string; amount: number; date: string; cardId?: string; isEmi?: boolean; months?: number };
 export type Goal = { id: string; title: string; target: number; saved: number; color: string };
 export type AccountOption = { id: string; title: string };

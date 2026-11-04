@@ -20,6 +20,7 @@ import {
   fetchSecureVault,
   isValidCardNumber,
   isValidCardCvv,
+  isValidCardExpiry,
   isValidCardPin,
   normalizeCardNumber,
   saveSecureVault,
@@ -225,8 +226,8 @@ export default function SecureRecordsPage({ view }: { view: View }) {
         setDraftError("Enter a valid card number (12–19 digits). Spaces and hyphens are allowed.");
         return;
       }
-      if (!draft.cardExpiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(draft.cardExpiry)) {
-        setDraftError("Enter the card expiry in MM/YY format.");
+      if (!draft.cardExpiry || !isValidCardExpiry(draft.cardExpiry)) {
+        setDraftError("Enter a current or future card expiry in MM/YY format.");
         return;
       }
       if (draft.cardCvv && !isValidCardCvv(draft.cardCvv)) {
@@ -273,7 +274,57 @@ export default function SecureRecordsPage({ view }: { view: View }) {
   };
 
   const changeType = (type: SecureRecordType) => {
-    setDraft((current) => ({ ...current, type }));
+    setDraft((current) => {
+      const sharedFields = {
+        title: current.title,
+        provider: current.provider,
+        website: current.website,
+        notes: current.notes,
+        type,
+      };
+      if (type === "card") {
+        return {
+          ...sharedFields,
+          cardholderName: current.cardholderName,
+          cardNumber: current.cardNumber,
+          cardExpiry: current.cardExpiry,
+          cardCvv: current.cardCvv,
+          cardPin: current.cardPin,
+          cardLastFour: current.cardLastFour,
+        };
+      }
+      if (type === "password") {
+        return { ...sharedFields, username: current.username, password: current.password };
+      }
+      if (type === "bank-login" || type === "netbanking") {
+        return {
+          ...sharedFields,
+          username: current.username,
+          password: current.password,
+          accountNumber: current.accountNumber,
+          ifscCode: current.ifscCode,
+        };
+      }
+      if (type === "nominee") {
+        return {
+          ...sharedFields,
+          relationship: current.relationship,
+          contact: current.contact,
+          allocation: current.allocation,
+        };
+      }
+      if (type === "emergency-contact") {
+        return {
+          ...sharedFields,
+          relationship: current.relationship,
+          contact: current.contact,
+        };
+      }
+      if (type === "document") {
+        return { ...sharedFields, accountNumber: current.accountNumber };
+      }
+      return sharedFields;
+    });
   };
 
   const renderField = (
@@ -415,11 +466,6 @@ export default function SecureRecordsPage({ view }: { view: View }) {
         <p>
           <span className="text-slate-500">Expiry: </span>
           {record.cardExpiry}
-        </p>
-      )}
-      {record.cardLastFour && !record.cardNumber && (
-        <p>
-          <span className="text-slate-500">Card ending: </span>•••• {record.cardLastFour}
         </p>
       )}
       {record.cardCvv && (

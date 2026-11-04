@@ -7,6 +7,7 @@ import {
   encryptVaultRecords,
   fetchSecureVault,
   isValidCardCvv,
+  isValidCardExpiry,
   isValidCardNumber,
   isValidCardPin,
   normalizeCardNumber,
@@ -120,6 +121,16 @@ describe("secure vault encryption", () => {
     expect(isValidCardNumber("4111 1111 1111 1111")).toBe(true);
     expect(isValidCardNumber("4111 1111 1111 1112")).toBe(false);
     expect(isValidCardNumber("123")).toBe(false);
+  });
+
+  it("accepts current and future card expiries and rejects malformed or expired dates", () => {
+    const now = new Date(2026, 9, 15);
+    expect(isValidCardExpiry("10/26", now)).toBe(true);
+    expect(isValidCardExpiry("11/26", now)).toBe(true);
+    expect(isValidCardExpiry("01/27", now)).toBe(true);
+    expect(isValidCardExpiry("09/26", now)).toBe(false);
+    expect(isValidCardExpiry("13/27", now)).toBe(false);
+    expect(isValidCardExpiry("1/27", now)).toBe(false);
   });
 
   it("encrypts CVV and PIN with card details", async () => {

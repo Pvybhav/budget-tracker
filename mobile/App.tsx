@@ -17,6 +17,7 @@ import { applyPendingMutations, buildAlerts, createLocalId, hydrateModules, init
 import { AnimatedScreen, BottomNav, TopBar } from "./components/navigation";
 import { AlertCenter, SkeletonScreen } from "./components/feedback";
 import { Accounts, AuthScreen, Dashboard, Expenses, Goals, ModuleScreen, More } from "./components/screens";
+import { SecureRecordsScreen } from "./components/secure-records";
 import { isModuleScreen } from "./components/screen-helpers";
 import { DataTransferForm, EmiSchedule, ExpenseForm, GoalForm, ReceiptScanner, VoiceExpenseForm } from "./components/forms";
 import { initialExpenses, initialGoals, moduleLabels, money } from "./components/constants";
@@ -779,6 +780,8 @@ export default function App() {
           {screen === "accounts" && <Accounts darkMode={darkMode} />}
           {screen === "goals" && <Goals darkMode={darkMode} goals={goals} onAdd={() => setModal("goal")} />}
           {screen === "more" && <More darkMode={darkMode} setDarkMode={toggleDarkMode} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={toggleNotifications} biometricEnabled={biometricEnabled} setBiometricEnabled={toggleBiometric} onNavigate={setScreen} onLogout={() => { void logout().then(() => setUser(null)); }} onSync={() => void syncData()} syncing={syncing} />}
+          {screen === "secureVault" && <SecureRecordsScreen view="credentials" darkMode={darkMode} />}
+          {screen === "personalRecords" && <SecureRecordsScreen view="personal" darkMode={darkMode} />}
           {isModuleScreen(screen) && <ModuleScreen darkMode={darkMode} module={screen} items={modules[screen]} household={household} onHouseholdChange={setHousehold} onRefresh={refreshFromServer} refreshing={refreshing} onExport={() => setModal("data")} onImport={() => setModal("data")} onAdd={(item) => void addModuleItem(screen, item)} onUpdate={(id, patch) => void updateModuleItem(screen, id, patch)} onDelete={(id) => void deleteModuleItem(screen, id)} />}
         </AnimatedScreen>
         <BottomNav screen={screen} setScreen={setScreen} />

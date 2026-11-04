@@ -86,6 +86,17 @@ export function isValidCardCvv(value: string): boolean {
   return /^\d{3,4}$/.test(value);
 }
 
+export function isValidCardExpiry(value: string, now = new Date()): boolean {
+  const match = /^(0[1-9]|1[0-2])\/(\d{2})$/.exec(value);
+  if (!match) return false;
+  const expiryYear = 2000 + Number(match[2]);
+  const expiryMonth = Number(match[1]);
+  return (
+    expiryYear > now.getFullYear() ||
+    (expiryYear === now.getFullYear() && expiryMonth >= now.getMonth() + 1)
+  );
+}
+
 export function isValidCardPin(value: string): boolean {
   return /^\d{4,6}$/.test(value);
 }

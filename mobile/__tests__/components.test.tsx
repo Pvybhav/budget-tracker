@@ -224,11 +224,17 @@ describe("budget screens", () => {
     const screen = render(<More darkMode={false} setDarkMode={noOp} notificationsEnabled setNotificationsEnabled={noOp} biometricEnabled={false} setBiometricEnabled={noOp} onNavigate={onNavigate} onLogout={onLogout} onSync={onSync} syncing={false} />);
     expect(screen.getByText("↻ Sync with web app")).toBeTruthy();
     fireEvent.press(screen.getByText("Bills & subscriptions"));
+    fireEvent.press(screen.getByText("Secure Vault"));
+    fireEvent.press(screen.getByText("Nominees & personal records"));
     fireEvent.press(screen.getByText("↻ Sync with web app"));
     fireEvent.press(screen.getByText("Sign out securely"));
     fireEvent.press(screen.getByText("□ Add bill reminder to calendar"));
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith("Calendar permission needed", "Allow calendar access to add bill reminders."));
     expect(onNavigate).toHaveBeenCalledWith("bills");
+    expect(onNavigate).toHaveBeenCalledWith("secureVault");
+    expect(onNavigate).toHaveBeenCalledWith("personalRecords");
+    expect(isModuleScreen("secureVault")).toBe(false);
+    expect(isModuleScreen("personalRecords")).toBe(false);
     expect(onLogout).toHaveBeenCalledTimes(1);
     expect(onSync).toHaveBeenCalledTimes(1);
   });
