@@ -21,9 +21,11 @@ The Secure Vault and Nominees & Personal Records pages encrypt records in the br
 AES-256-GCM before sending ciphertext to the database. A separate vault passphrase derives the
 encryption key; the server does not receive or store that passphrase. Use HTTPS and a strong
 passphrase, and keep it backed up: there is no recovery path if it is lost. The vault is accessible
-to the signed-in user only, not shared with household members. Do not put card CVVs, PINs, or
-one-time codes in the vault. Insurance and investment pages remain separate, and existing card
-records are unaffected; all use the app's standard data storage.
+to the signed-in user only, not shared with household members. Full card numbers, cardholder names,
+expiry dates, CVVs, and card PINs are encrypted in the vault and masked in the record list. Storing
+CVVs and PINs increases risk if the device or vault passphrase is compromised; use a trusted,
+private device. One-time codes are not supported. Insurance and investment pages remain separate,
+and existing card records are unaffected; all use the app's standard data storage.
 
 ## Mobile app
 

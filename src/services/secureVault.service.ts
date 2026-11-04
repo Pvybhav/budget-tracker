@@ -20,6 +20,11 @@ export interface SecureRecord {
   password?: string;
   accountNumber?: string;
   ifscCode?: string;
+  cardholderName?: string;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCvv?: string;
+  cardPin?: string;
   cardLastFour?: string;
   relationship?: string;
   contact?: string;
@@ -44,12 +49,46 @@ const OPTIONAL_STRING_FIELDS = [
   "password",
   "accountNumber",
   "ifscCode",
+  "cardholderName",
+  "cardNumber",
+  "cardExpiry",
+  "cardCvv",
+  "cardPin",
   "cardLastFour",
   "relationship",
   "contact",
   "allocation",
   "notes",
 ];
+
+export function normalizeCardNumber(value: string): string {
+  return value.replace(/[\s-]/g, "");
+}
+
+export function isValidCardNumber(value: string): boolean {
+  const digits = normalizeCardNumber(value);
+  if (!/^\d{12,19}$/.test(digits)) return false;
+  let sum = 0;
+  let doubleDigit = false;
+  for (let index = digits.length - 1; index >= 0; index -= 1) {
+    let digit = Number(digits[index]);
+    if (doubleDigit) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    doubleDigit = !doubleDigit;
+  }
+  return sum % 10 === 0;
+}
+
+export function isValidCardCvv(value: string): boolean {
+  return /^\d{3,4}$/.test(value);
+}
+
+export function isValidCardPin(value: string): boolean {
+  return /^\d{4,6}$/.test(value);
+}
 
 function getCrypto() {
   if (!globalThis.crypto?.subtle || !globalThis.crypto.getRandomValues) {

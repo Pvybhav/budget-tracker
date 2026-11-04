@@ -6,6 +6,10 @@ import {
   deriveVaultKey,
   encryptVaultRecords,
   fetchSecureVault,
+  isValidCardCvv,
+  isValidCardNumber,
+  isValidCardPin,
+  normalizeCardNumber,
   saveSecureVault,
   type SecureRecord,
   type SecureVaultEnvelope,
@@ -109,5 +113,39 @@ describe("secure vault encryption", () => {
 
     await expect(saveSecureVault(vault)).resolves.toBeUndefined();
     expect(apiPut).toHaveBeenCalledWith("/secure-vault", { vault });
+  });
+
+  it("accepts valid card numbers with optional separators and rejects invalid numbers", () => {
+    expect(normalizeCardNumber("4111 1111-1111 1111")).toBe("4111111111111111");
+    expect(isValidCardNumber("4111 1111 1111 1111")).toBe(true);
+    expect(isValidCardNumber("4111 1111 1111 1112")).toBe(false);
+    expect(isValidCardNumber("123")).toBe(false);
+  });
+
+  it("encrypts CVV and PIN with card details", async () => {
+    const card: SecureRecord = {
+      id: "card-1",
+      type: "card",
+      title: "Test card",
+      cardNumber: "4111111111111111",
+      cardExpiry: "12/30",
+      cardCvv: "123",
+      cardPin: "0042",
+    };
+    const key = await createKey();
+    const envelope = await encryptVaultRecords([card], key, "AAECAwQFBgcICQoLDA0ODw");
+
+    expect(envelope.ciphertext).not.toContain("123");
+    expect(envelope.ciphertext).not.toContain("0042");
+    await expect(decryptVaultRecords(envelope, key)).resolves.toEqual([card]);
+  });
+
+  it("validates CVVs and card PIN lengths as digit strings", () => {
+    expect(isValidCardCvv("123")).toBe(true);
+    expect(isValidCardCvv("1234")).toBe(true);
+    expect(isValidCardCvv("12a")).toBe(false);
+    expect(isValidCardPin("0042")).toBe(true);
+    expect(isValidCardPin("123456")).toBe(true);
+    expect(isValidCardPin("123")).toBe(false);
   });
 });

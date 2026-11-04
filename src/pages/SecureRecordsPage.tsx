@@ -7,6 +7,10 @@ import {
   deriveVaultKey,
   encryptVaultRecords,
   fetchSecureVault,
+  isValidCardNumber,
+  isValidCardCvv,
+  isValidCardPin,
+  normalizeCardNumber,
   saveSecureVault,
   type SecureRecord,
   type SecureRecordType,
@@ -21,7 +25,7 @@ const CREDENTIAL_TYPES: { value: SecureRecordType; label: string }[] = [
   { value: "password", label: "Password" },
   { value: "bank-login", label: "Bank account" },
   { value: "netbanking", label: "Netbanking" },
-  { value: "card", label: "Card (last 4 digits only)" },
+  { value: "card", label: "Payment card" },
   { value: "other", label: "Other login" },
 ];
 const PERSONAL_TYPES: { value: SecureRecordType; label: string }[] = [
@@ -47,9 +51,22 @@ export default function SecureRecordsPage({ view }: { view: View }) {
   const [message, setMessage] = useState("");
   const [unlockError, setUnlockError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [draftError, setDraftError] = useState("");
   const [draft, setDraft] = useState<RecordDraft>(() => emptyDraft(allowedTypes[0].value));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
+
+  const isRevealed = (recordId: string, field: string) =>
+    revealedIds.has(`${recordId}:${field}`);
+  const toggleReveal = (recordId: string, field: string) => {
+    const key = `${recordId}:${field}`;
+    setRevealedIds((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   useEffect(() => {
     let active = true;
@@ -148,7 +165,35 @@ export default function SecureRecordsPage({ view }: { view: View }) {
   const saveDraft = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!vaultKey || !draft.title.trim()) return;
-    const record = { ...draft, title: draft.title.trim() };
+    if (draft.type === "card") {
+      if (!draft.cardNumber || !isValidCardNumber(draft.cardNumber)) {
+        setDraftError("Enter a valid card number (12–19 digits). Spaces and hyphens are allowed.");
+        return;
+      }
+      if (!draft.cardExpiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(draft.cardExpiry)) {
+        setDraftError("Enter the card expiry in MM/YY format.");
+        return;
+      }
+      if (draft.cardCvv && !isValidCardCvv(draft.cardCvv)) {
+        setDraftError("CVV must be 3 or 4 digits.");
+        return;
+      }
+      if (draft.cardPin && !isValidCardPin(draft.cardPin)) {
+        setDraftError("Card PIN must be 4 to 6 digits.");
+        return;
+      }
+    }
+    setDraftError("");
+    const record = {
+      ...draft,
+      title: draft.title.trim(),
+      ...(draft.type === "card" && draft.cardNumber
+        ? {
+            cardNumber: normalizeCardNumber(draft.cardNumber),
+            cardLastFour: normalizeCardNumber(draft.cardNumber).slice(-4),
+          }
+        : {}),
+    };
     const updatedRecords = editingId
       ? records.map((item) => (item.id === editingId ? { ...record, id: editingId } : item))
       : [...records, { ...record, id: crypto.randomUUID() }];
@@ -230,21 +275,14 @@ export default function SecureRecordsPage({ view }: { view: View }) {
         <p>
           <span className="text-slate-500">Password: </span>
           <span className="break-all font-mono">
-            {revealedIds.has(record.id) ? record.password : "••••••••"}
+            {isRevealed(record.id, "password") ? record.password : "••••••••"}
           </span>
           <button
             type="button"
             className="ml-2 text-blue-600 hover:underline dark:text-blue-400"
-            onClick={() =>
-              setRevealedIds((current) => {
-                const next = new Set(current);
-                if (next.has(record.id)) next.delete(record.id);
-                else next.add(record.id);
-                return next;
-              })
-            }
+            onClick={() => toggleReveal(record.id, "password")}
           >
-            {revealedIds.has(record.id) ? "Hide" : "Reveal"}
+            {isRevealed(record.id, "password") ? "Hide" : "Reveal"}
           </button>
         </p>
       )}
@@ -260,9 +298,78 @@ export default function SecureRecordsPage({ view }: { view: View }) {
           {record.ifscCode}
         </p>
       )}
-      {record.cardLastFour && (
+      {record.cardholderName && (
+        <p>
+          <span className="text-slate-500">Cardholder: </span>
+          {record.cardholderName}
+        </p>
+      )}
+      {record.cardNumber && (
+        <p className="break-all">
+          <span className="text-slate-500">Card number: </span>
+          <span className="font-mono">
+            {isRevealed(record.id, "cardNumber")
+              ? record.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ")
+              : `${record.cardNumber
+                  .slice(0, -4)
+                  .replace(/\d/g, "•")
+                  .replace(/(.{4})/g, "$1 ")}${record.cardNumber.slice(-4)}`}
+          </span>
+          <button
+            type="button"
+            className="ml-2 text-blue-600 hover:underline dark:text-blue-400"
+            onClick={() => toggleReveal(record.id, "cardNumber")}
+          >
+            {isRevealed(record.id, "cardNumber") ? "Hide" : "Reveal"}
+          </button>
+        </p>
+      )}
+      {!record.cardNumber && record.cardLastFour && (
         <p>
           <span className="text-slate-500">Card ending: </span>•••• {record.cardLastFour}
+        </p>
+      )}
+      {record.cardExpiry && (
+        <p>
+          <span className="text-slate-500">Expiry: </span>
+          {record.cardExpiry}
+        </p>
+      )}
+      {record.cardLastFour && !record.cardNumber && (
+        <p>
+          <span className="text-slate-500">Card ending: </span>•••• {record.cardLastFour}
+        </p>
+      )}
+      {record.cardCvv && (
+        <p>
+          <span className="text-slate-500">CVV: </span>
+          <span className="font-mono">
+            {isRevealed(record.id, "cardCvv") ? record.cardCvv : "••••"}
+          </span>
+          <button
+            type="button"
+            className="ml-2 text-blue-600 hover:underline dark:text-blue-400"
+            aria-label={`${isRevealed(record.id, "cardCvv") ? "Hide" : "Reveal"} CVV for ${record.title}`}
+            onClick={() => toggleReveal(record.id, "cardCvv")}
+          >
+            {isRevealed(record.id, "cardCvv") ? "Hide" : "Reveal"}
+          </button>
+        </p>
+      )}
+      {record.cardPin && (
+        <p>
+          <span className="text-slate-500">Card PIN: </span>
+          <span className="font-mono">
+            {isRevealed(record.id, "cardPin") ? record.cardPin : "••••••"}
+          </span>
+          <button
+            type="button"
+            className="ml-2 text-blue-600 hover:underline dark:text-blue-400"
+            aria-label={`${isRevealed(record.id, "cardPin") ? "Hide" : "Reveal"} card PIN for ${record.title}`}
+            onClick={() => toggleReveal(record.id, "cardPin")}
+          >
+            {isRevealed(record.id, "cardPin") ? "Hide" : "Reveal"}
+          </button>
         </p>
       )}
       {record.relationship && (
@@ -316,7 +423,9 @@ export default function SecureRecordsPage({ view }: { view: View }) {
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
         <p>
           Keep your passphrase safe: it cannot be reset, and lost passphrases mean lost vault data.
-          Never store card CVVs, PINs, or one-time codes. For cards, save only the last four digits.
+          Full card numbers, CVVs, and PINs are encrypted before saving and masked by default. This
+          still increases risk if your device or passphrase is compromised; use a trusted, private
+          device and prefer your bank’s app for sensitive details.
         </p>
       </div>
 
@@ -442,14 +551,37 @@ export default function SecureRecordsPage({ view }: { view: View }) {
                   {renderField("ifscCode", "IFSC / routing code")}
                 </>
               )}
-              {isCredentials &&
-                draft.type === "card" &&
-                renderField("cardLastFour", "Last four digits", {
-                  placeholder: "1234",
-                  maxLength: 4,
-                  pattern: "\\d{4}",
-                  inputMode: "numeric",
-                })}
+              {isCredentials && draft.type === "card" && (
+                <>
+                  {renderField("cardholderName", "Name on card")}
+                  {renderField("cardNumber", "Full card number", {
+                    placeholder: "1234 5678 9012 3456",
+                    maxLength: 23,
+                    pattern: "[\\d\\s-]{12,23}",
+                    inputMode: "numeric",
+                  })}
+                  {renderField("cardExpiry", "Expiry (MM/YY)", {
+                    placeholder: "MM/YY",
+                    maxLength: 5,
+                    pattern: "(0[1-9]|1[0-2])\\/\\d{2}",
+                    inputMode: "numeric",
+                  })}
+                  {renderField("cardCvv", "CVV (optional)", {
+                    type: "password",
+                    placeholder: "3 or 4 digits",
+                    maxLength: 4,
+                    pattern: "\\d{3,4}",
+                    inputMode: "numeric",
+                  })}
+                  {renderField("cardPin", "Card PIN (optional)", {
+                    type: "password",
+                    placeholder: "4 to 6 digits",
+                    maxLength: 6,
+                    pattern: "\\d{4,6}",
+                    inputMode: "numeric",
+                  })}
+                </>
+              )}
               {!isCredentials && draft.type === "nominee" && (
                 <>
                   {renderField("relationship", "Relationship")}
@@ -468,6 +600,11 @@ export default function SecureRecordsPage({ view }: { view: View }) {
                 renderField("accountNumber", "Document / policy reference number")}
               {renderField("notes", "Notes", { wide: true })}
             </div>
+            {draftError && (
+              <p role="alert" className="text-sm text-rose-600">
+                {draftError}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
