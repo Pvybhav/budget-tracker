@@ -30,6 +30,8 @@ import {
   Users,
   Gift,
   WalletCards,
+  KeyRound,
+  ContactRound,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "../utils/cn";
@@ -43,6 +45,8 @@ type LayoutProps = { logout?: () => void };
 const manageNavItems = [
   { name: "Manage Loans", path: "/loans", icon: DollarSign },
   { name: "Manage Insurance", path: "/insurance", icon: ShieldCheck },
+  { name: "Secure Vault", path: "/secure-vault", icon: KeyRound },
+  { name: "Nominees & Personal Records", path: "/personal-records", icon: ContactRound },
   { name: "Manage Expenses (Yearly)", path: "/expenses/yearly", icon: Receipt },
   { name: "EMI Payments", path: "/expenses/emi", icon: Receipt },
   { name: "Manage Categories", path: "/categories", icon: Tags },

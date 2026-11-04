@@ -15,6 +15,16 @@ flow, and core financial services included in the coverage configuration. Tests 
 and routing, API request/error handling, budget forecasts and carryover, recurring dates, and
 currency behavior.
 
+## Secure vault
+
+The Secure Vault and Nominees & Personal Records pages encrypt records in the browser with
+AES-256-GCM before sending ciphertext to the database. A separate vault passphrase derives the
+encryption key; the server does not receive or store that passphrase. Use HTTPS and a strong
+passphrase, and keep it backed up: there is no recovery path if it is lost. The vault is accessible
+to the signed-in user only, not shared with household members. Do not put card CVVs, PINs, or
+one-time codes in the vault. Insurance and investment pages remain separate, and existing card
+records are unaffected; all use the app's standard data storage.
+
 ## Mobile app
 
 The `mobile/` directory contains an Expo React Native companion for Budget Tracker. It mirrors the web app's personal-finance modules, authentication, API synchronization, offline cache, CRUD flows, EMI schedules, budget forecasting, recurring dates, reports, JSON backup/restore, native file sharing, statement import, and household invitations.

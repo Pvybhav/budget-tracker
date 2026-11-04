@@ -16,6 +16,10 @@ vi.mock("./pages/HomePage", () => ({
   default: () => <main>Protected dashboard</main>,
 }));
 
+vi.mock("./pages/SecureRecordsPage", () => ({
+  default: ({ view }: { view: string }) => <main>Secure records {view}</main>,
+}));
+
 function jsonResponse(status: number, body: unknown): Response {
   return {
     ok: status >= 200 && status < 300,
@@ -52,6 +56,18 @@ describe("web app authentication routing", () => {
     render(<App />);
 
     expect(await screen.findByText("Protected dashboard")).toBeTruthy();
+  });
+
+  it.each([
+    ["secure-vault", "credentials"],
+    ["personal-records", "personal"],
+  ])("opens the %s page for an authenticated session", async (path, view) => {
+    window.location.hash = `#/${path}`;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, {})));
+
+    render(<App />);
+
+    expect(await screen.findByText(`Secure records ${view}`)).toBeTruthy();
   });
 
   it("redirects authenticated users away from the login route and handles logout", async () => {

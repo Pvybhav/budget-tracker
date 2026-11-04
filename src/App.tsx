@@ -29,6 +29,7 @@ const NetWorthHistoryPage = lazy(() => import("./pages/NetWorthHistoryPage"));
 const ManageHouseholdPage = lazy(() => import("./pages/ManageHouseholdPage"));
 const AcceptInvitePage = lazy(() => import("./pages/AcceptInvitePage"));
 const RewardsPage = lazy(() => import("./pages/RewardsPage"));
+const SecureRecordsPage = lazy(() => import("./pages/SecureRecordsPage"));
 
 function PageFallback() {
   return (
@@ -62,6 +63,8 @@ function ProtectedApp({ onLogout }: { onLogout: () => void }) {
           <Route path="income" element={<ManageIncomePage />} />
           <Route path="loans" element={<ManageLoansPage />} />
           <Route path="insurance" element={<ManageInsurancePage />} />
+          <Route path="secure-vault" element={<SecureRecordsPage view="credentials" />} />
+          <Route path="personal-records" element={<SecureRecordsPage view="personal" />} />
           <Route path="budget-rules" element={<ManageBudgetRulesPage />} />
           <Route path="savings-goals" element={<SavingsGoalsPage />} />
           <Route path="investments" element={<InvestmentsPage />} />

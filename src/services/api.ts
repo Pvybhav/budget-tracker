@@ -35,6 +35,7 @@ function getRequestMessage(path: string, method: string) {
     "budget-rules": { singular: "budget rule", plural: "budget rules" },
     "savings-goals": { singular: "savings goal", plural: "savings goals" },
     "net-worth-snapshots": { singular: "net-worth snapshot", plural: "net-worth history" },
+    "secure-vault": { singular: "secure vault", plural: "secure vault" },
   };
   const resourceName = Object.prototype.hasOwnProperty.call(messages, resource) || resource === "health"
     ? resource

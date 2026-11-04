@@ -43,6 +43,18 @@ describe("API requests", () => {
     unsubscribe();
   });
 
+  it("uses secure-vault loading text for encrypted vault requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response(200, '{"vault":null}'));
+    vi.stubGlobal("fetch", fetchMock);
+    const loadingMessages: string[] = [];
+    const unsubscribe = onNetworkLoadingChange((_count, message) => loadingMessages.push(message));
+
+    await expect(apiGet<{ vault: null }>("/secure-vault")).resolves.toEqual({ vault: null });
+
+    expect(loadingMessages).toContain("Loading your secure vault…");
+    unsubscribe();
+  });
+
   it("posts and updates JSON with credentials", async () => {
     const fetchMock = vi
       .fn()

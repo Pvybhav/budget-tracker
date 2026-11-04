@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { styles } from "./styles";
@@ -23,7 +23,7 @@ export function SkeletonBlock({
 }
 
 export function SkeletonScreen({ variant, darkMode }: { variant: Screen | "boot"; darkMode: boolean }) {
-  const pulse = useRef(new Animated.Value(0.42)).current;
+  const [pulse] = useState(() => new Animated.Value(0.42));
   useEffect(() => {
     const animation = Animated.loop(Animated.sequence([
       Animated.timing(pulse, { toValue: 0.9, duration: 750, useNativeDriver: true }),

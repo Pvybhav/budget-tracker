@@ -9,7 +9,7 @@ import * as TextExtractor from "expo-text-extractor";
 import * as XLSX from "xlsx";
 import { calcMonthlyEmi, getEmiSchedule } from "../calculations";
 import { parseReceiptText, parseStatementText, parseVoiceExpense, type ImportedStatementRow } from "../parsing";
-import { categoryColors, moduleLabels, money } from "./constants";
+import { moduleLabels, money } from "./constants";
 import { styles } from "./styles";
 import type { AccountOption, Expense, Goal, ModuleItem, ModuleKey } from "./types";
 

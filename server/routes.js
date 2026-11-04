@@ -23,6 +23,7 @@ import {
   NetWorthSnapshot,
   InvestmentTransaction,
   Household,
+  SecureVault,
 } from "./models.js";
 const router = express.Router();
 // Brute-force protection: caps login/signup attempts per IP.
@@ -127,6 +128,63 @@ router.use(
     }
     req.user = payload;
     return next();
+  }),
+);
+const isValidSecureVaultEnvelope = (envelope) =>
+  envelope != null &&
+  typeof envelope === "object" &&
+  envelope.version === 1 &&
+  envelope.kdfIterations === 600000 &&
+  typeof envelope.salt === "string" &&
+  /^[A-Za-z0-9_-]{22}$/.test(envelope.salt) &&
+  typeof envelope.iv === "string" &&
+  /^[A-Za-z0-9_-]{16}$/.test(envelope.iv) &&
+  typeof envelope.ciphertext === "string" &&
+  /^[A-Za-z0-9_-]{24,2800000}$/.test(envelope.ciphertext);
+router.get(
+  "/secure-vault",
+  catchAsync(async (req, res) => {
+    const vault = await SecureVault.findOne({ userId: req.user.actualUserId });
+    if (!vault) return res.json({ vault: null });
+    res.json({
+      vault: {
+        version: vault.version,
+        kdfIterations: vault.kdfIterations,
+        salt: vault.salt,
+        iv: vault.iv,
+        ciphertext: vault.ciphertext,
+      },
+    });
+  }),
+);
+router.put(
+  "/secure-vault",
+  catchAsync(async (req, res) => {
+    const envelope = req.body?.vault;
+    if (!isValidSecureVaultEnvelope(envelope)) {
+      return res.status(400).json({ error: "Invalid encrypted vault data" });
+    }
+    const vault = await SecureVault.findOneAndUpdate(
+      { userId: req.user.actualUserId },
+      {
+        version: envelope.version,
+        kdfIterations: envelope.kdfIterations,
+        salt: envelope.salt,
+        iv: envelope.iv,
+        ciphertext: envelope.ciphertext,
+        userId: req.user.actualUserId,
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
+    );
+    res.json({
+      vault: {
+        version: vault.version,
+        kdfIterations: vault.kdfIterations,
+        salt: vault.salt,
+        iv: vault.iv,
+        ciphertext: vault.ciphertext,
+      },
+    });
   }),
 );
 const ensureDefaultAdminUser = async () => {

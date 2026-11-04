@@ -485,6 +485,17 @@ const householdSchema = new Schema(
   },
   { timestamps: true },
 );
+const secureVaultSchema = new Schema(
+  {
+    userId: { type: String, required: true, unique: true, index: true },
+    version: { type: Number, required: true, enum: [1] },
+    kdfIterations: { type: Number, required: true, enum: [600000] },
+    salt: { type: String, required: true },
+    iv: { type: String, required: true },
+    ciphertext: { type: String, required: true, maxlength: 2_800_000 },
+  },
+  { timestamps: true },
+);
 export const User = model("User", withIdTransform(userSchema));
 export const Card = model("Card", withIdTransform(cardSchema));
 export const Category = model("Category", withIdTransform(categorySchema));
@@ -514,3 +525,4 @@ export const AutoCategorizeRule = model(
 );
 export const NetWorthSnapshot = model("NetWorthSnapshot", withIdTransform(netWorthSnapshotSchema));
 export const Household = model("Household", withIdTransform(householdSchema));
+export const SecureVault = model("SecureVault", withIdTransform(secureVaultSchema));

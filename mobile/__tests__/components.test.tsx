@@ -9,11 +9,11 @@ import {
   Dashboard,
   Expenses,
   Goals,
-  isModuleScreen,
   ModuleScreen,
   More,
 } from "../components/screens";
 import { initialExpenses, initialGoals, initialModules } from "../components/constants";
+import { isModuleScreen } from "../components/screen-helpers";
 
 jest.mock("../api", () => ({
   acceptHouseholdInvite: jest.fn(async () => undefined),

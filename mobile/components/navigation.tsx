@@ -1,9 +1,8 @@
-import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, Easing, Pressable, Text, View } from "react-native";
 import { moduleLabels } from "./constants";
 import { styles } from "./styles";
-import type { ModuleKey, Screen } from "./types";
+import type { Screen } from "./types";
 
 export function TopBar({ screen, onSettings, onAlerts, alertCount, darkMode, user }: { screen: Screen; onSettings: () => void; onAlerts: () => void; alertCount: number; darkMode: boolean; user: { fullName: string } }) {
   const titles: Record<Screen, string> = { dashboard: "Good morning, Alex", expenses: "Expenses", accounts: "Accounts & cards", goals: "Savings goals", more: "More", ...moduleLabels };
@@ -11,8 +10,8 @@ export function TopBar({ screen, onSettings, onAlerts, alertCount, darkMode, use
 }
 
 export function AnimatedScreen({ screen, children }: { screen: Screen; children: React.ReactNode }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(18)).current;
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [translateX] = useState(() => new Animated.Value(18));
   useEffect(() => {
     opacity.setValue(0);
     translateX.setValue(18);
@@ -25,7 +24,7 @@ export function AnimatedScreen({ screen, children }: { screen: Screen; children:
 }
 
 export function PressableScale({ children, onPress, style, accessibilityLabel }: { children: React.ReactNode; onPress: () => void; style?: object; accessibilityLabel?: string }) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const [scale] = useState(() => new Animated.Value(1));
   const animate = (toValue: number) => Animated.spring(scale, { toValue, useNativeDriver: true, damping: 16, stiffness: 260 }).start();
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} onPressIn={() => animate(0.94)} onPressOut={() => animate(1)}><Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View></Pressable>;
 }

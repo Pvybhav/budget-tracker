@@ -43,7 +43,7 @@ jest.mock("../api", () => ({
   syncPendingMutations: jest.fn(async () => ({ synced: 0, remaining: 0 })),
 }));
 
-jest.mock("../widget", () => ({ updateBudgetTrackerWidget: jest.fn() }));
+jest.mock("../widget-service", () => ({ updateBudgetTrackerWidget: jest.fn() }));
 jest.mock("expo-speech-recognition", () => ({
   ExpoSpeechRecognitionModule: {
     stop: jest.fn(),
@@ -177,7 +177,7 @@ describe("mobile app", () => {
       isSupported: jest.Mock;
     };
     const backgroundTask = jest.requireMock("expo-background-task") as { registerTaskAsync: jest.Mock };
-    const widget = jest.requireMock("../widget") as { updateBudgetTrackerWidget: jest.Mock };
+    const widget = jest.requireMock("../widget-service") as { updateBudgetTrackerWidget: jest.Mock };
     const shareIntent = jest.requireMock("expo-share-intent") as { useShareIntent: jest.Mock };
     const snapshot = {
       cards: [{ id: "card-1", title: "Checking" }],
@@ -362,7 +362,7 @@ describe("mobile app", () => {
       error: null,
     }));
     fileSystem.readAsStringAsync.mockImplementationOnce(async () => { throw new Error("file read failed"); });
-    const failed = render(<App />);
+    render(<App />);
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith("Could not open shared content", "file read failed"));
   });
 
