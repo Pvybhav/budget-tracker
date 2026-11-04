@@ -15,6 +15,10 @@
     min-height: 100%;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   main img,
   main video,
   main canvas,
@@ -41,6 +45,12 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  button,
+  a,
+  [role="button"] {
+    @apply transition-colors duration-200 ease-out;
+  }
+
   input,
   textarea,
   select {
@@ -62,7 +72,23 @@
 
 @layer components {
   main table thead {
-    @apply bg-slate-200 dark:bg-slate-800;
+    @apply bg-teal-100 text-teal-950 dark:bg-teal-950/90 dark:text-teal-100;
+  }
+
+  main table thead th {
+    @apply bg-teal-100 text-teal-950 dark:bg-teal-950/90 dark:text-teal-100;
+  }
+
+  main table tbody tr {
+    transition: background-color 160ms ease;
+  }
+
+  main table tbody tr:hover {
+    background-color: rgb(16 185 129 / 0.08) !important;
+  }
+
+  .dark main table tbody tr:hover {
+    background-color: rgb(16 185 129 / 0.12) !important;
   }
 
   .card {
@@ -276,6 +302,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .progress-fill {
     animation: none;
   }

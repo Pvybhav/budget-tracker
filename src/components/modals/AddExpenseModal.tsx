@@ -518,6 +518,9 @@ export default function AddExpenseModal({ isOpen, onClose, initialExpense }: Pro
               name="details"
               value={formData.details}
               onChange={handleChange}
+              onBlur={() =>
+                setFormData((current) => ({ ...current, details: current.details.trim() }))
+              }
               className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-400 dark:placeholder-slate-500"
               placeholder="e.g. Amazon Purchase"
             />

@@ -15,7 +15,7 @@ import { dateOnly, formatDateInput, formatDateOnly } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
 import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
-import { Check, CheckCircle2, Clock3, Eye, Pencil, Trash2 } from "lucide-react";
+import { Check, CheckCircle2, Clock3, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import SortableTableHeader from "../components/SortableTableHeader";
 
 type ExpenseSort =
@@ -77,6 +77,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
   const [selectedEmiExpense, setSelectedEmiExpense] = useState<Expense | null>(null);
+  const [updatingExpenseId, setUpdatingExpenseId] = useState<string | null>(null);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -223,6 +224,15 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / pageSize));
   const visibleExpenses = filteredExpenses.slice((page - 1) * pageSize, page * pageSize);
   const groupExpensesByDate = sortBy === "date-desc" || sortBy === "date-asc";
+  const expenseTotalsByDate = filteredExpenses.reduce((totals, expense) => {
+    const date = dateOnly(expense.date);
+    totals.set(
+      date,
+      (totals.get(date) ?? 0) +
+        convertCurrency(expense.amount, expense.currency, displayCurrency),
+    );
+    return totals;
+  }, new Map<string, number>());
   const visibleExpenseGroups = groupExpensesByDate
     ? Array.from(
         visibleExpenses.reduce((groups, expense) => {
@@ -236,12 +246,14 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           dateKey: date,
           date: formatDateOnly(date),
           expenses: groupedExpenses,
+          total: expenseTotalsByDate.get(date) ?? 0,
         }),
       )
     : visibleExpenses.map((expense, index) => ({
         dateKey: `${dateOnly(expense.date)}-${expense.id ?? index}`,
         date: formatDateOnly(expense.date),
         expenses: [expense],
+        total: convertCurrency(expense.amount, expense.currency, displayCurrency),
       }));
 
   const totalAmount =
@@ -312,7 +324,13 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   };
 
   const handleMarkPaid = async (expense: Expense) => {
-    if (expense.id) await updateExpense(expense.id, { status: "paid" });
+    if (!expense.id) return;
+    setUpdatingExpenseId(expense.id);
+    try {
+      await updateExpense(expense.id, { status: "paid" });
+    } finally {
+      setUpdatingExpenseId(null);
+    }
   };
 
   const handleSkipNext = async (expense: Expense) => {
@@ -368,21 +386,28 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-          {mode === "monthly"
-            ? "Monthly Manage Expenses"
-            : mode === "yearly"
-              ? "Yearly Manage Expenses"
-              : mode === "emi"
-                ? "Manage EMI Payments"
-                : "Manage Expenses"}
-        </h1>
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+            {mode === "monthly"
+              ? "Monthly Manage Expenses"
+              : mode === "yearly"
+                ? "Yearly Manage Expenses"
+                : mode === "emi"
+                  ? "EMI payments"
+                  : "Manage Expenses"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {mode === "emi"
+              ? "Review installments, compare plan balances, and open a schedule for payment details."
+              : "Review and organize your transactions with flexible filters."}
+          </p>
+        </div>
         <button
           onClick={openAddModal}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shrink-0 whitespace-nowrap self-start sm:self-auto"
         >
-          Add Expense
+          {mode === "emi" ? "Add EMI plan" : "Add Expense"}
         </button>
       </div>
 
@@ -421,7 +446,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr] xl:gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
           <span>Search expenses</span>
           <input
@@ -488,16 +513,22 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </select>
         </label>
 
-        <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
+        <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400 xl:col-span-2">
           <span>Quick filters</span>
           <div className="flex flex-wrap gap-2">
             {(
-              [
-                { label: "All", status: "all", emi: false },
-                { label: "Pending", status: "pending", emi: false },
-                { label: "Paid", status: "paid", emi: false },
-                { label: "EMI", status: "all", emi: true },
-              ] as const
+              mode === "emi"
+                ? ([
+                    { label: "All plans", status: "all", emi: false },
+                    { label: "Pending", status: "pending", emi: false },
+                    { label: "Paid", status: "paid", emi: false },
+                  ] as const)
+                : ([
+                    { label: "All", status: "all", emi: false },
+                    { label: "Pending", status: "pending", emi: false },
+                    { label: "Paid", status: "paid", emi: false },
+                    { label: "EMI", status: "all", emi: true },
+                  ] as const)
             ).map((filter) => {
               const active =
                 selectedStatus === filter.status && showEmiOnly === filter.emi;
@@ -717,6 +748,9 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                       className="py-2 pl-3 text-sm font-semibold text-slate-800 dark:text-slate-200"
                     >
                       {group.date}
+                      <span className="ml-3 font-semibold text-emerald-700 dark:text-emerald-300">
+                        {formatMoney(group.total, displayCurrency)}
+                      </span>
                       <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
                         {group.expenses.length}{" "}
                         {group.expenses.length === 1 ? "expense" : "expenses"}
@@ -903,10 +937,15 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
                         <button
                           type="button"
                           onClick={() => void handleMarkPaid(expense)}
-                          className="mr-3 rounded p-1.5 text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
+                          disabled={updatingExpenseId === expense.id}
+                          className="mr-3 rounded p-1.5 text-emerald-700 hover:text-emerald-600 disabled:cursor-wait disabled:opacity-60 dark:text-emerald-400 dark:hover:text-emerald-300"
                           aria-label="Mark expense paid"
                         >
-                          <Check className="h-4 w-4" />
+                          {updatingExpenseId === expense.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
                         </button>
                       </Tooltip>
                     )}

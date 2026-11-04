@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { X, AlertTriangle } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface Options {
   title?: string;
@@ -75,51 +76,11 @@ export function showConfirm(message: string, opts: Options = {}) {
 export default showConfirm;
 
 export function showAlert(message: string, opts: { title?: string; okText?: string } = {}) {
-  return new Promise<void>((resolve) => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const root = createRoot(container);
-
-    const handleClose = () => {
-      resolve();
-      setTimeout(() => {
-        try {
-          root.unmount();
-        } catch {
-          // Ignore errors during unmounting, as the component may have already been unmounted
-        }
-        container.remove();
-      }, 100);
-    };
-
-    function Alert() {
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={handleClose} />
-          <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex items-start gap-3">
-              <div className="rounded-md bg-emerald-400/10 p-2 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-slate-100">{opts.title ?? "Notice"}</div>
-                <div className="text-sm text-slate-400 mt-1">{message}</div>
-              </div>
-            </div>
-
-            <div className="p-4 flex items-center justify-end">
-              <button
-                onClick={handleClose}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                {opts.okText ?? "OK"}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    root.render(React.createElement(Alert));
-  });
+  toast.info(
+    <div>
+      {opts.title && <strong className="mb-1 block">{opts.title}</strong>}
+      <span>{message}</span>
+    </div>,
+  );
+  return Promise.resolve();
 }

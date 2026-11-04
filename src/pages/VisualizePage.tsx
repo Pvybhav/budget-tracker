@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../context/ThemeContextCore";
 import { useBackendResource } from "../services/backendHooks";
 import {
   BarChart,
@@ -149,6 +150,10 @@ const COLORS = [
 
 export default function VisualizePage() {
   const displayCurrency = useDisplayCurrency();
+  const { theme } = useTheme();
+  const axisColor = theme === "dark" ? "#cbd5e1" : "#475569";
+  const gridColor = theme === "dark" ? "#334155" : "#cbd5e1";
+  const legendStyle = { color: axisColor, fontSize: 12 };
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -215,9 +220,9 @@ export default function VisualizePage() {
     })
     .filter((d) => d.amount > 0);
 
-  // 3. Total trend for the last 6 months
-  const monthlyTrendData = Array.from({ length: 6 }, (_, index) => {
-    const date = new Date(currentYear, currentMonth - (5 - index), 1);
+  // 3. Total trend for the last 12 months
+  const monthlyTrendData = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(currentYear, currentMonth - (11 - index), 1);
     const label = date.toLocaleString("default", {
       month: "short",
       year: "numeric",
@@ -247,9 +252,9 @@ export default function VisualizePage() {
   // 4. Category share by month and year
   const categoryShareMonthlyData = monthlyCategoryData;
   const categoryShareYearlyData = yearlyCategoryData;
-  // 5. Income vs Expense for the last 6 months
-  const incomeVsExpenseData = Array.from({ length: 6 }, (_, index) => {
-    const date = new Date(currentYear, currentMonth - (5 - index), 1);
+  // 5. Income vs Expense for the last 12 months
+  const incomeVsExpenseData = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(currentYear, currentMonth - (11 - index), 1);
     const label = date.toLocaleString("default", { month: "short", year: "numeric" });
     const expenseTotal = expenses
       .filter((exp) => {
@@ -286,7 +291,7 @@ export default function VisualizePage() {
         ["Month", `Spending (${displayCurrency})`],
         ...monthlyTrendData.map((row) => [row.month, row.amount]),
         [],
-        ["Total (6 months)", monthlyTrendData.reduce((sum, row) => sum + row.amount, 0)],
+        ["Total (12 months)", monthlyTrendData.reduce((sum, row) => sum + row.amount, 0)],
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(trendSheet), "Spending Trend");
       if (categoryShareMonthlyData.length > 0) {
@@ -399,23 +404,24 @@ export default function VisualizePage() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        <ChartCard title="Spending Trend (Last 6 Months)">
+        <ChartCard title="Spending Trend (Last 12 Months)">
           
           {monthlyTrendData.some((row) => row.amount > 0) ? (
             <ResponsiveContainer width="100%" height="100%">
               
               <LineChart data={monthlyTrendData}>
                 
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                 <XAxis
                   dataKey="month"
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
+                  interval="preserveStartEnd"
                 />
                 <YAxis
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -423,7 +429,7 @@ export default function VisualizePage() {
                 />
                 <Tooltip
                   content={<TrendTooltip currency={displayCurrency} />}
-                  cursor={{ stroke: "#1e293b", strokeWidth: 2 }}
+                  cursor={{ stroke: gridColor, strokeWidth: 2 }}
                 />
                 <Line
                   type="monotone"
@@ -452,10 +458,10 @@ export default function VisualizePage() {
                 margin={{ top: 0, right: 0, left: 0, bottom: 24 }}
               >
                 
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                 <XAxis
                   dataKey="name"
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -465,7 +471,7 @@ export default function VisualizePage() {
                   height={60}
                 />
                 <YAxis
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -473,7 +479,7 @@ export default function VisualizePage() {
                 />
                 <Tooltip
                   content={<CustomTooltip currency={displayCurrency} />}
-                  cursor={{ fill: "#1e293b" }}
+                  cursor={{ fill: gridColor }}
                 />
                 <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -502,7 +508,10 @@ export default function VisualizePage() {
                   dataKey="amount"
                 />
                 <Tooltip content={<CustomTooltip currency={displayCurrency} />} />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ paddingTop: "20px", ...legendStyle }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -529,7 +538,10 @@ export default function VisualizePage() {
                   dataKey="amount"
                 />
                 <Tooltip content={<CustomTooltip currency={displayCurrency} />} />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ paddingTop: "20px", ...legendStyle }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -542,23 +554,24 @@ export default function VisualizePage() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        <ChartCard title="Income vs Expense (Last 6 Months)">
+        <ChartCard title="Income vs Expense (Last 12 Months)">
           
           {incomeVsExpenseData.some((row) => row.income > 0 || row.expense > 0) ? (
             <ResponsiveContainer width="100%" height="100%">
               
               <BarChart data={incomeVsExpenseData}>
                 
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                 <XAxis
                   dataKey="month"
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
+                  interval="preserveStartEnd"
                 />
                 <YAxis
-                  stroke="#94a3b8"
+                  stroke={axisColor}
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -567,7 +580,7 @@ export default function VisualizePage() {
                 <Tooltip
                   content={<IncomeExpenseTooltip currency={displayCurrency} />}
                 />
-                <Legend />
+                <Legend wrapperStyle={legendStyle} />
                 <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -596,7 +609,10 @@ export default function VisualizePage() {
                   dataKey="amount"
                 />
                 <Tooltip content={<CustomTooltip currency={displayCurrency} />} />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ paddingTop: "20px", ...legendStyle }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (

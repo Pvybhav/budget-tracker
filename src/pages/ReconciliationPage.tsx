@@ -16,7 +16,7 @@ export default function ReconciliationPage() {
   const categories = useBackendResource(() => fetchCategories(), []);
   const [accountId, setAccountId] = useState("all");
   const [categoryId, setCategoryId] = useState("all");
-  const [status, setStatus] = useState<"all" | "unverified" | "verified">("all");
+  const [status, setStatus] = useState<"all" | "unverified" | "verified">("unverified");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -64,14 +64,14 @@ export default function ReconciliationPage() {
   const filtersActive =
     accountId !== "all" ||
     categoryId !== "all" ||
-    status !== "all" ||
+    status !== "unverified" ||
     search.trim().length > 0 ||
     dateFrom !== "" ||
     dateTo !== "";
   const resetFilters = () => {
     setAccountId("all");
     setCategoryId("all");
-    setStatus("all");
+    setStatus("unverified");
     setSearch("");
     setDateFrom("");
     setDateTo("");
