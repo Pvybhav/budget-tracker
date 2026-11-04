@@ -10,28 +10,36 @@ import {
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { getBalanceMonthAmountForExpense } from "../services/card.service";
 
-function isCurrentMonth(date: string) {
+function isCurrentMonth(date: string, year: number, month: number) {
   const value = new Date(date);
-  const now = new Date();
-  return value.getFullYear() === now.getFullYear() && value.getMonth() === now.getMonth();
+  return value.getFullYear() === year && value.getMonth() === month;
 }
 
 export default function DashboardSummary() {
   const displayCurrency = useDisplayCurrency();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const incomes = useBackendResource(() => fetchIncomes(), []);
   const bills = useBackendResource(() => fetchBills(), []);
   const savingsGoals = useBackendResource(() => fetchSavingsGoals(), []);
   const summary = useMemo(() => {
+    const month = new Date(currentYear, currentMonth, 1);
     const spent = (expenses ?? []).reduce(
       (total, expense) =>
-        total + convertCurrency(getBalanceMonthAmountForExpense(expense, new Date()), expense.currency, displayCurrency),
+        total +
+        convertCurrency(
+          getBalanceMonthAmountForExpense(expense, month),
+          expense.currency,
+          displayCurrency,
+        ),
       0,
     );
     const income = (incomes ?? []).reduce(
       (total, entry) =>
         total +
-        (isCurrentMonth(entry.date)
+        (isCurrentMonth(entry.date, currentYear, currentMonth)
           ? convertCurrency(entry.amount, entry.currency, displayCurrency)
           : 0),
       0,
@@ -39,7 +47,9 @@ export default function DashboardSummary() {
     const billPayments = (bills ?? []).reduce(
       (total, bill) =>
         total +
-        (bill.paid && bill.paidDate && isCurrentMonth(bill.paidDate)
+        (bill.paid &&
+        bill.paidDate &&
+        isCurrentMonth(bill.paidDate, currentYear, currentMonth)
           ? convertCurrency(bill.amount, bill.currency, displayCurrency)
           : 0),
       0,
@@ -49,7 +59,7 @@ export default function DashboardSummary() {
       0,
     );
     return { spent, income, billPayments, savings, remaining: income - spent - billPayments };
-  }, [expenses, incomes, bills, savingsGoals, displayCurrency]);
+  }, [expenses, incomes, bills, savingsGoals, displayCurrency, currentYear, currentMonth]);
 
   const metrics = [
     { label: "Spent", value: summary.spent, icon: ArrowDownRight, color: "text-rose-500" },

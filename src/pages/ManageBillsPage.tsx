@@ -116,7 +116,7 @@ export default function ManageBillsPage() {
   };
   const markPaid = async (bill: Bill) => {
     if (bill.paid) {
-      if (bill.id) await updateBill(bill.id, { paid: false });
+      if (bill.id) await updateBill(bill.id, { paid: false, paidDate: undefined });
       return;
     }
     setBillToPay(bill);

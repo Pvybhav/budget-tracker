@@ -32,6 +32,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
     amount: "",
     dueDate: today(),
     paid: false,
+    paidDate: "",
     note: "",
     isSubscription: false,
     subscriptionFrequency: "monthly" as NonNullable<Bill["subscriptionFrequency"]>,
@@ -47,6 +48,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         amount: initialBill.amount.toString(),
         dueDate: dateOnly(initialBill.dueDate),
         paid: initialBill.paid,
+        paidDate: initialBill.paidDate ? dateOnly(initialBill.paidDate) : initialBill.paid ? today() : "",
         note: initialBill.note ?? "",
         isSubscription: Boolean(initialBill.isSubscription),
         subscriptionFrequency: initialBill.subscriptionFrequency ?? "monthly",
@@ -60,6 +62,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
         amount: "",
         dueDate: today(),
         paid: false,
+        paidDate: "",
         note: "",
         isSubscription: false,
         subscriptionFrequency: "monthly",
@@ -76,6 +79,16 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
       e.target instanceof HTMLInputElement && e.target.type === "checkbox"
         ? e.target.checked
         : e.target.value;
+
+    if (e.target.name === "paid") {
+      setFormData({
+        ...formData,
+        paid: value as boolean,
+        paidDate: value ? formData.paidDate || today() : "",
+      });
+      return;
+    }
+
     setFormData({ ...formData, [e.target.name]: value });
   };
   const handleSubmit = async (e: React.SubmitEvent) => {
@@ -88,6 +101,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
       amount: Number.parseFloat(formData.amount),
       dueDate: formData.dueDate,
       paid: formData.paid,
+      paidDate: formData.paid ? formData.paidDate || today() : undefined,
       note: formData.note.trim() || undefined,
       isSubscription: formData.isSubscription,
       subscriptionFrequency: formData.isSubscription ? formData.subscriptionFrequency : undefined,
@@ -264,7 +278,7 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               />
             </div>
           </div>
-          <div>
+          <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <input
                 type="checkbox"
@@ -275,6 +289,24 @@ export default function AddBillModal({ isOpen, onClose, initialBill }: Readonly<
               />
               Already paid
             </label>
+            {formData.paid && (
+              <div>
+                <label
+                  htmlFor="bill-paid-date"
+                  className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400"
+                >
+                  Paid Date
+                </label>
+                <input
+                  id="bill-paid-date"
+                  type="date"
+                  name="paidDate"
+                  value={formData.paidDate}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            )}
           </div>
           <div>
             <label
