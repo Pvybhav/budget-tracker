@@ -32,6 +32,39 @@ function parseDate(value: string) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
+function parseCalendarDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return parseDate(value);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) return parseDate(value);
+  return parsed;
+}
+
+function calendarToday(now: Date) {
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+function addCalendarMonths(date: Date, months: number) {
+  const targetMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
+  const lastDay = new Date(Date.UTC(targetMonth.getUTCFullYear(), targetMonth.getUTCMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(
+    targetMonth.getUTCFullYear(),
+    targetMonth.getUTCMonth(),
+    Math.min(date.getUTCDate(), lastDay),
+  ));
+}
+
+function formatCalendarDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export type RecurringRecord = {
   date: string;
   recurringFrequency?: "weekly" | "monthly" | "yearly";
@@ -41,15 +74,22 @@ export type RecurringRecord = {
 
 export function getNextRecurringDue(record: RecurringRecord, now = new Date()) {
   if (!record.recurringFrequency) return null;
-  const next = parseDate(record.date);
+  const start = parseCalendarDate(record.date);
+  const today = calendarToday(now);
   const interval = Math.max(1, record.recurringInterval ?? 1);
-  while (next <= now) {
-    if (record.recurringFrequency === "weekly") next.setDate(next.getDate() + 7 * interval);
-    else if (record.recurringFrequency === "yearly") next.setFullYear(next.getFullYear() + interval);
-    else next.setMonth(next.getMonth() + interval);
+  let occurrences = 0;
+  let next = start;
+  while (next <= today) {
+    occurrences += 1;
+    if (record.recurringFrequency === "weekly") {
+      next = new Date(start);
+      next.setUTCDate(next.getUTCDate() + 7 * interval * occurrences);
+    } else {
+      next = addCalendarMonths(start, (record.recurringFrequency === "yearly" ? 12 : 1) * interval * occurrences);
+    }
   }
-  if (record.recurringEndDate && next > parseDate(record.recurringEndDate)) return null;
-  return next.toISOString().slice(0, 10);
+  if (record.recurringEndDate && next > parseCalendarDate(record.recurringEndDate)) return null;
+  return formatCalendarDate(next);
 }
 
 export function calculateBudgetCarryover(budget: number, spent: number, previousCarryover = 0) {
@@ -76,18 +116,19 @@ export type InsurancePolicyInput = {
 
 export function getInsuranceSummary(policy: InsurancePolicyInput, today = new Date()) {
   const payments = policy.premiumPayments ?? [];
-  const lastPaid = payments.map((payment) => parseDate(payment.date)).sort((a, b) => b.getTime() - a.getTime())[0];
-  const nextDue = lastPaid ? new Date(lastPaid) : parseDate(policy.startDate);
+  const lastPaid = payments.map((payment) => parseCalendarDate(payment.date)).sort((a, b) => b.getTime() - a.getTime())[0];
+  let nextDue = parseCalendarDate(policy.startDate);
   if (lastPaid) {
     const months = policy.premiumFrequency === "monthly" ? 1 : policy.premiumFrequency === "quarterly" ? 3 : policy.premiumFrequency === "half-yearly" ? 6 : 12;
-    nextDue.setMonth(nextDue.getMonth() + months);
+    nextDue = addCalendarMonths(lastPaid, months);
   }
-  const daysUntilDue = Math.ceil((nextDue.getTime() - today.getTime()) / 86400000);
+  const todayDate = calendarToday(today);
+  const daysUntilDue = (nextDue.getTime() - todayDate.getTime()) / 86400000;
   return {
-    nextDueDate: nextDue.toISOString().slice(0, 10),
+    nextDueDate: formatCalendarDate(nextDue),
     daysUntilDue,
     totalPaid: payments.reduce((sum, payment) => sum + payment.amount, 0),
-    status: policy.endDate && parseDate(policy.endDate) < today ? "expired" : daysUntilDue <= 0 ? "due" : daysUntilDue <= 15 ? "upcoming" : "ok",
+    status: policy.endDate && parseCalendarDate(policy.endDate) < todayDate ? "expired" : daysUntilDue <= 0 ? "due" : daysUntilDue <= 15 ? "upcoming" : "ok",
   };
 }
 
@@ -139,23 +180,19 @@ export function getEmiSchedule(
   const monthlyRate = annualRatePct / 100 / 12;
   const monthlyPayment = calcMonthlyEmi(principal, annualRatePct, months);
   let balance = principal;
-  const start = new Date(`${startDate.slice(0, 10)}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const start = parseCalendarDate(startDate);
+  const today = calendarToday(new Date());
   return Array.from({ length: months }, (_, index) => {
-    const due = new Date(start);
-    due.setMonth(due.getMonth() + index);
+    const due = addCalendarMonths(start, index);
     const interestAmount = monthlyRate > 0 ? balance * monthlyRate : 0;
     let principalAmount = monthlyPayment - interestAmount;
     if (index === months - 1) principalAmount = balance;
     const paymentAmount = principalAmount + interestAmount;
     balance = Math.max(0, balance - principalAmount);
-    const dueDay = new Date(due);
-    dueDay.setHours(0, 0, 0, 0);
-    const status = dueDay < today ? "completed" : dueDay.getFullYear() === today.getFullYear() && dueDay.getMonth() === today.getMonth() ? "due" : "upcoming";
+    const status = due < today ? "completed" : due.getUTCFullYear() === today.getUTCFullYear() && due.getUTCMonth() === today.getUTCMonth() ? "due" : "upcoming";
     return {
       paymentNumber: index + 1,
-      dueDate: due.toISOString().slice(0, 10),
+      dueDate: formatCalendarDate(due),
       paymentAmount,
       principalAmount,
       interestAmount,

@@ -51,6 +51,17 @@ describe("recurring records", () => {
     )).toBeNull();
     expect(getNextRecurringDue({ date: "2025-01-01" })).toBeNull();
   });
+
+  it("keeps month-end recurring dates aligned across short months", () => {
+    expect(getNextRecurringDue(
+      { date: "2025-01-31", recurringFrequency: "monthly" },
+      new Date("2025-02-01T12:00:00Z"),
+    )).toBe("2025-02-28");
+    expect(getNextRecurringDue(
+      { date: "2025-01-31", recurringFrequency: "monthly" },
+      new Date("2025-02-28T12:00:00Z"),
+    )).toBe("2025-03-31");
+  });
 });
 
 describe("financial summaries", () => {
@@ -74,19 +85,29 @@ describe("financial summaries", () => {
         { amount: 125, date: "2025-04-01" },
       ],
     };
-    expect(getInsuranceSummary(policy, new Date("2025-04-20T00:00:00Z"))).toMatchObject({
+    expect(getInsuranceSummary(policy, new Date("2025-04-20T12:00:00Z"))).toMatchObject({
       nextDueDate: "2025-07-01",
       totalPaid: 225,
       status: "ok",
     });
     expect(getInsuranceSummary(
       { ...policy, endDate: "2025-04-10" },
-      new Date("2025-04-20T00:00:00Z"),
+      new Date("2025-04-20T12:00:00Z"),
     ).status).toBe("expired");
     expect(getInsuranceSummary(
       { ...policy, startDate: "2025-04-01", premiumPayments: [] },
-      new Date("2025-04-01T00:00:00Z"),
+      new Date("2025-04-01T12:00:00Z"),
     ).status).toBe("due");
+  });
+
+  it("clamps monthly premium dates to month end without drifting", () => {
+    const summary = getInsuranceSummary({
+      startDate: "2025-01-31",
+      premiumFrequency: "monthly",
+      premiumPayments: [{ amount: 100, date: "2025-01-31" }],
+    }, new Date("2025-02-01T12:00:00Z"));
+    expect(summary.nextDueDate).toBe("2025-02-28");
+    expect(summary.daysUntilDue).toBe(27);
   });
 });
 
@@ -118,6 +139,15 @@ describe("EMI calculations", () => {
     expect(schedule[0].status).toBe("upcoming");
     expect(schedule.reduce((sum, entry) => sum + entry.principalAmount, 0)).toBeCloseTo(1000);
     expect(schedule.at(-1)?.remainingBalance).toBe(0);
+  });
+
+  it("keeps installment dates on the original day after short months", () => {
+    const schedule = getEmiSchedule(1000, 0, 3, "2099-01-31");
+    expect(schedule.map((entry) => entry.dueDate)).toEqual([
+      "2099-01-31",
+      "2099-02-28",
+      "2099-03-31",
+    ]);
   });
 });
 
