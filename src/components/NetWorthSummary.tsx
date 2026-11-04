@@ -8,7 +8,7 @@ import {
   fetchPayments,
   fetchInvestments,
 } from "../services/backend.service";
-import { getCardMetrics } from "../services/card.service";
+import { getCardMetrics, getPaymentDebitForAccount } from "../services/card.service";
 import { getAccountTypeLabel, getLoanRemainingBalance } from "../services/netWorth.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
 export default function NetWorthSummary() {
@@ -31,7 +31,9 @@ export default function NetWorthSummary() {
         cards,
       );
       const balance = convertCurrency(
-        card.type === "credit" ? (metrics.amountOwed ?? 0) : Math.max(0, metrics.currentBalance),
+        card.type === "credit"
+          ? (metrics.amountOwed ?? 0)
+          : Math.max(0, metrics.currentBalance - getPaymentDebitForAccount(card, payments)),
         card.currency,
         displayCurrency,
       );

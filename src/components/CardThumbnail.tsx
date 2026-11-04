@@ -3,7 +3,11 @@ import { type Card } from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import { fetchExpenses, fetchPayments } from "../services/backend.service";
 import { CreditCard, CalendarDays, AlertCircle, Zap } from "lucide-react";
-import { getCardMetrics, getCreditUtilization } from "../services/card.service";
+import {
+  getCardMetrics,
+  getCreditUtilization,
+  getPaymentDebitForAccount,
+} from "../services/card.service";
 import { formatConverted, useDisplayCurrency } from "../services/currency.service";
 import { ACCOUNT_TYPE_ICONS, CARD_ICONS } from "../utils/typeIcons";
 import sbiLogo from "../assets/banks/sbi.svg";
@@ -26,15 +30,16 @@ export default function CardThumbnail({ card }: { card: Card }) {
     () => fetchExpenses().then((items) => items.filter((item) => item.cardId === card.id!)),
     [card.id],
   );
-  const payments = useBackendResource(
-    () => fetchPayments().then((items) => items.filter((item) => item.cardId === card.id!)),
-    [card.id],
-  );
+  const payments = useBackendResource(() => fetchPayments(), []);
   if (!expenses || !payments)
     return (
       <div className="p-6 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl animate-pulse aspect-[1.586/1]"></div>
     );
   const metrics = getCardMetrics(card, expenses, payments, []);
+  const accountBalance = Math.max(
+    0,
+    metrics.availableLimit - getPaymentDebitForAccount(card, payments),
+  );
   const {
     amountToPayNext,
     availableLimit,
@@ -138,7 +143,7 @@ export default function CardThumbnail({ card }: { card: Card }) {
               </p>
               <p className="text-lg font-medium text-emerald-400 tracking-wide drop-shadow-sm truncate">
                 
-                {formatConverted(availableLimit, card.currency, displayCurrency)}
+                {formatConverted(card.type === "credit" ? availableLimit : accountBalance, card.currency, displayCurrency)}
               </p>
             </div>
             <div className="bg-black/20 p-3 rounded-xl border border-white/5 backdrop-blur-sm">

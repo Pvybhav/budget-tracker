@@ -1,6 +1,17 @@
 import type { Card, Expense, Payment } from "../db/db";
-import { formatMoney } from "./currency.service";
+import { convertCurrency, formatMoney } from "./currency.service";
 import { formatDateInput } from "../utils/date";
+
+export function getPaymentDebitForAccount(account: Card, payments: Payment[]): number {
+  if (!account.id) return 0;
+  return payments.reduce(
+    (total, payment) =>
+      payment.sourceAccountId === account.id
+        ? total + convertCurrency(payment.amount, payment.currency, account.currency)
+        : total,
+    0,
+  );
+}
 
 /**
  * Months between two dates (year*12 + month arithmetic — ignores day).

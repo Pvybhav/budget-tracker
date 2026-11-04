@@ -13,7 +13,7 @@ import {
   fetchTransfers,
   fetchNetWorthSnapshots,
 } from "../services/backend.service";
-import { getCardMetrics } from "../services/card.service";
+import { getCardMetrics, getPaymentDebitForAccount } from "../services/card.service";
 import { getLoanRemainingBalance } from "../services/netWorth.service";
 import { formatDateOnly } from "../utils/date";
 import { createNetWorthSnapshot } from "../services/backendSync";
@@ -51,7 +51,14 @@ export default function NetWorthHistoryPage() {
         total +
         (card.type === "credit"
           ? 0
-          : convertCurrency(metrics.currentBalance, card.currency, displayCurrency) +
+          : convertCurrency(
+              Math.max(
+                0,
+                metrics.currentBalance - getPaymentDebitForAccount(card, payments),
+              ),
+              card.currency,
+              displayCurrency,
+            ) +
             incoming -
             outgoing)
       );

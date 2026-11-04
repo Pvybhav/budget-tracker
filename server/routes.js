@@ -597,6 +597,16 @@ router.post(
     if (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))) {
       return res.status(400).json({ error: "Payment account must exist" });
     }
+    if (req.body.sourceAccountId != null) {
+      const sourceAccountId = toRecordId(req.body.sourceAccountId);
+      const sourceAccount =
+        sourceAccountId == null
+          ? null
+          : await Card.findOne({ _id: sourceAccountId, userId: req.user.userId });
+      if (!sourceAccount || sourceAccountId === cardId || sourceAccount.type === "credit") {
+        return res.status(400).json({ error: "Payment source must be a different non-credit account" });
+      }
+    }
     const payment = await createWithId(Payment, req.body, req.user.userId);
     res.status(201).json(payment);
   }),
@@ -616,12 +626,24 @@ router.put(
   catchAsync(async (req, res) => {
     const id = toRecordId(req.params.id);
     if (id == null) return res.status(400).json({ error: "Invalid payment id" });
+    const existingPayment = await Payment.findOne({ _id: id, userId: req.user.userId });
+    if (!existingPayment) return res.status(404).json({ error: "Payment not found" });
+    if (req.body.sourceAccountId != null) {
+      const sourceAccountId = toRecordId(req.body.sourceAccountId);
+      const sourceAccount =
+        sourceAccountId == null
+          ? null
+          : await Card.findOne({ _id: sourceAccountId, userId: req.user.userId });
+      const cardId = req.body.cardId == null ? existingPayment.cardId : toRecordId(req.body.cardId);
+      if (!sourceAccount || !cardId || sourceAccountId === cardId || sourceAccount.type === "credit") {
+        return res.status(400).json({ error: "Payment source must be a different non-credit account" });
+      }
+    }
     const payment = await Payment.findOneAndUpdate(
       { _id: id, userId: req.user.userId },
       stripProtectedFields(req.body),
       { new: true, runValidators: true },
     );
-    if (!payment) return res.status(404).json({ error: "Payment not found" });
     res.json(payment);
   }),
 );

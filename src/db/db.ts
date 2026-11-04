@@ -93,6 +93,7 @@ export interface Expense {
 export interface Payment {
   id?: string;
   cardId: string;
+  sourceAccountId?: string;
   amount: number;
   date: string;
   note?: string;

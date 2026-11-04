@@ -3,7 +3,11 @@ import { useBackendResource } from "../services/backendHooks";
 import { type Card } from "../db/db";
 import AddCardModal from "../components/modals/AddCardModal";
 import showConfirm from "../components/Confirm";
-import { getCardMetrics, getCreditUtilization } from "../services/card.service";
+import {
+  getCardMetrics,
+  getCreditUtilization,
+  getPaymentDebitForAccount,
+} from "../services/card.service";
 import { deleteCard } from "../services/backendSync";
 import {
   fetchCards,
@@ -156,7 +160,14 @@ export default function ManageCardsPage() {
             const balance =
               card.type === "credit"
                 ? metrics.currentBalance
-                : metrics.currentBalance + accountIncome + transferIn - transferOut;
+                : Math.max(
+                    0,
+                    metrics.currentBalance +
+                  accountIncome +
+                  transferIn -
+                  transferOut -
+                      getPaymentDebitForAccount(card, payments ?? []),
+                  );
             return convertCurrency(balance, card.currency, displayCurrency);
           },
           utilization: ({ card }) => {
@@ -527,7 +538,14 @@ export default function ManageCardsPage() {
                 const currentBalance =
                   card.type === "credit"
                     ? metrics.currentBalance
-                    : metrics.currentBalance + accountIncome + transferIn - transferOut;
+                    : Math.max(
+                        0,
+                        metrics.currentBalance +
+                      accountIncome +
+                      transferIn -
+                      transferOut -
+                          getPaymentDebitForAccount(card, payments ?? []),
+                      );
                 const utilization =
                   card.type === "credit"
                     ? getCreditUtilization(card.totalLimit ?? 0, currentBalance)

@@ -163,6 +163,7 @@ const paymentSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     cardId: { type: ObjectId, ref: "Card", required: true },
+    sourceAccountId: { type: ObjectId, ref: "Card" },
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
     dateTimezoneVersion: { type: Number, default: 2, select: false },

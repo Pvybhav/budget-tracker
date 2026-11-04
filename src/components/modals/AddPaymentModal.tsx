@@ -27,6 +27,7 @@ export default function AddPaymentModal({
   const cards = useBackendResource(() => fetchCards(), []);
   const [formData, setFormData] = useState({
     cardId: "",
+    sourceAccountId: "",
     amount: "",
     date: currentDateTimeInput(),
     note: "",
@@ -37,6 +38,7 @@ export default function AddPaymentModal({
     if (initialPayment) {
       setFormData({
         cardId: initialPayment.cardId.toString(),
+        sourceAccountId: initialPayment.sourceAccountId ?? "",
         amount: initialPayment.amount.toString(),
         date: dateTimeInput(initialPayment.date),
         note: initialPayment.note ?? "",
@@ -46,6 +48,7 @@ export default function AddPaymentModal({
       const defaultDate = currentDateTimeInput();
       setFormData({
         cardId: defaultPayment?.cardId ?? "",
+        sourceAccountId: "",
         amount: defaultPayment?.amount?.toString() ?? "",
         date: defaultDate,
         note: "",
@@ -59,6 +62,9 @@ export default function AddPaymentModal({
     initialPayment,
     isOpen,
   ]);
+  const sourceAccounts = (cards ?? []).filter(
+    (card) => card.id && card.id !== formData.cardId && card.type !== "credit",
+  );
 
   if (!isOpen) return null;
 
@@ -98,9 +104,14 @@ export default function AddPaymentModal({
       await showAlert("Please select a card");
       return;
     }
+    if (!formData.sourceAccountId) {
+      await showAlert("Please select the account this payment will be paid from");
+      return;
+    }
 
     const payload = {
       cardId: formData.cardId,
+      sourceAccountId: formData.sourceAccountId,
       amount: parseFloat(formData.amount),
       date: dateTimeInputToUTC(formData.date),
       note: formData.note.trim() || undefined,
@@ -163,6 +174,41 @@ export default function AddPaymentModal({
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Paid from account
+            </label>
+            {sourceAccounts.length > 0 ? (
+              <select
+                required
+                name="sourceAccountId"
+                value={formData.sourceAccountId}
+                onChange={handleChange}
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-purple-500"
+              >
+                <option value="">Select a bank or other non-credit account...</option>
+                {sourceAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.title}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Add a bank or other non-credit account before recording this payment.{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate("/cards");
+                  }}
+                  className="font-semibold underline"
+                >
+                  Add account
+                </button>
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
