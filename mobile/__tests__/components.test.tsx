@@ -166,7 +166,7 @@ describe("budget screens", () => {
     expect(screen.queryByText("Rent payment")).toBeNull();
     fireEvent.press(screen.getByText("All"));
     fireEvent.changeText(screen.getByPlaceholderText("Search expenses"), "");
-    fireEvent.press(screen.getByText("Food & dining"));
+    fireEvent.press(screen.getAllByText("Food & dining")[0]);
     expect(screen.getByText("KFC")).toBeTruthy();
     expect(screen.queryByText("Uber")).toBeNull();
     fireEvent.press(screen.getByText("KFC"));
@@ -290,7 +290,7 @@ describe("budget screens", () => {
 
     const item = initialModules.bills[0];
     fireEvent.press(screen.getByText(item.title));
-    expect(onUpdate).toHaveBeenCalledWith(item.id, expect.objectContaining({ enabled: !item.enabled }));
+    expect(onUpdate).toHaveBeenCalledWith(item.id, expect.objectContaining({ status: "Paid" }));
     fireEvent.changeText(screen.getByPlaceholderText("Search bills & subscriptions"), "not found");
     expect(screen.getByText("No records found")).toBeTruthy();
   });

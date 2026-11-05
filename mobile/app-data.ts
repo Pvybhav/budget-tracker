@@ -41,20 +41,46 @@ export function hydrateModules(current: Record<ModuleKey, ModuleItem[]>, snapsho
     loans: "loans", insurance: "insurance", budgets: "budget-rules", categories: "categories",
     investments: "investments", rewards: "reward-points", netWorth: "net-worth-snapshots",
   };
+  const cards = Array.isArray(snapshot.cards) ? snapshot.cards as RemoteRecord[] : [];
   (Object.entries(mapping) as [ModuleKey, string][]).forEach(([module, resource]) => {
     const records = snapshot[resource];
     if (!Array.isArray(records)) return;
     next[module] = records.map((raw: unknown, index: number) => {
       const item = (raw && typeof raw === "object" ? raw : {}) as RemoteRecord;
+      const category = remoteString(item, "category", remoteString(item, "type", ""));
+      const accountId = remoteString(item, "accountId", remoteString(item, "cardId", ""));
+      const date = remoteString(item, "date", "");
       return {
         id: remoteString(item, "id", remoteString(item, "_id", `${module}-${index}`)),
         title: remoteString(item, "name", remoteString(item, "title", remoteString(item, "source", moduleLabels[module]))),
         detail: remoteString(item, "note", remoteString(item, "provider", "Synced from Budget Tracker")),
-        amount: remoteNumber(item, "amount") || remoteNumber(item, "currentValue") || remoteNumber(item, "thresholdAmount"),
+        amount: remoteNumber(item, "amount") || remoteNumber(item, "currentValue") || remoteNumber(item, "thresholdAmount") || (module === "rewards" ? remoteNumber(item, "points") : 0),
         status: remoteString(item, "status", item.enabled === false ? "Disabled" : "Active"),
         enabled: item.enabled !== false,
+        ...(category ? { category } : {}),
+        ...(accountId ? { accountId } : {}),
+        ...(date ? { date } : {}),
       };
     });
+  });
+  const expenseRecords = Array.isArray(snapshot.expenses) ? snapshot.expenses : [];
+  next.reconciliation = expenseRecords.map((raw: unknown, index: number) => {
+    const item = (raw && typeof raw === "object" ? raw : {}) as RemoteRecord;
+    const accountId = remoteString(item, "cardId", "");
+    const account = cards.find((card) =>
+      remoteString(card, "id", remoteString(card, "_id", "")) === accountId,
+    );
+    const id = remoteString(item, "id", remoteString(item, "_id", `reconciliation-${index}`));
+    const reconciled = item.reconciled === true;
+    return {
+      id,
+      title: remoteString(item, "details", "Expense"),
+      detail: `${account ? remoteString(account, "title", "Account") : "No account"} · ${remoteString(item, "date", "").slice(0, 10)}`,
+      amount: remoteNumber(item, "amount"),
+      status: reconciled ? "Verified" : "To verify",
+      accountId,
+      date: remoteString(item, "date", ""),
+    };
   });
   return next;
 }
@@ -71,6 +97,9 @@ export function snapshotExpenses(snapshot: Record<string, unknown>): Expense[] {
       date: remoteString(item, "date", ""),
       isEmi: item.isEmi === true,
       months: typeof item.emiMonths === "number" ? item.emiMonths : undefined,
+      ...(item.reconciled === true ? { reconciled: true } : {}),
+      ...(remoteString(item, "status", "") ? { status: remoteString(item, "status", "") } : {}),
+      ...(remoteString(item, "cardId", "") ? { cardId: remoteString(item, "cardId", "") } : {}),
     };
   });
 }
@@ -145,12 +174,15 @@ export function moduleResource(module: ModuleKey) {
     bills: "bills", payments: "payments", transfers: "transfers", income: "income",
     loans: "loans", insurance: "insurance", budgets: "budget-rules", categories: "categories",
     investments: "investments", rewards: "reward-points", netWorth: "net-worth-snapshots",
+    reconciliation: "expenses",
   };
   return mapping[module];
 }
 
 export function modulePayload(module: ModuleKey, item: Partial<ModuleItem>) {
   const common = { title: item.title, note: item.detail, amount: item.amount };
+  if (module === "reconciliation") return { reconciled: item.status === "Verified" };
+  if (module === "payments" || module === "bills") return { ...common, ...(item.status ? { status: item.status } : {}) };
   if (module === "categories") return { title: item.title, description: item.detail };
   if (module === "budgets") return { type: "category", targetId: item.title, thresholdAmount: item.amount ?? 0, period: "monthly", enabled: item.enabled ?? true, createdAt: new Date().toISOString() };
   if (module === "income") return { source: item.title, amount: item.amount ?? 0, date: new Date().toISOString() };

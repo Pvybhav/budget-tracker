@@ -68,6 +68,15 @@ describe("form primitives and expense forms", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ title: "Train", amount: 250, category: "Transport", cardId: "card" }));
   });
 
+  it("trims an expense description when the field loses focus", () => {
+    const onSave = jest.fn();
+    const expense = render(<ExpenseForm accounts={[{ id: "checking", title: "Checking" }]} onClose={() => undefined} onSave={onSave} />);
+    const description = expense.getByPlaceholderText("e.g. Coffee, rent, groceries");
+    fireEvent.changeText(description, "  Train fare  ");
+    fireEvent(description, "blur");
+    expect(expense.getByDisplayValue("Train fare")).toBeTruthy();
+  });
+
   it("requires a synchronized account before recording an expense", () => {
     const noAccount = render(<ExpenseForm accounts={[]} onClose={() => undefined} onSave={() => undefined} />);
     fireEvent.changeText(noAccount.getByPlaceholderText("e.g. Coffee, rent, groceries"), "Tea");

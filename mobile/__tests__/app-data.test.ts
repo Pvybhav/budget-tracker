@@ -200,6 +200,9 @@ describe("alerts and module payloads", () => {
     expect(modulePayload("budgets", { title: "Food" })).toMatchObject({ thresholdAmount: 0, enabled: true });
     expect(modulePayload("income", { title: "Salary" })).toMatchObject({ source: "Salary", amount: 0 });
     expect(modulePayload("bills", { title: "Power", detail: "Monthly", amount: 20 })).toEqual({ title: "Power", note: "Monthly", amount: 20 });
+    expect(modulePayload("payments", { title: "Card", status: "Paid" })).toMatchObject({ status: "Paid" });
+    expect(modulePayload("reconciliation", { status: "Verified" })).toEqual({ reconciled: true });
+    expect(moduleResource("reconciliation")).toBe("expenses");
     expect(createLocalId()).toMatch(/^local-\d+-[a-z0-9]+$/);
   });
 });

@@ -667,7 +667,7 @@ export default function App() {
       });
       setModules((current) => ({ ...current, [module]: current[module].map((item) => item.id === id ? updatedItem : item) }));
       if (!networkOnline) setOffline(true);
-      else void syncData();
+      else await syncData();
     } catch (error) {
       Alert.alert("Record update not saved", error instanceof Error ? error.message : "Could not save the update on this device.");
     }
@@ -782,7 +782,7 @@ export default function App() {
           {screen === "more" && <More darkMode={darkMode} setDarkMode={toggleDarkMode} notificationsEnabled={notificationsEnabled} setNotificationsEnabled={toggleNotifications} biometricEnabled={biometricEnabled} setBiometricEnabled={toggleBiometric} onNavigate={setScreen} onLogout={() => { void logout().then(() => setUser(null)); }} onSync={() => void syncData()} syncing={syncing} />}
           {screen === "secureVault" && <SecureRecordsScreen view="credentials" darkMode={darkMode} />}
           {screen === "personalRecords" && <SecureRecordsScreen view="personal" darkMode={darkMode} />}
-          {isModuleScreen(screen) && <ModuleScreen darkMode={darkMode} module={screen} items={modules[screen]} household={household} onHouseholdChange={setHousehold} onRefresh={refreshFromServer} refreshing={refreshing} onExport={() => setModal("data")} onImport={() => setModal("data")} onAdd={(item) => void addModuleItem(screen, item)} onUpdate={(id, patch) => void updateModuleItem(screen, id, patch)} onDelete={(id) => void deleteModuleItem(screen, id)} />}
+          {isModuleScreen(screen) && <ModuleScreen darkMode={darkMode} module={screen} items={modules[screen]} expenses={expenses} accounts={accounts} household={household} onHouseholdChange={setHousehold} onRefresh={refreshFromServer} refreshing={refreshing} onExport={() => setModal("data")} onImport={() => setModal("data")} onAdd={(item) => void addModuleItem(screen, item)} onUpdate={(id, patch) => updateModuleItem(screen, id, patch)} onDelete={(id) => void deleteModuleItem(screen, id)} />}
         </AnimatedScreen>
         <BottomNav screen={screen} setScreen={setScreen} />
       </View>
@@ -799,7 +799,7 @@ export default function App() {
         <GoalForm onClose={() => setModal(null)} onSave={addGoal} />
       </Modal>
       <Modal visible={modal === "emi"} animationType="slide" transparent onRequestClose={() => setModal(null)}>
-        {selectedExpense && <EmiSchedule expense={selectedExpense} onClose={() => setModal(null)} />}
+        {selectedExpense && <EmiSchedule expense={selectedExpense} darkMode={darkMode} onClose={() => setModal(null)} />}
       </Modal>
       <Modal visible={modal === "data"} animationType="slide" transparent onRequestClose={() => setModal(null)}>
         {modal === "data" && <DataTransferForm exportData={exportData} initialText={sharedImportText} onImport={(value) => { setSharedImportText(null); void importData(value); }} onClose={() => { setSharedImportText(null); setModal(null); }} />}
