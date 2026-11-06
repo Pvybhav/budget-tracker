@@ -125,6 +125,7 @@ const expenseSchema = new Schema(
     userId: { type: String, required: true, index: true },
     expenseKey: { type: String, unique: true, sparse: true, select: false },
     billId: { type: ObjectId, ref: "Bill" },
+    paymentId: { type: ObjectId, ref: "Payment" },
     cardId: { type: ObjectId, ref: "Card" },
     categoryId: { type: ObjectId, ref: "Category" },
     loanId: { type: ObjectId, ref: "Loan" },
@@ -164,11 +165,16 @@ expenseSchema.index(
   { userId: 1, billId: 1 },
   { unique: true, partialFilterExpression: { billId: { $type: "objectId" } } },
 );
+expenseSchema.index(
+  { userId: 1, paymentId: 1 },
+  { unique: true, partialFilterExpression: { paymentId: { $type: "objectId" } } },
+);
 const paymentSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
     cardId: { type: ObjectId, ref: "Card", required: true },
     sourceAccountId: { type: ObjectId, ref: "Card" },
+    categoryId: { type: ObjectId, ref: "Category" },
     amount: { type: Decimal128, required: true, set: toMoney },
     date: { type: Date, required: true, set: toUTCDate, validate: validDate },
     dateTimezoneVersion: { type: Number, default: 2, select: false },
@@ -210,6 +216,7 @@ const beneficiarySchema = new Schema(
 const billSchema = new Schema(
   {
     userId: { type: String, required: true, index: true },
+    categoryId: { type: ObjectId, ref: "Category" },
     name: { type: String, required: true },
     type: {
       type: String,

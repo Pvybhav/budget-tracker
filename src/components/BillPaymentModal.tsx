@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Bill } from "../db/db";
-import { fetchCards } from "../services/backend.service";
+import { fetchCards, fetchCategories } from "../services/backend.service";
 import { payBill } from "../services/backendSync";
 import { useBackendResource } from "../services/backendHooks";
 import { X } from "lucide-react";
@@ -23,6 +23,8 @@ const PAYMENT_TYPES = [
 
 export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
   const accounts = useBackendResource(() => fetchCards(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
+  const [categoryId, setCategoryId] = useState(bill.categoryId ?? "");
   const [paymentType, setPaymentType] = useState<NonNullable<Bill["paymentType"]>>(
     bill.paymentType ?? "card",
   );
@@ -34,16 +36,22 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!categoryId && categories?.length) setCategoryId(categories[0].id ?? "");
+  }, [categories, categoryId]);
+
+  useEffect(() => {
     if (paymentType === "cash" || paymentType === "other") setPaymentAccountId("");
   }, [paymentType]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!bill.id || isSubmitting) return;
+    if (!categoryId) return;
     setIsSubmitting(true);
     try {
       await payBill(bill.id, {
         paidDate: dateTimeInputToUTC(paidDate),
+        categoryId,
         paymentType,
         paymentAccountId: paymentAccountId || undefined,
         paymentReference: paymentReference.trim() || undefined,
@@ -75,6 +83,33 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{bill.name}</p>
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div>
+            <label
+              htmlFor="bill-expense-category"
+              className="mb-1 block text-sm text-slate-500 dark:text-slate-400"
+            >
+              Expense category
+            </label>
+            <select
+              id="bill-expense-category"
+              required
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value="">Select a category...</option>
+              {categories?.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+            {categories?.length === 0 && (
+              <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
+                Add an expense category before recording this bill payment.
+              </p>
+            )}
+          </div>
           <div>
             <label
               htmlFor="bill-paid-date"
@@ -162,7 +197,7 @@ export default function BillPaymentModal({ bill, onClose }: Readonly<Props>) {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || (needsAccount && !paymentAccountId)}
+              disabled={isSubmitting || !categoryId || (needsAccount && !paymentAccountId)}
               className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Saving..." : "Mark paid"}

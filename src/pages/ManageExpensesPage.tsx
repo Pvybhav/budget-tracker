@@ -11,7 +11,7 @@ import showConfirm from "../components/Confirm";
 import { deleteExpense, updateExpense } from "../services/backendSync";
 import { getNextRecurringExpenseDue, syncRecurringExpenses } from "../services/recurring.service";
 import { convertCurrency, formatMoney, useDisplayCurrency } from "../services/currency.service";
-import { dateOnly, formatDateInput, formatDateOnly } from "../utils/date";
+import { dateOnly, formatDateInput, formatDateOnly, getStatementDateRange } from "../utils/date";
 import { getCategoryAccent } from "../utils/categoryTheme";
 import Tooltip from "../components/Tooltip";
 import { getCategoryIcon } from "../utils/categoryIcons";
@@ -34,7 +34,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 function getEmiProgress(expense: Expense) {
   const months = Math.max(1, expense.emiMonths ?? 1);
-  const start = new Date(`${(expense.emiStartDate ?? expense.date).slice(0, 10)}T00:00:00`);
+  const start = new Date(`${dateOnly(expense.emiStartDate ?? expense.date)}T00:00:00`);
   start.setHours(0, 0, 0, 0);
 
   const today = new Date();
@@ -78,6 +78,11 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
   const [selectedEmiExpense, setSelectedEmiExpense] = useState<Expense | null>(null);
   const [updatingExpenseId, setUpdatingExpenseId] = useState<string | null>(null);
+  const [showEmiProducts, setShowEmiProducts] = useState(false);
+  const [statementView, setStatementView] = useState(false);
+  const [statementCardId, setStatementCardId] = useState("");
+  const [statementYear, setStatementYear] = useState(new Date().getFullYear());
+  const [statementMonth, setStatementMonth] = useState(new Date().getMonth() + 1);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -120,19 +125,41 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     category: null,
   });
 
+  const statementCards = (cards ?? []).filter(
+    (card) => (card.type ?? "credit") === "credit" && Number.isInteger(card.billingDate) &&
+      (card.billingDate ?? 0) >= 1 && (card.billingDate ?? 0) <= 31,
+  );
+  useEffect(() => {
+    if (!statementCards.some((card) => card.id === statementCardId)) {
+      setStatementCardId(statementCards[0]?.id ?? "");
+    }
+  }, [statementCardId, statementCards]);
+
+  const statementCard = statementCards.find((card) => card.id === statementCardId);
+  const statementRange = statementCard?.billingDate
+    ? getStatementDateRange(statementCard.billingDate, statementYear, statementMonth)
+    : undefined;
+
   const periodFilteredExpenses = expenses?.filter((expense) => {
-    if (!mode) return true;
+    if (!mode && !statementView) return true;
     if (mode === "emi") {
       return !!expense.isEmi;
     }
-    const expenseDate = new Date(expense.date);
-    if (mode === "monthly") {
-      return (
-        expenseDate.getFullYear() === selectedYear && expenseDate.getMonth() + 1 === selectedMonth
+    if (statementView) {
+      const date = dateOnly(expense.date);
+      return Boolean(
+        statementRange &&
+          expense.cardId === statementCardId &&
+          date >= statementRange.start &&
+          date <= statementRange.end,
       );
     }
+    const expenseDate = dateOnly(expense.date);
+    if (mode === "monthly") {
+      return expenseDate.slice(0, 7) === `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+    }
     if (mode === "yearly") {
-      return expenseDate.getFullYear() === selectedYear;
+      return expenseDate.slice(0, 4) === String(selectedYear);
     }
     return true;
   });
@@ -263,7 +290,8 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
     ) || 0;
 
   const expenseCount = filteredExpenses?.length || 0;
-  const emiCount = filteredExpenses?.filter((expense) => expense.isEmi).length || 0;
+  const emiExpenses = filteredExpenses.filter((expense) => expense.isEmi);
+  const emiCount = emiExpenses.length;
   const biggestExpense = filteredExpenses?.reduce<Expense | undefined>((max, expense) => {
     if (!max || expense.amount > max.amount) return expense;
     return max;
@@ -296,7 +324,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       ? Array.from({ length: 12 }, (_, i) => {
           const month = i + 1;
           const monthExpenses = filteredExpenses?.filter(
-            (expense) => new Date(expense.date).getMonth() + 1 === month,
+            (expense) => Number(dateOnly(expense.date).slice(5, 7)) === month,
           );
           return {
             name: new Date(0, i).toLocaleString("default", { month: "short" }),
@@ -412,7 +440,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
       </div>
 
       <div className="flex flex-wrap gap-4">
-        {mode !== "emi" && (
+        {mode !== "emi" && !statementView && (
           <select
             value={selectedYear}
             onChange={(e) => {
@@ -428,7 +456,7 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             ))}
           </select>
         )}
-        {mode === "monthly" && (
+        {mode === "monthly" && !statementView && (
           <select
             value={selectedMonth}
             onChange={(e) => {
@@ -444,7 +472,82 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             ))}
           </select>
         )}
+        {mode !== "emi" && (
+          <button
+            type="button"
+            aria-pressed={statementView}
+            onClick={() => {
+              if (!statementView) setSelectedCardId("all");
+              setStatementView((current) => !current);
+              setPage(1);
+            }}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          >
+            {statementView ? "Calendar view" : "Credit card statement"}
+          </button>
+        )}
+        {statementView && (
+          <>
+            <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-400">
+              <span>Credit card</span>
+              <select
+                value={statementCardId}
+                onChange={(event) => {
+                  setStatementCardId(event.target.value);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                <option value="">Select a card...</option>
+                {statementCards.map((card) => (
+                  <option key={card.id} value={card.id}>{card.title}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-400">
+              <span>Statement closes in</span>
+              <select
+                aria-label="Statement month"
+                value={statementMonth}
+                onChange={(event) => {
+                  setStatementMonth(Number(event.target.value));
+                  setPage(1);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => (
+                  <option key={month} value={month}>
+                    {new Date(2000, month - 1, 1).toLocaleString("default", { month: "long" })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-400">
+              <span>Year</span>
+              <select
+                aria-label="Statement year"
+                value={statementYear}
+                onChange={(event) => {
+                  setStatementYear(Number(event.target.value));
+                  setPage(1);
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
+      {statementView && (
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {statementRange
+            ? `${statementCard?.title}: ${formatDateOnly(statementRange.start)} – ${formatDateOnly(statementRange.end)}`
+            : "Add a billing date to a credit card to view its statement cycle."}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
@@ -494,24 +597,26 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
           </select>
         </label>
 
-        <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
-          <span>Card</span>
-          <select
-            value={selectedCardId}
-            onChange={(e) => {
-              setSelectedCardId(e.target.value);
-              setPage(1);
-            }}
-            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
-          >
-            <option value="all">All cards</option>
-            {cards?.filter((card) => usedCardIds.has(card.id ?? "")).map((card) => (
-              <option key={card.id} value={card.id?.toString()}>
-                {card.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!statementView && (
+          <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400">
+            <span>Card</span>
+            <select
+              value={selectedCardId}
+              onChange={(e) => {
+                setSelectedCardId(e.target.value);
+                setPage(1);
+              }}
+              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
+            >
+              <option value="all">All cards</option>
+              {cards?.filter((card) => usedCardIds.has(card.id ?? "")).map((card) => (
+                <option key={card.id} value={card.id?.toString()}>
+                  {card.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          )}
 
         <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-400 xl:col-span-2">
           <span>Quick filters</span>
@@ -597,11 +702,13 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
-              {mode === "monthly"
-                ? "Month Total"
-                : mode === "yearly"
-                  ? "Year Total"
-                  : "Visible Total"}
+              {statementView
+                ? "Statement Total"
+                : mode === "monthly"
+                  ? "Month Total"
+                  : mode === "yearly"
+                    ? "Year Total"
+                    : "Visible Total"}
             </p>
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {formatMoney(totalAmount, displayCurrency)}
@@ -615,12 +722,20 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{expenseCount}</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
+          <button
+            type="button"
+            aria-expanded={showEmiProducts}
+            onClick={() => setShowEmiProducts((current) => !current)}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl text-left hover:border-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500"
+          >
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
               EMI Count
             </p>
             <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{emiCount}</p>
-          </div>
+            <span className="mt-1 block text-xs text-slate-500">
+              {showEmiProducts ? "Hide EMI products" : "View EMI products"}
+            </span>
+          </button>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl">
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">
@@ -641,6 +756,47 @@ export default function ManageExpensesPage({ mode }: { mode?: "monthly" | "yearl
             </p>
           </div>
         </div>
+      )}
+
+      {showEmiProducts && mode !== "emi" && (
+        <section
+          aria-label="EMI products"
+          className="rounded-2xl border border-amber-500/25 bg-white p-4 dark:bg-slate-900"
+        >
+          <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            EMI products ({emiCount})
+          </h2>
+          {emiExpenses.length ? (
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {emiExpenses.map((expense) => (
+                <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                      {expense.details || "EMI product"}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {getCategoryById(expense.categoryId)?.title ?? "Uncategorized"} ·{" "}
+                      {expense.emiMonths ?? 1} months ·{" "}
+                      {formatMoney(
+                        convertCurrency(getEmiProgress(expense).monthlyEmi, expense.currency, displayCurrency),
+                        displayCurrency,
+                      )}/mo
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEmiExpense(expense)}
+                    className="rounded-lg border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+                  >
+                    View schedule
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No EMI products in this period.</p>
+          )}
+        </section>
       )}
 
       {mode && mode !== "emi" && (

@@ -66,6 +66,7 @@ export interface ExpenseSplitItem {
 export interface Expense {
   id?: string;
   billId?: string;
+  paymentId?: string;
   cardId?: string | null;
   categoryId?: string;
   loanId?: string;
@@ -95,6 +96,7 @@ export interface Payment {
   id?: string;
   cardId: string;
   sourceAccountId?: string;
+  categoryId?: string;
   amount: number;
   date: string;
   note?: string;
@@ -111,6 +113,7 @@ export interface Bill {
   dueDate: string;
   paid: boolean;
   paidDate?: string;
+  categoryId?: string;
   paymentType?: "card" | "bank" | "cash" | "upi" | "other";
   paymentAccountId?: string;
   paymentReference?: string;

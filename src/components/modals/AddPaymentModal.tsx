@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Payment } from "../../db/db";
 import { useBackendResource } from "../../services/backendHooks";
-import { fetchCards } from "../../services/backend.service";
+import { fetchCards, fetchCategories } from "../../services/backend.service";
 import { createPayment, updatePayment } from "../../services/backendSync";
 import { X } from "lucide-react";
 import showConfirm, { showAlert } from "../../components/Confirm";
@@ -25,9 +25,11 @@ export default function AddPaymentModal({
 }: Props) {
   const navigate = useNavigate();
   const cards = useBackendResource(() => fetchCards(), []);
+  const categories = useBackendResource(() => fetchCategories(), []);
   const [formData, setFormData] = useState({
     cardId: "",
     sourceAccountId: "",
+    categoryId: "",
     amount: "",
     date: currentDateTimeInput(),
     note: "",
@@ -39,6 +41,7 @@ export default function AddPaymentModal({
       setFormData({
         cardId: initialPayment.cardId.toString(),
         sourceAccountId: initialPayment.sourceAccountId ?? "",
+        categoryId: initialPayment.categoryId ?? "",
         amount: initialPayment.amount.toString(),
         date: dateTimeInput(initialPayment.date),
         note: initialPayment.note ?? "",
@@ -49,6 +52,7 @@ export default function AddPaymentModal({
       setFormData({
         cardId: defaultPayment?.cardId ?? "",
         sourceAccountId: "",
+        categoryId: categories?.[0]?.id ?? "",
         amount: defaultPayment?.amount?.toString() ?? "",
         date: defaultDate,
         note: "",
@@ -61,7 +65,13 @@ export default function AddPaymentModal({
     defaultPayment?.currency,
     initialPayment,
     isOpen,
+    categories,
   ]);
+  useEffect(() => {
+    if (!formData.categoryId && categories?.length) {
+      setFormData((current) => ({ ...current, categoryId: categories[0].id ?? "" }));
+    }
+  }, [categories, formData.categoryId]);
   const sourceAccounts = (cards ?? []).filter(
     (card) => card.id && card.id !== formData.cardId && card.type !== "credit",
   );
@@ -108,10 +118,15 @@ export default function AddPaymentModal({
       await showAlert("Please select the account this payment will be paid from");
       return;
     }
+    if (!formData.categoryId) {
+      await showAlert("Please select an expense category");
+      return;
+    }
 
     const payload = {
       cardId: formData.cardId,
       sourceAccountId: formData.sourceAccountId,
+      categoryId: formData.categoryId,
       amount: parseFloat(formData.amount),
       date: dateTimeInputToUTC(formData.date),
       note: formData.note.trim() || undefined,
@@ -211,6 +226,30 @@ export default function AddPaymentModal({
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Expense category
+              </label>
+              <select
+                required
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleChange}
+                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 focus:outline-none focus:border-purple-500"
+              >
+                <option value="">Select a category...</option>
+                {categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
+              {categories?.length === 0 && (
+                <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
+                  Add an expense category before recording this payment.
+                </p>
+              )}
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Amount Paid

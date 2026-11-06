@@ -527,6 +527,7 @@ router.post(
   "/expenses",
   catchAsync(async (req, res) => {
     const billId = req.body.billId == null ? undefined : toRecordId(req.body.billId);
+    const paymentId = req.body.paymentId == null ? undefined : toRecordId(req.body.paymentId);
     const cardId = req.body.cardId == null ? undefined : toRecordId(req.body.cardId);
     const categoryId = req.body.categoryId == null ? undefined : toRecordId(req.body.categoryId);
     const loanId = req.body.loanId == null ? undefined : toRecordId(req.body.loanId);
@@ -536,6 +537,13 @@ router.post(
         !(await Bill.exists({ _id: billId, userId: req.user.userId, paid: true })))
     ) {
       return res.status(400).json({ error: "Paid bill must exist" });
+    }
+    if (
+      req.body.paymentId != null &&
+      (paymentId == null ||
+        !(await Payment.exists({ _id: paymentId, userId: req.user.userId })))
+    ) {
+      return res.status(400).json({ error: "Payment must exist" });
     }
     const loanPaymentNumber = Number(req.body.loanPaymentNumber);
     const hasLoanLink = req.body.loanId != null || req.body.loanPaymentNumber != null;
@@ -598,6 +606,12 @@ router.put(
       String(req.body.billId ?? "") !== String(currentExpense.billId ?? "")
     ) {
       return res.status(400).json({ error: "Bill transaction link cannot be changed" });
+    }
+    if (
+      Object.hasOwn(req.body, "paymentId") &&
+      String(req.body.paymentId ?? "") !== String(currentExpense.paymentId ?? "")
+    ) {
+      return res.status(400).json({ error: "Payment transaction link cannot be changed" });
     }
     const updatedValues = { ...currentExpense.toObject(), ...stripProtectedFields(req.body) };
     const cardId = updatedValues.cardId == null ? undefined : toRecordId(updatedValues.cardId);
@@ -674,8 +688,15 @@ router.post(
   "/payments",
   catchAsync(async (req, res) => {
     const cardId = toRecordId(req.body.cardId);
+    const categoryId = toRecordId(req.body.categoryId);
     if (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))) {
       return res.status(400).json({ error: "Payment account must exist" });
+    }
+    if (
+      categoryId == null ||
+      !(await Category.exists({ _id: categoryId, userId: req.user.userId }))
+    ) {
+      return res.status(400).json({ error: "Payment category must exist" });
     }
     if (req.body.sourceAccountId != null) {
       const sourceAccountId = toRecordId(req.body.sourceAccountId);
@@ -688,6 +709,24 @@ router.post(
       }
     }
     const payment = await createWithId(Payment, req.body, req.user.userId);
+    try {
+      await Expense.create({
+        paymentId: payment._id,
+        cardId,
+        categoryId,
+        details: typeof req.body.note === "string" && req.body.note.trim()
+          ? req.body.note.trim()
+          : "Credit card payment",
+        amount: req.body.amount,
+        date: req.body.date,
+        status: "paid",
+        currency: req.body.currency,
+        userId: req.user.userId,
+      });
+    } catch (error) {
+      await payment.deleteOne();
+      throw error;
+    }
     res.status(201).json(payment);
   }),
 );
@@ -708,6 +747,17 @@ router.put(
     if (id == null) return res.status(400).json({ error: "Invalid payment id" });
     const existingPayment = await Payment.findOne({ _id: id, userId: req.user.userId });
     if (!existingPayment) return res.status(404).json({ error: "Payment not found" });
+    const categoryId = toRecordId(req.body.categoryId ?? existingPayment.categoryId);
+    if (
+      categoryId == null ||
+      !(await Category.exists({ _id: categoryId, userId: req.user.userId }))
+    ) {
+      return res.status(400).json({ error: "Payment category must exist" });
+    }
+    const cardId = toRecordId(req.body.cardId ?? existingPayment.cardId);
+    if (cardId == null || !(await Card.exists({ _id: cardId, userId: req.user.userId }))) {
+      return res.status(400).json({ error: "Payment account must exist" });
+    }
     if (req.body.sourceAccountId != null) {
       const sourceAccountId = toRecordId(req.body.sourceAccountId);
       const sourceAccount =
@@ -721,9 +771,31 @@ router.put(
     }
     const payment = await Payment.findOneAndUpdate(
       { _id: id, userId: req.user.userId },
-      stripProtectedFields(req.body),
+      { ...stripProtectedFields(req.body), cardId, categoryId },
       { new: true, runValidators: true },
     );
+    if (!payment) return res.status(404).json({ error: "Payment not found" });
+    const expenseData = {
+      cardId: payment.cardId,
+      categoryId: payment.categoryId,
+      details: typeof payment.note === "string" && payment.note.trim()
+        ? payment.note.trim()
+        : "Credit card payment",
+      amount: payment.amount,
+      date: payment.date,
+      status: "paid",
+      currency: payment.currency,
+    };
+    const expense = await Expense.findOne({ paymentId: id, userId: req.user.userId });
+    if (expense) {
+      await Expense.findOneAndUpdate(
+        { _id: expense._id, userId: req.user.userId },
+        expenseData,
+        { new: true, runValidators: true },
+      );
+    } else {
+      await Expense.create({ ...expenseData, paymentId: id, userId: req.user.userId });
+    }
     res.json(payment);
   }),
 );
@@ -734,6 +806,7 @@ router.delete(
     if (id == null) return res.status(400).json({ error: "Invalid payment id" });
     const payment = await Payment.findOne({ _id: id, userId: req.user.userId });
     if (!payment) return res.status(404).json({ error: "Payment not found" });
+    await Expense.deleteOne({ paymentId: id, userId: req.user.userId });
     await payment.deleteOne();
     res.json({ success: true });
   }),
@@ -935,6 +1008,13 @@ router.put(
     if (!req.body.paidDate) {
       return res.status(400).json({ error: "Payment date and time are required" });
     }
+    const categoryId = req.body.categoryId == null ? undefined : toRecordId(req.body.categoryId);
+    if (
+      categoryId == null ||
+      !(await Category.exists({ _id: categoryId, userId: req.user.userId }))
+    ) {
+      return res.status(400).json({ error: "Expense category must exist" });
+    }
 
     const paymentAccountId =
       req.body.paymentAccountId == null ? undefined : toRecordId(req.body.paymentAccountId);
@@ -951,8 +1031,9 @@ router.put(
       {
         paid: true,
         paidDate: req.body.paidDate,
+        categoryId,
         paymentType: req.body.paymentType,
-        paymentAccountId,
+        paymentAccountId: paymentAccountId ?? null,
         paymentReference: req.body.paymentReference,
       },
       { new: true, runValidators: true },
@@ -961,7 +1042,8 @@ router.put(
 
     const expenseData = {
       billId: bill._id,
-      cardId: paymentAccountId,
+      cardId: paymentAccountId ?? null,
+      categoryId,
       details: `Bill payment: ${bill.name}`,
       amount: bill.amount,
       date: req.body.paidDate,

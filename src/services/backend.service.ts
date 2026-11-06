@@ -110,7 +110,7 @@ export async function updateBill(id: string, data: Partial<Bill>) {
 }
 export async function payBill(
   id: string,
-  data: Pick<Bill, "paidDate" | "paymentType" | "paymentAccountId" | "paymentReference">,
+  data: Pick<Bill, "paidDate" | "categoryId" | "paymentType" | "paymentAccountId" | "paymentReference">,
 ) {
   return apiPut<Bill>(`/bills/${id}/pay`, data);
 }
