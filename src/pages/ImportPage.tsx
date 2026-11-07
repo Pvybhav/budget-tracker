@@ -1,15 +1,23 @@
 import { useMemo, useState } from "react";
 import { FileUp, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
-import type { Category, Expense, Income, IncomeCategory } from "../db/db";
+import type {
+  Category,
+  Expense,
+  Income,
+  IncomeCategory,
+  Investment,
+  InvestmentTransactionType,
+} from "../db/db";
 import { useBackendResource } from "../services/backendHooks";
 import {
   fetchCards,
   fetchCategories,
   fetchExpenses,
   fetchIncomes,
+  fetchInvestments,
 } from "../services/backend.service";
-import { createExpense, createIncome } from "../services/backendSync";
+import { createExpense, createIncome, createInvestmentTransaction } from "../services/backendSync";
 import { showAlert } from "../components/Confirm";
 import { formatMoney, useDisplayCurrency } from "../services/currency.service";
 import { dateOnly, dateTimeInput, dateTimeInputToUTC } from "../utils/date";
@@ -18,9 +26,13 @@ interface ImportRow {
   dateTime: string;
   details: string;
   amount: number;
-  kind: "expense" | "income";
+  kind: "expense" | "income" | "investment";
   categoryId: string;
   incomeCategory: IncomeCategory;
+  investmentId: string;
+  investmentTransactionType: InvestmentTransactionType;
+  quantity: number | undefined;
+  selected: boolean;
 }
 
 const INCOME_CATEGORIES: { value: IncomeCategory; label: string }[] = [
@@ -153,6 +165,7 @@ function parseRows(file: File): Promise<ImportRow[]> {
           "remarks",
           "memo",
         ]);
+        const quantityIndex = findIndex(["quantity", "units", "unit"]);
 
         const result: ImportRow[] = [];
         for (const cells of sheetRows.slice(headerRowIndex + 1)) {
@@ -176,6 +189,13 @@ function parseRows(file: File): Promise<ImportRow[]> {
             kind: credit > 0 && debit === 0 ? "income" : "expense",
             categoryId: "",
             incomeCategory: "other",
+            investmentId: "",
+            investmentTransactionType: "buy",
+            quantity:
+              quantityIndex < 0 || !String(cells[quantityIndex] ?? "").trim()
+                ? undefined
+                : parseAmount(cells[quantityIndex]),
+            selected: true,
           });
         }
         resolve(result);
@@ -198,6 +218,7 @@ export default function ImportPage() {
   const categories = useBackendResource(() => fetchCategories(), []);
   const expenses = useBackendResource(() => fetchExpenses(), []);
   const incomes = useBackendResource(() => fetchIncomes(), []);
+  const investments = useBackendResource(() => fetchInvestments(), []);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [cardId, setCardId] = useState("");
   const [isReviewing, setIsReviewing] = useState(false);
@@ -214,6 +235,10 @@ export default function ImportPage() {
           details: expense.details ?? "",
           categoryId: "",
           incomeCategory: "other",
+          investmentId: "",
+          investmentTransactionType: "buy",
+          quantity: undefined,
+          selected: true,
         }),
       ),
       ...(incomes ?? []).map((income) =>
@@ -224,6 +249,10 @@ export default function ImportPage() {
           details: income.source,
           categoryId: "",
           incomeCategory: "other",
+          investmentId: "",
+          investmentTransactionType: "buy",
+          quantity: undefined,
+          selected: true,
         }),
       ),
     ]);
@@ -240,6 +269,14 @@ export default function ImportPage() {
     setRows((currentRows) =>
       currentRows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)),
     );
+  };
+
+  const selectedRows = rows.filter((row) => row.selected);
+  const selectedPendingRows = rows.filter(
+    (row, index) => row.selected && !duplicateIndexes.has(index),
+  );
+  const setAllRowsSelected = (selected: boolean) => {
+    setRows((currentRows) => currentRows.map((row) => ({ ...row, selected })));
   };
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,12 +308,25 @@ export default function ImportPage() {
       await showAlert("Select the account for these transactions");
       return;
     }
-    const missingCategory = rows.some((row) => row.kind === "expense" && !row.categoryId);
-    if (missingCategory) {
-      await showAlert("Choose an expense category for every debit before reviewing");
+    if (!selectedRows.length) {
+      await showAlert("Select at least one transaction to import");
       return;
     }
-    const invalidRow = rows.some(
+    const missingCategory = selectedPendingRows.some(
+      (row) => row.kind === "expense" && !row.categoryId,
+    );
+    if (missingCategory) {
+      await showAlert("Choose an expense category for every selected debit before reviewing");
+      return;
+    }
+    const missingInvestment = selectedPendingRows.some(
+      (row) => row.kind === "investment" && !row.investmentId,
+    );
+    if (missingInvestment) {
+      await showAlert("Choose an existing investment for every selected investment transaction");
+      return;
+    }
+    const invalidRow = selectedPendingRows.some(
       (row) =>
         !row.details.trim() ||
         !Number.isFinite(row.amount) ||
@@ -289,15 +339,15 @@ export default function ImportPage() {
       );
       return;
     }
-    if (rows.every((_, index) => duplicateIndexes.has(index))) {
-      await showAlert("There are no new rows to import");
+    if (!selectedPendingRows.length) {
+      await showAlert("There are no new selected rows to import");
       return;
     }
     setIsReviewing(true);
   };
 
   const importRows = async () => {
-    const pending = rows.filter((_, index) => !duplicateIndexes.has(index));
+    const pending = rows.filter((row, index) => row.selected && !duplicateIndexes.has(index));
     if (!pending.length) {
       await showAlert("There are no new rows to import");
       return;
@@ -306,9 +356,18 @@ export default function ImportPage() {
     const importedIndexes = new Set<number>();
     try {
       for (const [index, row] of rows.entries()) {
-        if (duplicateIndexes.has(index)) continue;
+        if (!row.selected || duplicateIndexes.has(index)) continue;
         const date = dateTimeInputToUTC(row.dateTime);
-        if (row.kind === "income") {
+        if (row.kind === "investment") {
+          await createInvestmentTransaction({
+            investmentId: row.investmentId,
+            type: row.investmentTransactionType,
+            quantity: row.quantity,
+            amount: row.amount,
+            date,
+            note: row.details.trim() || undefined,
+          });
+        } else if (row.kind === "income") {
           const payload: Omit<Income, "id"> = {
             source: row.details.trim(),
             category: row.incomeCategory,
@@ -410,9 +469,10 @@ export default function ImportPage() {
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {rows.length} transactions: {rows.filter((row) => row.kind === "expense").length}{" "}
-                debits, {rows.filter((row) => row.kind === "income").length} credits.{" "}
-                {duplicateIndexes.size} duplicate{duplicateIndexes.size === 1 ? "" : "s"} will be
-                skipped.
+                debits, {rows.filter((row) => row.kind === "income").length} credits,{" "}
+                {rows.filter((row) => row.kind === "investment").length} investments.{" "}
+                {selectedRows.length} selected; {duplicateIndexes.size} duplicate
+                {duplicateIndexes.size === 1 ? "" : "s"} will be skipped.
               </p>
             </div>
             {isReviewing ? (
@@ -432,30 +492,59 @@ export default function ImportPage() {
                   className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:opacity-50"
                 >
                   <Upload className="h-4 w-4" />
-                  {isImporting
-                    ? "Saving..."
-                    : `Save ${rows.length - duplicateIndexes.size} transactions`}
+                  {isImporting ? "Saving..." : `Save ${selectedPendingRows.length} transactions`}
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={reviewImport}
-                className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
-              >
-                Review import
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAllRowsSelected(true)}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                >
+                  Select all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAllRowsSelected(false)}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                >
+                  Clear all
+                </button>
+                <button
+                  type="button"
+                  onClick={reviewImport}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white"
+                >
+                  Review import
+                </button>
+              </div>
             )}
           </div>
 
           <div className="max-h-[34rem] overflow-auto">
-            <table className="w-full min-w-[900px] text-left text-sm text-slate-700 dark:text-slate-300">
+            <table className="w-full min-w-[1200px] text-left text-sm text-slate-700 dark:text-slate-300">
               <thead className="sticky top-0 border-b border-slate-300 bg-slate-200 dark:border-slate-800 dark:bg-slate-800">
                 <tr>
+                  <th className="px-3 py-3 text-slate-900 dark:text-slate-100">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all transactions"
+                      checked={rows.length > 0 && rows.every((row) => row.selected)}
+                      onChange={(event) => setAllRowsSelected(event.target.checked)}
+                      disabled={isReviewing}
+                    />
+                  </th>
                   <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Date &amp; time</th>
                   <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Description</th>
                   <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Type</th>
-                  <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Category</th>
+                  <th className="px-3 py-3 text-slate-900 dark:text-slate-100">
+                    Category / investment
+                  </th>
+                  <th className="px-3 py-3 text-slate-900 dark:text-slate-100">
+                    Investment transaction
+                  </th>
+                  <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Units</th>
                   <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Amount</th>
                   <th className="px-3 py-3 text-slate-900 dark:text-slate-100">Status</th>
                 </tr>
@@ -464,7 +553,19 @@ export default function ImportPage() {
                 {rows.map((row, index) => {
                   const duplicate = duplicateIndexes.has(index);
                   return (
-                    <tr key={`${row.dateTime}-${index}`} className={duplicate ? "opacity-60" : ""}>
+                    <tr
+                      key={`${row.dateTime}-${index}`}
+                      className={`${duplicate ? "opacity-60" : ""} ${row.selected ? "" : "opacity-50"}`}
+                    >
+                      <td className="px-3 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select transaction ${index + 1}`}
+                          checked={row.selected}
+                          onChange={(event) => updateRow(index, { selected: event.target.checked })}
+                          disabled={isReviewing || duplicate}
+                        />
+                      </td>
                       <td className="px-3 py-3">
                         {isReviewing ? (
                           <span>{row.dateTime.replace("T", " ")}</span>
@@ -502,17 +603,40 @@ export default function ImportPage() {
                               updateRow(index, {
                                 kind: event.target.value as ImportRow["kind"],
                                 categoryId: "",
+                                investmentId: "",
                               })
                             }
                             className={inputClass}
                           >
                             <option value="expense">Expense</option>
                             <option value="income">Income</option>
+                            <option value="investment">Investment</option>
                           </select>
                         )}
                       </td>
                       <td className="px-3 py-3">
-                        {isReviewing ? (
+                        {row.kind === "investment" ? (
+                          isReviewing ? (
+                            (investments?.find((investment) => investment.id === row.investmentId)
+                              ?.name ?? "Investment unavailable")
+                          ) : (
+                            <select
+                              aria-label={`Investment for transaction ${index + 1}`}
+                              value={row.investmentId}
+                              onChange={(event) =>
+                                updateRow(index, { investmentId: event.target.value })
+                              }
+                              className={inputClass}
+                            >
+                              <option value="">Select existing investment</option>
+                              {investments?.map((investment: Investment) => (
+                                <option key={investment.id} value={investment.id}>
+                                  {investment.name} ({investment.type})
+                                </option>
+                              ))}
+                            </select>
+                          )
+                        ) : isReviewing ? (
                           row.kind === "expense" ? (
                             (categories?.find((category) => category.id === row.categoryId)
                               ?.title ?? "Uncategorized")
@@ -557,6 +681,57 @@ export default function ImportPage() {
                         )}
                       </td>
                       <td className="px-3 py-3">
+                        {row.kind === "investment" ? (
+                          isReviewing ? (
+                            <span className="capitalize">{row.investmentTransactionType}</span>
+                          ) : (
+                            <select
+                              aria-label={`Investment transaction type for row ${index + 1}`}
+                              value={row.investmentTransactionType}
+                              onChange={(event) =>
+                                updateRow(index, {
+                                  investmentTransactionType: event.target
+                                    .value as InvestmentTransactionType,
+                                })
+                              }
+                              className={inputClass}
+                            >
+                              <option value="buy">Buy</option>
+                              <option value="sell">Sell</option>
+                              <option value="dividend">Dividend</option>
+                              <option value="fee">Fee</option>
+                            </select>
+                          )
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {row.kind === "investment" ? (
+                          isReviewing ? (
+                            (row.quantity ?? "—")
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.0001"
+                              aria-label={`Units for investment row ${index + 1}`}
+                              value={row.quantity ?? ""}
+                              onChange={(event) =>
+                                updateRow(index, {
+                                  quantity: event.target.value
+                                    ? Number.parseFloat(event.target.value)
+                                    : undefined,
+                                })
+                              }
+                              className={inputClass}
+                            />
+                          )
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
                         {isReviewing ? (
                           formatMoney(row.amount, displayCurrency)
                         ) : (
@@ -573,7 +748,13 @@ export default function ImportPage() {
                           />
                         )}
                       </td>
-                      <td className="px-3 py-3">{duplicate ? "Duplicate - skipped" : "Ready"}</td>
+                      <td className="px-3 py-3">
+                        {duplicate
+                          ? "Duplicate - skipped"
+                          : !row.selected
+                            ? "Not selected"
+                            : "Ready"}
+                      </td>
                     </tr>
                   );
                 })}
