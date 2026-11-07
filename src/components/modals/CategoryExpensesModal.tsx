@@ -105,6 +105,11 @@ export default function CategoryExpensesModal({
       sum + convertCurrency(entry.amount, entry.expense.currency, displayCurrency),
     0,
   );
+  const lifetimeTotal = (categoryExpenses ?? []).reduce(
+    (sum, expense) =>
+      sum + convertCurrency(expense.amount, expense.currency, displayCurrency),
+    0,
+  );
 
   const periodName = isYearly
     ? `the year ${currentYear}`
@@ -159,18 +164,35 @@ export default function CategoryExpensesModal({
         </div>
 
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-4">
-            <TrendingUp className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">
-                {isYearly
-                  ? "Total Spent This Year"
-                  : isQuarterly
-                    ? "Total Spent This Quarter"
-                    : "Total Spent This Month"}
-              </p>
-              <p className="text-2xl font-bold text-emerald-400">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-slate-100 dark:bg-slate-800/60 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">
+                  {isYearly
+                    ? "Total Spent This Year"
+                    : isQuarterly
+                      ? "Total Spent This Quarter"
+                      : "Total Spent This Month"}
+                </p>
+              </div>
+              <p className="text-xl font-bold text-emerald-500">
                 {formatMoney(total, displayCurrency)}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">{periodName}</p>
+            </div>
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-emerald-700 dark:text-emerald-300 flex-shrink-0" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">
+                  Lifetime recorded
+                </p>
+              </div>
+              <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+                {formatMoney(lifetimeTotal, displayCurrency)}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Across all dates
               </p>
             </div>
           </div>
