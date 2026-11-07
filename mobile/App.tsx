@@ -23,6 +23,7 @@ import { DataTransferForm, EmiSchedule, ExpenseForm, GoalForm, ReceiptScanner, V
 import { initialExpenses, initialGoals, moduleLabels, money } from "./components/constants";
 import { styles } from "./components/styles";
 import type { AccountOption, Expense, Goal, ModuleItem, ModuleKey, Screen } from "./components/types";
+import { getMonthlyExpenseAmount } from "./calculations";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true }),
@@ -358,9 +359,25 @@ export default function App() {
       updateBudgetTrackerWidget({ balance: "Sign in", spent: "—", alertCount: 0 });
       return;
     }
+    const currentMonth = new Date();
     updateBudgetTrackerWidget({
       balance: money(184250),
-      spent: money(expenses.reduce((sum, expense) => sum + expense.amount, 0)),
+      spent: money(
+        expenses.reduce(
+          (sum, expense) =>
+            sum +
+            getMonthlyExpenseAmount(
+              {
+                amount: expense.amount,
+                date: expense.date,
+                isEmi: expense.isEmi,
+                emiMonths: expense.months,
+              },
+              currentMonth,
+            ),
+          0,
+        ),
+      ),
       alertCount: alerts.length,
     });
   }, [user, expenses, alerts.length]);
